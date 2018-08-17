@@ -20,16 +20,16 @@
 #' # Writing the discharge for the RCH unsits 1 to 5
 #' # and the nitrogen load and ET for the RCH or SUB unit 5:
 #'   out_tbl <- define_output(flow = out_var(output_file = "rch",
-#'                                            variable_name = "FLOW_OUT",
+#'                                            variable = "FLOW_OUT",
 #'                                            spatial_unit = 1:5),
 #'                            no3  = out_var(output_file = "rch",
-#'                                            variable_name = "NO3_OUT",
+#'                                            variable = "NO3_OUT",
 #'                                            spatial_unit = 5),
 #'                            ptot = out_var(output_file = "rch",
-#'                                            variable_name = "PTOT",
+#'                                            variable = "PTOT",
 #'                                            spatial_unit = 5),
 #'                            et_a = out_var(output_file = "sub",
-#'                                            variable_name = "ET",
+#'                                            variable = "ET",
 #'                                            spatial_unit = 5))
 #'
 #'
@@ -51,7 +51,7 @@
 #'
 #' @param output_file The SWAT output output_file where the output variable is located (so
 #'   far only .sub and .rch are supported!)
-#' @param variable_name The name of the variable as given in the header of the
+#' @param variable The name of the variable as given in the header of the
 #'   respective output output_file (without unsits!)
 #' @param spatial_unit The 'RCH' or 'SUB unit for which the output should be
 #'   written.
@@ -71,16 +71,16 @@
 #' # Writing the discharge for the RCH unsits 1 to 5
 #' # and the nitrogen load and ET for the RCH or SUB unit 5:
 #' out_tbl <- define_output(flow = out_var(output_file   = "rch",
-#'                                         variable_name = "FLOW_OUT",
+#'                                         variable = "FLOW_OUT",
 #'                                         spatial_unit  = 1:5),
 #'                          no3  = out_var(output_file   = "rch",
-#'                                         variable_name = "NO3_OUT",
+#'                                         variable = "NO3_OUT",
 #'                                         spatial_unit  = 5),
 #'                          ptot = out_var(output_file   = "rch",
-#'                                         variable_name = "PTOT",
+#'                                         variable = "PTOT",
 #'                                         spatial_unit  = 5),
 #'                          et_a = out_var(output_file   = "sub",
-#'                                         variable_name = "ET",
+#'                                         variable = "ET",
 #'                                         spatial_unit  = 5))
 #'
 #'
@@ -92,7 +92,7 @@
 #'                dplyr::summarise(FLOW_SUM = sum(FLOW_OUT))"
 #'
 #' out_tbl <- define_output(flow = out_var(output_file   = "rch",
-#'                                         variable_name = "FLOW_OUT",
+#'                                         variable = "FLOW_OUT",
 #'                                         spatial_unit  = c(16,28,31)),
 #'                          flow_sum = out_var(output_file = "rch",
 #'                                             expression  = sum_expr,
@@ -102,8 +102,7 @@ define_output <- function(file, variable = NULL, unit = NULL,
                           expression = NULL){
   if(!is.null(expression) &
      (!is.null(unit) | !is.null(variable))){
-    stop("If 'expression' is given, 'spatial_unit'"%&&%
-         "and 'variable_name' must be NULL.")
+    stop("If 'expression' is given, 'unit' and 'variable' must be NULL.")
   }
 
   if(is.null(expression) &
@@ -120,39 +119,32 @@ define_output <- function(file, variable = NULL, unit = NULL,
     stop("Only one variable is allowed in 'define_output()'.")
   }
 
-  output_file <- output_file %>%
-    gsub("\\.", "", .) %>%
-    gsub("output", "", .) %>%
+  file <- file %>%
+    substr(., (nchar(.) - 2), nchar(.)) %>%
     paste0("output.",.)
 
-
-  if(nchar(output_file) == 3) {
-    output_file <- "output"%.%output_file
+  if(!(file %in% c("output.rch", "output.sub", "output.hru", "output.sed"))){
+    stop("Wrong input for 'file'."%&&%
+         "Supported output files are: '.rch', '.sub', '.hru', and '.sed'.")
   }
 
-  if(!(output_file %in% c("output.rch", "output.sub"))){
-    stop("Wrong input for 'output_file' in out_var()."%&&%
-         "So far only '.rch' and '.sub' supported")
-  }
-
-  variable_name <- variable_name %>%
+  variable <- variable %>%
     gsub("Mg/l|mg/L|mg/kg|kg/ha|kg/h|t/ha|mic/L|\\(mm\\)|kg|cms|tons|mg|mm|km2| ", "", .)
 
   if(is.null(expression)){
-    expression <- paste0("dplyr::filter(.[[2]] == ",  spatial_unit, ") %>% ",
+    expression <- paste0("dplyr::filter(.[[2]] == ",  unit, ") %>% ",
                          "dplyr::filter(MON <= 366) %>% ",
-                         "dplyr::select(", variable_name, ") %>% ",
+                         "dplyr::select(", variable, ") %>% ",
                          "magrittr::set_colnames('run'%_%sprintf('%06d',run_i))")
   }
 
-  if(length(spatial_unit) > 1){
-    label_ind <- paste0("_",spatial_unit)
+  if(length(unit) > 1){
+    label_ind <- paste0("_",unit)
   } else {
     label_ind <- ""
   }
 
-  tibble(file = output_file,
+  return(tibble(file = file,
          expr = expression,
-         label_ind = label_ind,
-         date = add_date)
+         label_ind = label_ind))
 }
