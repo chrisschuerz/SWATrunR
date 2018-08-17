@@ -26,11 +26,38 @@
 run_swat2012 <- function(project_path, output, parameter = NULL,
                          start_date = NULL, end_date = NULL,
                          output_int = NULL, years_skip = NULL,
-                         run_index = NULL, n_parallel = NULL,
+                         run_index = NULL, n_thread = NULL,
                          save = FALSE, save_incr = FALSE, save_file = NULL,
-                         return_out = TRUE, keep_folder = FALSE) {
+                         return_out = TRUE, refresh = FALSE,
+                         keep_folder = FALSE, quiet = FALSE) {
   #Build folder structure where the model will be executed
-  ##Check if .model_execution already exists. If yes write message as "warning"
+  ## Identify the required number of parallel threads to build.
+  n_thread <- min(max(nrow(parameter),1),
+                  max(n_thread,1),
+                  parallel::detectCores())
+
+  if(dir.exists(project_path%//%".model_run") & !refresh) {
+    # Check how many parallel threads are available
+    n_thread_avail <- list.dirs(project_path%//%".model_run") %>%
+      substr(.,(nchar(.) - 7), nchar(.)) %>%
+      grepl("thread_",.) %>%
+      sum()
+
+    if(n_thread_avail >= n_thread) {
+      if(!quiet) {
+        message("Model will be executed in existing '.model_run' folder structure"%&%
+                "\nMake shure '.model_run' is up to date with the project folder!")
+      }
+    } else {
+      unlink(project_path%//%".model_run", recursive = TRUE)
+      if(!quiet) {
+        message("The number of existing threads is to small."%&%
+                "\nParallel folder structure will be created from scratch!")
+      }
+      build_model_run(project_path, n_thread)
+    }
+  }
+  ##Check if .model_run already exists. If yes write message as "warning"
   ##If not build folder structure. n_threads based on n_par, n_cores, n_parallel
 
   #...
