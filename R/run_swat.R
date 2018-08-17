@@ -1,4 +1,4 @@
-#' Run a SWAT project
+#' Run a SWAT project and return ouputs in R
 #'
 #' @param factor_set Factor set resulting from \code{sample_factor()}
 #' @param project_path Path of the SWAT project
@@ -23,8 +23,17 @@
 #' @return Returns a nested tibble including parameter sets and simulation
 #'   results for the defined output variables.
 
-run_swat <- function(project_path, parameter = NULL, output,
-                     run_index = NULL, n_parallel = NULL,
-                     save = TRUE, save_incr = FALSE, save_file = NULL) {
+run_swat2012 <- function(project_path, output, parameter = NULL,
+                         start_date = NULL, end_date = NULL,
+                         output_int = NULL, years_skip = NULL,
+                         run_index = NULL, n_parallel = NULL,
+                         save = FALSE, save_incr = FALSE, save_file = NULL,
+                         return_out = TRUE, keep_folder = FALSE) {
+  #Build folder structure where the model will be executed
+  ##Check if .model_execution already exists. If yes write message as "warning"
+  ##If not build folder structure. n_threads based on n_par, n_cores, n_parallel
 
+  #...
+
+  #
 }
