@@ -7,8 +7,8 @@
 #'   must be in accordance to the number of cores of the PC
 #' @param file_cio The file_cio from the 'project_folder' modified according to
 #'   'start_date', 'end_date', 'output_interval', and 'years_skip'
-#' @param abs_swat_par Replace internal Absolute_SWAT_Values.txt' file with
-#'   custom one found in this path.
+#' @param abs_swat_val Replace internal Absolute_SWAT_Values.txt' file with
+#'   custom one found in this path if provided
 #'
 #' @importFrom parallel detectCores
 #' @importFrom dplyr %>%
@@ -17,7 +17,7 @@
 #'
 
 build_model_run <- function(project_path, run_path, n_thread,
-                            file_cio, abs_swat_par){
+                            file_cio, abs_swat_val){
   # If run_path is not provided '.model_run' is built directly in 'project_path'
   if(is.null(run_path)) run_path <- project_path
 
@@ -74,12 +74,12 @@ build_model_run <- function(project_path, run_path, n_thread,
       file.copy(system.file("extdata", "SUFI2_execute.exe",
                             package = "SWATplusR"),
                 run_path%//%".model_run"%//%"thread"%_%i)
-      if(is.null(abs_swat_par)) {
+      if(is.null(abs_swat_val)) {
         file.copy(system.file("extdata", "Absolute_SWAT_Values.txt",
                               package = "SWATplusR"),
                   run_path%//%".model_run"%//%"thread"%_%i)
       } else {
-        file.copy(abs_swat_par, run_path%//%".model_run"%//%"thread"%_%i)
+        file.copy(abs_swat_val, run_path%//%".model_run"%//%"thread"%_%i)
       }
       swat_edit_config <- "2012 : SWAT Version (2009 | 2012)"
       writeLines(swat_edit_config, con = run_path%//%".model_run"%//%
