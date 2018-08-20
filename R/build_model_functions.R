@@ -136,7 +136,22 @@ get_os <- function() {
 #'   daily, 2 for yearly).
 #' @param years_skip Integer value that provides the numbe of years to be
 #'   skipped during writing the SWAT model outputs
-#'
+#' @param rch_out_var Numeric vector of maximum length = 20 for customized
+#'   output of reach variables.For output codes see
+#'   \href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
+#'   Documentation} p.77ff.
+#' @param sub_out_var Numeric vector of maximum length = 15 for customized
+#'   output of subbasin variables.For output codes see
+#'   \href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
+#'   Documentation} p.78ff.
+#' @param hru_out_var Numeric vector of maximum length = 20 for customized
+#'   output of HRU variables.For output codes see
+#'   \href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
+#'   Documentation} p.79ff.
+#' @param hru_out_nr Numeric vector of maximum length = 20 for providing the HRU
+#'   numbers for which the HRU variables are written. Optional if hru_out_nr =
+#'   'all', HRU variables are written for all HRU (caution, very large output
+#'   files possible!)
 #' @importFrom lubridate int_end int_start interval yday year years ymd
 #' @importFrom dplyr case_when %>%
 #' @importFrom pasta %//% %&%
@@ -144,7 +159,9 @@ get_os <- function() {
 #'
 
 modify_file_cio <- function(project_path, start_date, end_date,
-                            output_interval, years_skip) {
+                            output_interval, years_skip,
+                            rch_out_var, sub_out_var,
+                            hru_out_var, hru_out_nr) {
   ## Read unmodified file.cio
   file_cio <- readLines(project_path%//%"file.cio")
 

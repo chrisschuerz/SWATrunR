@@ -1,40 +1,85 @@
 #' Run a SWAT project and return ouputs in R
 #'
-#' @param factor_set Factor set resulting from \code{sample_factor()}
-#' @param project_path Path of the SWAT project
-#' @param n_thread Number of threads to be used for the parallel model run.
-#'   n_thread must be smaller or equal the number of thread folders of the
-#'   parallel folder strucuture and the number of cores of the computer.
-#' @param run_index Provide a numeric vector (e.g.\code{run_index = c(1:100,
-#'   110, 115)}) if only a subset of the \code{factor_set} should be used in
-#'   current run. This parameter is for example helpful if the model runs
-#'   are split to multiple PCs
+#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
 #' @param output Define the output variables to extract from the SWAT model
-#'   runs. See functions \code{define_output()} and \code{output_variable()}
-#'   for instructions to define the output.
-#' @param save \code{save = TRUE} aditionally saves the resulting
-#'   \code{swat_object} to \code{project_path/"swat_object".rds}.
-#' @param save_incr Saves the model runs incrementally. In case of an
-#'   interruption of the model runs the already performed runs can be
-#'   recovered with \code{recover_run()} if \code{save_incr = TRUE}.
-#' @param refresh If set \code{TRUE} the thread folders will be refreshed
-#'   before executing SWAT runs. This should always be done except for
-#'   testing!
+#'   runs. See function \code{\link{define_output}} help file to see how to
+#'   define an output.
+#' @param parameter (optional) SWAT model parameters either provided as named
+#'   vector or data.frame. If \code(parameter) is provided respective parameters
+#'   are modified accordingly.
+#' @param start_date (ptional) Start date of the SWAT simulation. Provided as
+#'   character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
+#'   project are located
+#' @param end_date (optional) End date of the SWAT simulation. Provided as
+#'   character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
+#'   project are located
+#' @param output_interval (optional) Time interval in which the SWAT model
+#'   outputs are written. Provided either as character string ("d" for daily,
+#'   "m" for monthly, or "y" for yearly) or as SWAT input values (0 for monthly,
+#'   1 for daily, 2 for yearly).
+#' @param years_skip (optional) Integer value that provides the numbe of years
+#'   to be skipped during writing the SWAT model outputs
+#' @param rch_out_var (optional) Numeric vector of maximum length = 20 for
+#'   customized output of reach variables.For output codes see
+#'   \href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
+#'   Documentation} p.77ff.
+#' @param sub_out_var (optional) Numeric vector of maximum length = 15 for
+#'   customized output of subbasin variables.For output codes see
+#'   \href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
+#'   Documentation} p.78ff.
+#' @param hru_out_var (optional) Numeric vector of maximum length = 20 for
+#'   customized output of HRU variables.For output codes see
+#'   \href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
+#'   Documentation} p.79ff.
+#' @param hru_out_nr (optional) Numeric vector of maximum length = 20 for
+#'   providing the HRU numbers for which the HRU variables are written. Optional
+#'   if hru_out_nr = 'all', HRU variables are written for all HRU (caution, very
+#'   large output files possible!)
+#' @param run_index (optional) Numeric vector (e.g.\code{run_index = c(1:100,
+#'   110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL
+#'   all provided parameter sets are used.
+#' @param run_path (optional) Character string that provides the path where the
+#'   '.model_run' folder is written and the SWAT models are executed. If NULL
+#'   '.model_run' is built in the project folder.
+#' @param n_thread (optional) Number of threads to be used for the parallel
+#'   model run. If not provided models are run on single core
+#' @param save_file (optional) Character string that provides file path to which
+#'   model results are saved after all model runs are completed. (Load
+#'   \code{save_file} with \code{file <- readRDS(save_file)}).
+#' @param save_incr (optional) Logical. If \code{save_incr = TRUE} model runs
+#'   are saved incrementally and can be restored with \code{\link{recover_run}}.
+#' @param save_parameter (optional) Logical. If \code{save_parameter = TRUE}
+#'   used parameter sets are saved and/or returned together with the model
+#'   outputs.
+#' @param return_out (optional) Logical. Whether outputs should be returned or
+#'   not. Set \code{return_out = FALSE} and provide \code{save_file} if outputs
+#'   should only be saved on hard drive.
+#' @param refresh (optional) Logical. \code{refresh = TRUE} always forces that
+#'   '.model_run' is newly written when SWAT run ins started.
+#' @param keep_folder (optional) Logical. If \code{keep_folder = TRUE}
+#'   '.model_run' is kept and not deleted after finishing model runs. In this
+#'   case '.model_run' is reused in a new model run if \code{refresh = FALSE}.
+#' @param quiet (optional) Logical. If \code{quiet = TRUE} no messages are
+#'   written.
 #' @return Returns a nested tibble including parameter sets and simulation
 #'   results for the defined output variables.
 
 run_swat2012 <- function(project_path, output, parameter = NULL,
                          start_date = NULL, end_date = NULL,
                          output_interval = NULL, years_skip = NULL,
+                         rch_out_var = NULL, sub_out_var = NULL,
+                         hru_out_var = NULL, hru_out_nr = NULL,
                          run_index = NULL, run_path = NULL, n_thread = NULL,
-                         save = FALSE, save_file = NULL, save_incr = FALSE,
+                         save_file = NULL, save_incr = FALSE, save_parameter = TRUE,
                          return_out = TRUE, refresh = FALSE,
                          keep_folder = FALSE, quiet = FALSE) {
 
   ## Check all inputs, modify file cio etc, BEFORE very long task of copying!!!
   ## Read and modify the projects' file.cio
   file_cio <- modify_file_cio(project_path, start_date, end_date,
-                              output_interval, years_skip)
+                              output_interval, years_skip,
+                              rch_out_var, sub_out_var,
+                              hru_out_var, hru_out_nr)
 
 #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
