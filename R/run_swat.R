@@ -26,13 +26,15 @@
 run_swat2012 <- function(project_path, output, parameter = NULL,
                          start_date = NULL, end_date = NULL,
                          output_interval = NULL, years_skip = NULL,
-                         run_index = NULL, n_thread = NULL,
-                         save = FALSE, save_incr = FALSE, save_file = NULL,
+                         run_index = NULL, run_path = NULL, n_thread = NULL,
+                         save = FALSE, save_file = NULL, save_incr = FALSE,
                          return_out = TRUE, refresh = FALSE,
                          keep_folder = FALSE, quiet = FALSE) {
 
   ## Check all inputs, modify file cio etc, BEFORE very long task of copying!!!
-
+  ## Read and modify the projects' file.cio
+  file_cio <- modify_file_cio(project_path, start_date, end_date,
+                              output_interval, years_skip)
 
 #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
@@ -61,17 +63,17 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
       unlink(project_path%//%".model_run", recursive = TRUE)
       if(!quiet) {
         message("The number of existing threads is lower than the required number."%&%
-                "\nParallel folder structure will be created from scratch!"%&&%
+                "\nParallel folder structure will be created from scratch!"%&%
                 "\nBuilding '.model_run' with"%&&%n_thread%&&%"parallel threads:")
       }
-      build_model_run(project_path, n_thread)
+      build_model_run(project_path, run_path, n_thread, file_cio)
     ## Build the parallel folder structure if it does not exist or if a
     ## forced refresh was set with refresh = TRUE
     } else {
       if(!quiet) {
         cat("Building '.model_run' with"%&&%n_thread%&&%"parallel threads:")
       }
-      build_model_run(project_path, n_thread)
+      build_model_run(project_path, run_path, n_thread, file_cio)
     }
   }
 

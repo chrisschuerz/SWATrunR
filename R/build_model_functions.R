@@ -1,39 +1,43 @@
 #' Generate folder structure for parallel SWAT execution
 #'
-#' @param project_path Project path where the parallel folder structure should
-#' be created.
-#' @param txtIO_path TxtInOut path where the text in out files of the SWAT
-#' project are located
-#' @param n_thread Number of parallel threads that will be created. This
-#' number must be in accordance to the number of cores of the PC
-#' @param swat_version SWAT version, either 2012 or 2009
+#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path where the '.model_run' folder is built. If NULL the
+#'   executable model is built in the 'project_path'
+#' @param n_thread Number of parallel threads that will be created. This number
+#'   must be in accordance to the number of cores of the PC
+#' @param file_cio The file_cio from the 'project_folder' modified according to
+#'   'start_date', 'end_date', 'output_interval', and 'years_skip'
 #'
 #' @importFrom parallel detectCores
-#' @import dplyr
-#' @importFrom pasta %//% %_%
+#' @importFrom dplyr %>%
+#' @importFrom pasta %//% %_% %&&%
 #' @keywords internal
+#'
 
-build_model_run <- function(project_path, n_thread){
+build_model_run <- function(project_path, run_path, n_thread, file_cio){
+  # If run_path is not provided '.model_run' is built directly in 'project_path'
+  if(is.null(run_path)) run_path <- project_path
+
   # Identify operating system and find the SWAT executable in the project folder
   os <- get_os()
   if(os == "win") {
-    exe_file <- list.files(project_path) %>%
+    swat_exe <- list.files(project_path) %>%
       .[grepl(".exe$",.)]
   } else if(os == "unix") {
-    exe_file <- system("find"%&&%project_path%&&%"-executable -type f",
+    swat_exe <- system("find"%&&%project_path%&&%"-executable -type f",
                        intern = TRUE) %>%
       basename(.)
   }
 
   # Make shure that there is exactly one executable in the SWAT project folder
-  if(length(exe_file) == 0) stop("No SWAT executable found in the project folder!")
-  if(length(exe_file) > 1) stop("Project folter contains more than one executable!")
+  if(length(swat_exe) == 0) stop("No SWAT executable found in the project folder!")
+  if(length(swat_exe) > 1) stop("Project folter contains more than one executable!")
 
   # Batch file template
   batch_temp <- list(win = c("@echo off",
-                             substr(project_path, 1, 2),
-                             paste("cd", project_path, sep = " "),
-                             exe_file,
+                             substr(run_path, 1, 2),
+                             "cd"%&&%run_path,
+                             swat_exe,
                              "if %errorlevel% == 0 exit 0",
                              "echo."),
                      unix = NULL) #Required batch for running SWAT in Linux coming soon
@@ -42,47 +46,58 @@ build_model_run <- function(project_path, n_thread){
   if(os == "win") {
     print("Building folder '.model_run' for the SWAT model execution:")
     swat_files <- dir(project_path, full.names = TRUE)
-    dir.create(project_path%//%".model_run")
+    dir.create(run_path%//%".model_run")
     pb <- progress_estimated(n_thread)
     for (i in 1:n_thread){
       pb$begin()$print()
+
       ## Copy all files from the project folder to the respective thread
-      dir.create(project_path%//%".model_run"%//%"thread"%_%i)
-      file.copy(swat_files, project_path%//%".model_run"%//%"thread"%_%i)
+      dir.create(run_path%//%".model_run"%//%"thread"%_%i)
+      file.copy(swat_files, run_path%//%".model_run"%//%"thread"%_%i)
+
       ## Create a Backup folder and copy files to there as well
       ## Required for rewriting parameters with Swat_edit.exe
-      dir.create(project_path%//%".model_run"%//%"thread"%_%i%//%"Backup")
+      dir.create(run_path%//%".model_run"%//%"thread"%_%i%//%"Backup")
       file.copy(swat_files,
-                project_path%//%".model_run"%//%"thread"%_%i%//%"Backup")
+                run_path%//%".model_run"%//%"thread"%_%i%//%"Backup")
+
       ## Write all files required for rewriting parameters using the
       ## Swat_edit.exe from SWAT CUP
       file.copy(system.file("extdata", "Swat_Edit.exe",
                             package = "SWATplusR"),
-                project_path%//%".model_run"%//%"thread"%_%i)
+                run_path%//%".model_run"%//%"thread"%_%i)
       file.copy(system.file("extdata", "SUFI2_execute.exe",
                             package = "SWATplusR"),
-                project_path%//%".model_run"%//%"thread"%_%i)
+                run_path%//%".model_run"%//%"thread"%_%i)
       file.copy(system.file("extdata", "Absolute_SWAT_Values.txt",
                             package = "SWATplusR"),
-                project_path%//%".model_run"%//%"thread"%_%i)
+                run_path%//%".model_run"%//%"thread"%_%i)
       swat_edit_config <- "2012 : SWAT Version (2009 | 2012)"
-      writeLines(swat_edit_config, con = project_path%//%".model_run"%//%
+      writeLines(swat_edit_config, con = run_path%//%".model_run"%//%
                    "thread"%_%i%//%"Swat_edit.exe.config.txt")
+
       ## Create empty dummy folders. The Swat_edit.exe requires these to execute
-      dir.create(project_path%//%".model_run"%//%"thread"%_%i%//%"Echo")
-      dir.create(project_path%//%".model_run"%//%"thread"%_%i%//%"SUFI2.IN")
-      dir.create(project_path%//%".model_run"%//%"thread"%_%i%//%"SUFI2.OUT")
+      dir.create(run_path%//%".model_run"%//%"thread"%_%i%//%"Echo")
+      dir.create(run_path%//%".model_run"%//%"thread"%_%i%//%"SUFI2.IN")
+      dir.create(run_path%//%".model_run"%//%"thread"%_%i%//%"SUFI2.OUT")
+
       ## Write the batch file that will be executed to call the SWAT exe when
       ## executing SWAT in a later step
       swat_bat <- batch_temp
       swat_bat[3] <- swat_bat[3]%//%"thread"%_%i
-      writeLines(swat_bat, con = project_path%//%".model_run"%//%
+      writeLines(swat_bat, con = run_path%//%".model_run"%//%
                    "thread"%_%i%//%"swat_run.bat")
+
       ## Write the batch file that is called for overwriting parameters
       swatedit_bat <- swat_bat
       swatedit_bat[4] <- "start /min /w SWAT_Edit.exe"
-      writeLines(swatedit_bat, con = project_path%//%".model_run"%//%
+      writeLines(swatedit_bat, con = run_path%//%".model_run"%//%
                    "thread"%_%i%//%"swat_edit.bat")
+
+      ## Write modified file_cio into thread folder and respective Backup folder
+      writeLines(file_cio, run_path%//%".model_run"%//%"thread"%_%i)
+      writeLines(file_cio, run_path%//%".model_run"%//%"thread"%_%i%//%"Backup")
+
       pb$tick()
     }
     pb$stop()
@@ -91,6 +106,8 @@ build_model_run <- function(project_path, n_thread){
 
 #' Identify the OS (provided by Gabor Csardi)
 #' @keywords internal
+#'
+
 get_os <- function() {
   if (.Platform$OS.type == "windows") {
     "win"
@@ -107,8 +124,7 @@ get_os <- function() {
 
 #' Reads and modifies the SWAT projects' filo.cio according to provided inputs
 #'
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut) be
-#'   created.
+#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
 #' @param start_date Start date of the SWAT simulation. Provided as character
 #'   string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are
 #'   located
@@ -125,6 +141,8 @@ get_os <- function() {
 #' @importFrom dplyr case_when %>%
 #' @importFrom pasta %//% %&%
 #' @keywords internal
+#'
+
 modify_file_cio <- function(project_path, start_date, end_date,
                             output_interval, years_skip) {
   ## Read unmodified file.cio
