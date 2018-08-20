@@ -105,7 +105,26 @@ get_os <- function() {
   }
 }
 
-
+#' Reads and modifies the SWAT projects' filo.cio according to provided inputs
+#'
+#' @param project_path Path to the SWAT project folder (i.e. TxtInOut) be
+#'   created.
+#' @param start_date Start date of the SWAT simulation. Provided as character
+#'   string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are
+#'   located
+#' @param end_date End date of the SWAT simulation. Provided as character string
+#'   in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are located
+#' @param output_interval Time interval in which the SWAT model outputs are
+#'   written. Provided either as character string ("d" for daily, "m" for
+#'   monthly, or "y" for yearly) or as SWAT input values (0 for monthly, 1 for
+#'   daily, 2 for yearly).
+#' @param years_skip Integer value that provides the numbe of years to be
+#'   skipped during writing the SWAT model outputs
+#'
+#' @importFrom lubridate int_end int_start interval yday year years ymd
+#' @importFrom dplyr case_when %>%
+#' @importFrom pasta %//% %&%
+#' @keywords internal
 modify_file_cio <- function(project_path, start_date, end_date,
                             output_interval, years_skip) {
   ## Read unmodified file.cio
@@ -128,7 +147,7 @@ modify_file_cio <- function(project_path, start_date, end_date,
   }
   ## Overwrite output interval if value was provided
   if(!is.null(output_interval)){
-    output_interval <- substr(output_interval, 1,1)
+    output_interval <- substr(output_interval, 1,1) %>% tolower(.)
     output_interval <- case_when(output_interval %in% c("m", "0") ~ 0,
                                  output_interval %in% c("d", "1") ~ 1,
                                  output_interval %in% c("y", "2") ~ 2)
