@@ -156,7 +156,7 @@ modify_file_cio <- function(project_path, start_date, end_date,
 
   ## Overwrite number of years to skip if value was provided
   if(!is.null(years_skip)) {
-    if(!numeric(years_skip)) stop("'years_skip must be numeric!")
+    if(!is.numeric(years_skip)) stop("'years_skip must be numeric!")
     file_cio[60] <- sprintf("%16d", years_skip)%&%"    | NYSKIP: number of years to skip output printing/summarization"
   }
 
