@@ -86,7 +86,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
   ## Check values provided with run_index and prepare run_index for simulation
   if(!is.null(run_index)){
-    check_run_index(parameter, run_index)
+    run_index <- check_run_index(run_index, parameter)
   } else {
     run_index <- 1:max(nrow(parameter), 1)
   }
@@ -95,6 +95,17 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   if(!is.null(save_file)) {
     if(file.exists(save_file)) stop("'save_file' allready exists in provided path!")
   }
+
+  ## General function input checks
+  stopifnot(is.character(project_path))
+  stopifnot(is.character(run_path)|is.null(run_path))
+  stopifnot(is.numeric(n_thread)|is.null(rn_thread))
+  stopifnot(is.logical(save_incr))
+  stopifnot(is.logical(save_parameter))
+  stopifnot(is.logical(return_out))
+  stopifnot(is.logical(refreshr))
+  stopifnot(is.logical(keep_folder))
+  stopifnot(is.logical(quiet))
 
   ## Read and modify the projects' file.cio, internal variable checks done.
   file_cio <- modify_file_cio(project_path, start_date, end_date,
