@@ -25,42 +25,57 @@
 
 run_swat2012 <- function(project_path, output, parameter = NULL,
                          start_date = NULL, end_date = NULL,
-                         output_int = NULL, years_skip = NULL,
+                         output_interval = NULL, years_skip = NULL,
                          run_index = NULL, n_thread = NULL,
                          save = FALSE, save_incr = FALSE, save_file = NULL,
                          return_out = TRUE, refresh = FALSE,
                          keep_folder = FALSE, quiet = FALSE) {
-  #Build folder structure where the model will be executed
+
+  ## Check all inputs, modify file cio etc, BEFORE very long task of copying!!!
+
+
+#-------------------------------------------------------------------------------
+  # Build folder structure where the model will be executed
   ## Identify the required number of parallel threads to build.
   n_thread <- min(max(nrow(parameter),1),
                   max(n_thread,1),
                   parallel::detectCores())
 
+  ## Case .model_run exists already and no forced refresh considered
   if(dir.exists(project_path%//%".model_run") & !refresh) {
-    # Check how many parallel threads are available
+    ## Check how many parallel threads are available
     n_thread_avail <- list.dirs(project_path%//%".model_run") %>%
       substr(.,(nchar(.) - 7), nchar(.)) %>%
       grepl("thread_",.) %>%
       sum()
-
+    ## The existing folder strucuture is used when more parallel folders are
+    ## available than parallel threads are needed
     if(n_thread_avail >= n_thread) {
       if(!quiet) {
         message("Model will be executed in existing '.model_run' folder structure"%&%
                 "\nMake shure '.model_run' is up to date with the project folder!")
       }
+    ## If the number of available parallel folders is not sufficient
+    ## a new setup of the folder structures is forced
     } else {
       unlink(project_path%//%".model_run", recursive = TRUE)
       if(!quiet) {
-        message("The number of existing threads is to small."%&%
-                "\nParallel folder structure will be created from scratch!")
+        message("The number of existing threads is lower than the required number."%&%
+                "\nParallel folder structure will be created from scratch!"%&&%
+                "\nBuilding '.model_run' with"%&&%n_thread%&&%"parallel threads:")
+      }
+      build_model_run(project_path, n_thread)
+    ## Build the parallel folder structure if it does not exist or if a
+    ## forced refresh was set with refresh = TRUE
+    } else {
+      if(!quiet) {
+        cat("Building '.model_run' with"%&&%n_thread%&&%"parallel threads:")
       }
       build_model_run(project_path, n_thread)
     }
   }
-  ##Check if .model_run already exists. If yes write message as "warning"
-  ##If not build folder structure. n_threads based on n_par, n_cores, n_parallel
 
-  #...
+#-------------------------------------------------------------------------------
+#
 
-  #
 }

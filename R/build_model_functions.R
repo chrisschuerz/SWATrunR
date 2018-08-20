@@ -13,8 +13,6 @@
 #' @importFrom pasta %//% %_%
 #' @keywords internal
 
-
-
 build_model_run <- function(project_path, n_thread){
   # Identify operating system and find the SWAT executable in the project folder
   os <- get_os()
@@ -105,4 +103,43 @@ get_os <- function() {
   } else {
     stop("Unknown OS")
   }
+}
+
+
+modify_file_cio <- function(project_path, start_date, end_date,
+                            output_interval, years_skip) {
+  ## Read unmodified file.cio
+  file_cio <- readLines(project_path%//%"file.cio")
+
+  if(xor(is.null(start_date), is.null(end_date))) {
+    stop("'start_date' and 'end_date' must be provided together!")
+  } else if (!is.null(start_date)) {
+    ## Determine required date indices for writing to file.cio
+    time_interval <- interval(ymd(start_date),  ymd(end_date))
+    n_year        <- ceiling(time_interval / years(1))
+    start_year    <- year(int_start(time_interval))
+    start_jdn     <- yday(int_start(time_interval))
+    end_jdn       <- yday(int_end(time_interval))
+
+    file_cio[8]  <- sprintf("%16d", n_year)%&%    "    | NBYR : Number of years simulated"
+    file_cio[9]  <- sprintf("%16d", start_year)%&%"    | IYR : Beginning year of simulation"
+    file_cio[10] <- sprintf("%16d", start_jdn)%&% "    | IDAF : Beginning julian day of simulation"
+    file_cio[11] <- sprintf("%16d", end_jdn)%&%   "    | IDAL : Ending julian day of simulation"
+  }
+  ## Overwrite output interval if value was provided
+  if(!is.null(output_interval)){
+    output_interval <- substr(output_interval, 1,1)
+    output_interval <- case_when(output_interval %in% c("m", "0") ~ 0,
+                                 output_interval %in% c("d", "1") ~ 1,
+                                 output_interval %in% c("y", "2") ~ 2)
+    file_cio[59] <- sprintf("%16d", output_interval)%&%"    | IPRINT: print code (month, day, year)"
+  }
+
+  ## Overwrite number of years to skip if value was provided
+  if(!is.null(years_skip)) {
+    if(!numeric(years_skip)) stop("'years_skip must be numeric!")
+    file_cio[60] <- sprintf("%16d", years_skip)%&%"    | NYSKIP: number of years to skip output printing/summarization"
+  }
+
+  return(file_cio)
 }
