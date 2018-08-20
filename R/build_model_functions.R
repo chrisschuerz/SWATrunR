@@ -7,6 +7,8 @@
 #'   must be in accordance to the number of cores of the PC
 #' @param file_cio The file_cio from the 'project_folder' modified according to
 #'   'start_date', 'end_date', 'output_interval', and 'years_skip'
+#' @param abs_swat_par Replace internal Absolute_SWAT_Values.txt' file with
+#'   custom one found in this path.
 #'
 #' @importFrom parallel detectCores
 #' @importFrom dplyr %>%
@@ -14,7 +16,8 @@
 #' @keywords internal
 #'
 
-build_model_run <- function(project_path, run_path, n_thread, file_cio){
+build_model_run <- function(project_path, run_path, n_thread,
+                            file_cio, abs_swat_par){
   # If run_path is not provided '.model_run' is built directly in 'project_path'
   if(is.null(run_path)) run_path <- project_path
 
@@ -46,6 +49,8 @@ build_model_run <- function(project_path, run_path, n_thread, file_cio){
   if(os == "win") {
     print("Building folder '.model_run' for the SWAT model execution:")
     swat_files <- dir(project_path, full.names = TRUE)
+    ## To save storage do not copy allready existing output files
+    swat_files <- swat_files[!grepl("output.hru|output.pst|output.rch|output.rsv|output.sed|output.std|output.sub",swat_files)]
     dir.create(run_path%//%".model_run")
     pb <- progress_estimated(n_thread)
     for (i in 1:n_thread){
@@ -69,9 +74,13 @@ build_model_run <- function(project_path, run_path, n_thread, file_cio){
       file.copy(system.file("extdata", "SUFI2_execute.exe",
                             package = "SWATplusR"),
                 run_path%//%".model_run"%//%"thread"%_%i)
-      file.copy(system.file("extdata", "Absolute_SWAT_Values.txt",
-                            package = "SWATplusR"),
-                run_path%//%".model_run"%//%"thread"%_%i)
+      if(is.null(abs_swat_par)) {
+        file.copy(system.file("extdata", "Absolute_SWAT_Values.txt",
+                              package = "SWATplusR"),
+                  run_path%//%".model_run"%//%"thread"%_%i)
+      } else {
+        file.copy(abs_swat_par, run_path%//%".model_run"%//%"thread"%_%i)
+      }
       swat_edit_config <- "2012 : SWAT Version (2009 | 2012)"
       writeLines(swat_edit_config, con = run_path%//%".model_run"%//%
                    "thread"%_%i%//%"Swat_edit.exe.config.txt")
@@ -191,9 +200,36 @@ modify_file_cio <- function(project_path, start_date, end_date,
 
   ## Overwrite number of years to skip if value was provided
   if(!is.null(years_skip)) {
-    if(!is.numeric(years_skip)) stop("'years_skip must be numeric!")
+    if(!is.numeric(years_skip)) stop("'years_skip' must be numeric!")
     file_cio[60] <- sprintf("%16d", years_skip)%&%"    | NYSKIP: number of years to skip output printing/summarization"
   }
 
+  ## Overwrite custom reach variables if values are provided
+  if(!is.null(rch_out_var)){
+    if(!is.numeric(rch_out_var)) stop("'rch_out_var' must be numeric!")
+    rch_out_var <- c(rch_out_var, rep(0, 20 - length(rch_out_var)))
+    file_cio[65] <- paste0(sprintf("%4d", rch_out_var), collapse = "")
+  }
+
+  ## Overwrite custom subbasin variables if values are provided
+  if(!is.null(sub_out_var)){
+    if(!is.numeric(sub_out_var)) stop("'sub_out_var' must be numeric!")
+    sub_out_var <- c(sub_out_var, rep(0, 15 - length(sub_out_var)))
+    file_cio[67] <- paste0(sprintf("%4d", sub_out_var), collapse = "")
+  }
+
+  ## Overwrite custom HRU variables if values are provided
+  if(!is.null(hru_out_var)){
+    if(!is.numeric(hru_out_var)) stop("'hru_out_var' must be numeric!")
+    hru_out_var <- c(hru_out_var, rep(0, 20 - length(hru_out_var)))
+    file_cio[69] <- paste0(sprintf("%4d", hru_out_var), collapse = "")
+  }
+
+  ## Overwrite HRU numbers for which HRU outputs are written if values are provided
+  if(!is.null(hru_out_nr)){
+    if(!is.numeric(hru_out_nr)) stop("'hru_out_nr' must be numeric!")
+    hru_out_nr <- c(hru_out_nr, rep(0, 20 - length(hru_out_nr)))
+    file_cio[71] <- paste0(sprintf("%4d", hru_out_nr), collapse = "")
+  }
   return(file_cio)
 }

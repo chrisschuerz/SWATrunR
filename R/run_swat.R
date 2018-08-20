@@ -35,6 +35,10 @@
 #'   providing the HRU numbers for which the HRU variables are written. Optional
 #'   if hru_out_nr = 'all', HRU variables are written for all HRU (caution, very
 #'   large output files possible!)
+#' @param abs_swat_val (optional) \code{run_swat2012} uses an internal
+#'   'Absolute_SWAT_Values.txt' file required for overwriting parameters. With
+#'   this parameter the path to a custom 'Absolute_SWAT_Values' file can be
+#'   provided in case it is necessary.
 #' @param run_index (optional) Numeric vector (e.g.\code{run_index = c(1:100,
 #'   110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL
 #'   all provided parameter sets are used.
@@ -69,13 +73,24 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                          output_interval = NULL, years_skip = NULL,
                          rch_out_var = NULL, sub_out_var = NULL,
                          hru_out_var = NULL, hru_out_nr = NULL,
-                         run_index = NULL, run_path = NULL, n_thread = NULL,
-                         save_file = NULL, save_incr = FALSE, save_parameter = TRUE,
-                         return_out = TRUE, refresh = FALSE,
-                         keep_folder = FALSE, quiet = FALSE) {
+                         abs_swat_val = NULL, run_index = NULL, run_path = NULL,
+                         n_thread = NULL, save_file = NULL, save_incr = FALSE,
+                         save_parameter = TRUE, return_out = TRUE,
+                         refresh = FALSE, keep_folder = FALSE, quiet = FALSE) {
 
-  ## Check all inputs, modify file cio etc, BEFORE very long task of copying!!!
-  ## Read and modify the projects' file.cio
+#-------------------------------------------------------------------------------
+  # Check settings before starting to set up '.model_run'
+  ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
+  if(!is.null(parameter)) check_parameter(parameter, abs_swat_val)
+
+  ## Check if save file already exists
+  if(!is.null(save_file)) {
+    if(file.exists(save_file)) stop("'save_file' allready exists in provided path!")
+  }
+
+
+
+  ## Read and modify the projects' file.cio, internal variable checks done.
   file_cio <- modify_file_cio(project_path, start_date, end_date,
                               output_interval, years_skip,
                               rch_out_var, sub_out_var,
@@ -111,14 +126,14 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                 "\nParallel folder structure will be created from scratch!"%&%
                 "\nBuilding '.model_run' with"%&&%n_thread%&&%"parallel threads:")
       }
-      build_model_run(project_path, run_path, n_thread, file_cio)
+      build_model_run(project_path, run_path, n_thread, file_cio, abs_swat_val)
     ## Build the parallel folder structure if it does not exist or if a
     ## forced refresh was set with refresh = TRUE
     } else {
       if(!quiet) {
         cat("Building '.model_run' with"%&&%n_thread%&&%"parallel threads:")
       }
-      build_model_run(project_path, run_path, n_thread, file_cio)
+      build_model_run(project_path, run_path, n_thread, file_cio, abs_swat_val)
     }
   }
 
