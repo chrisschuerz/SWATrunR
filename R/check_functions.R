@@ -46,3 +46,24 @@ check_parameter <- function(parameter, abs_swat_val) {
          "the parameter 'abs_swat_val'.")
   }
 }
+
+#' Checks the provided run_index vector in accordance with provided parameters
+#'
+#' @param run_index Numeric vector to subset the provided parameter sets
+#' @param parameter Named parameter vector or parameter table
+#'
+#' @importFrom dplyr %>%
+#' @keywords internal
+#'
+
+check_run_index <- function(run_index, parameter) {
+  #Sort and check run_indices
+
+  if(!is.numeric(run_index)) stop("'run_index' must be a numeric vector!")
+  if(max(run_index) > max(nrow(parameter),1)) {
+    stop("'run_index' includes larger values than the available numer of parameter sets.")
+  }
+  if(any(run_index <= 0)) stop("No negative 'run_index' allowed.")
+
+  return(run_index %>% sort(.) %>% unique(.))
+}
