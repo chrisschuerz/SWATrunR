@@ -5,7 +5,7 @@
 #'   runs. See function \code{\link{define_output}} help file to see how to
 #'   define an output.
 #' @param parameter (optional) SWAT model parameters either provided as named
-#'   vector or data.frame. If \code(parameter) is provided respective parameters
+#'   vector or data.frame. If \code{parameter} is provided respective parameters
 #'   are modified accordingly.
 #' @param start_date (ptional) Start date of the SWAT simulation. Provided as
 #'   character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
@@ -65,8 +65,9 @@
 #'   case '.model_run' is reused in a new model run if \code{refresh = FALSE}.
 #' @param quiet (optional) Logical. If \code{quiet = TRUE} no messages are
 #'   written.
-#' @return Returns a nested tibble including parameter sets and simulation
-#'   results for the defined output variables.
+#' @return Returns the simulation results for the defined output variables as a
+#'   named list. If more than one parameter set was provided the list contains a
+#'   tibble where each column is a model run.
 
 run_swat2012 <- function(project_path, output, parameter = NULL,
                          start_date = NULL, end_date = NULL,
@@ -83,12 +84,17 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
   if(!is.null(parameter)) check_parameter(parameter, abs_swat_val)
 
+  ## Check values provided with run_index and prepare run_index for simulation
+  if(!is.null(run_index)){
+    check_run_index(parameter, run_index)
+  } else {
+    run_index <- 1:max(nrow(parameter), 1)
+  }
+
   ## Check if save file already exists
   if(!is.null(save_file)) {
     if(file.exists(save_file)) stop("'save_file' allready exists in provided path!")
   }
-
-
 
   ## Read and modify the projects' file.cio, internal variable checks done.
   file_cio <- modify_file_cio(project_path, start_date, end_date,
@@ -127,6 +133,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                 "\nBuilding '.model_run' with"%&&%n_thread%&&%"parallel threads:")
       }
       build_model_run(project_path, run_path, n_thread, file_cio, abs_swat_val)
+    }
     ## Build the parallel folder structure if it does not exist or if a
     ## forced refresh was set with refresh = TRUE
     } else {
@@ -134,7 +141,6 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
         cat("Building '.model_run' with"%&&%n_thread%&&%"parallel threads:")
       }
       build_model_run(project_path, run_path, n_thread, file_cio, abs_swat_val)
-    }
   }
 
 #-------------------------------------------------------------------------------
