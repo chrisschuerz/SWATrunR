@@ -53,10 +53,9 @@ build_model_run <- function(project_path, run_path, n_thread,
     ## To save storage do not copy allready existing output files
     swat_files <- swat_files[!grepl("output.hru|output.pst|output.rch|output.rsv|output.sed|output.std|output.sub",swat_files)]
     dir.create(run_path)
-    pb <- progress_estimated(n = n_thread, min_time = 0)
-    pb$begin()$print()
+    pb <- progress_estimated(n = n_thread)
+    pb
     for (i in 1:n_thread){
-
       ## Copy all files from the project folder to the respective thread
       dir.create(run_path%//%"thread"%_%i)
       file.copy(swat_files, run_path%//%"thread"%_%i)

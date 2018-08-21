@@ -4,44 +4,7 @@
 #' function \code{\link{run_swat}}) should be saved and returned after finishing
 #' the model runs. Note that, the variable \code{output} in
 #' \code{\link{run_swat}} must be defined via this function.
-#'
-#' @param ... Variables that will be provided as output after the execution
-#'   of \code{run_SWAT()}. The variables are defined with the helper
-#'   function \code{variable()}. See the examples for possible application.
-#'
-#' @return Returns a tibble of the output variables to provide to the
-#'   parameter \code{output} of the function \code{run_SWAT()}
-#' @importFrom purrr map_df
-#' @importFrom tibble add_column
-#' @importFrom dplyr mutate select
-#' @export
-#'
-#' @examples
-#' # Writing the discharge for the RCH unsits 1 to 5
-#' # and the nitrogen load and ET for the RCH or SUB unit 5:
-#'   out_tbl <- define_output(flow = out_var(output_file = "rch",
-#'                                            variable = "FLOW_OUT",
-#'                                            spatial_unit = 1:5),
-#'                            no3  = out_var(output_file = "rch",
-#'                                            variable = "NO3_OUT",
-#'                                            spatial_unit = 5),
-#'                            ptot = out_var(output_file = "rch",
-#'                                            variable = "PTOT",
-#'                                            spatial_unit = 5),
-#'                            et_a = out_var(output_file = "sub",
-#'                                            variable = "ET",
-#'                                            spatial_unit = 5))
-#'
-#'
-# define_output <- function(...){
-#   var_input <- c(as.list(environment()), list(...))
-#   var_nrow <- lapply(var_input, nrow) %>% unlist
-#
-#   map_df(var_input, rbind) %>%
-#     add_column(label = rep(names(var_input), var_nrow), .before = "file") %>%
-#     mutate(label = paste0(label, label_ind)) %>%
-#     select(-label_ind)
-# }
+
 
 #' Helper function for the \code{\link{run_swat}}) output variable definition with
 #' \code{\link{define_output}}
@@ -49,19 +12,15 @@
 #' Each variable provided with the function \code{\link{define_output}}should be
 #' defined using the helper function \code{\link{variable}}.
 #'
-#' @param output_file The SWAT output output_file where the output variable is located (so
+#' @param file The SWAT output output_file where the output variable is located (so
 #'   far only .sub and .rch are supported!)
 #' @param variable The name of the variable as given in the header of the
 #'   respective output output_file (without unsits!)
-#' @param spatial_unit The 'RCH' or 'SUB unit for which the output should be
+#' @param unit The 'RCH' or 'SUB unit for which the output should be
 #'   written.
 #' @param expr Caution! Advanced setting if the output variable should be
 #'   modified or aggregated before writing the output. To do so a piped
 #'   workflow must be provided (see examples).
-#' @param add_date Logical parameter whether a date should be provided for
-#'   the output or not. E.g. can be set FALSE if temporal aggregation was
-#'   applied to the output variable and the date would have no meaning for
-#'   the variable.
 #' @return The function should only be used as a helper function for
 #'   \code{define_output()}
 #' @importFrom tibble tibble
@@ -133,6 +92,8 @@ define_output <- function(file, variable = NULL, unit = NULL,
 
   if(is.null(expression)){
     expression <- paste0("dplyr::filter(.[[2]] == ",  unit, ") %>% ",
+                         "dplyr::filter(MON > (quantile(MON, probs = 0.75, type = 3) - 300)) %>% ",
+                         "dplyr::filter(MON < (quantile(MON, probs = 0.75, type = 3) + 200)) %>% ",
                          "dplyr::filter(MON <= 366) %>% ",
                          "dplyr::select(", variable, ") %>% ",
                          "magrittr::set_colnames('run'%_%sprintf('%06d',run_i))")

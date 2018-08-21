@@ -181,7 +181,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 #-------------------------------------------------------------------------------
   # Start parallel SWAT model execution with foreach
   sim <- foreach(i_run = 1:max(nrow(parameter), 1),
-                 .packages = c("dplyr", "pasta")) %dopar% {
+                 .packages = c("dplyr", "pasta")) %do% {
 
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
@@ -196,12 +196,23 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     }
 
     system(thread_path%//%"swat_run.bat")
-    return(c(worker_id, thread_path))
+    out_structure <- lapply(out_names, get_outstruct, thread_dir) %>%
+      set_names(out_names)
+
+    output_file <- lapply(out_names, read_output, out_structure, thread_dir) %>%
+      set_names(out_names)
+
+    sim_lst <- apply(output, 1, extract_var, output_file, ind) %>%
+      set_names(output$label)
+
   }
 
   ## Stop cluster after parallel run
   stopCluster(cl)
+
+  ## Delete the parallel threads if keep_folder is not TRUE
   if(!keep_folder)unlink(run_path, recursive = TRUE)
+
   return(sim)
 
 }
