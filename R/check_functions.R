@@ -5,14 +5,20 @@
 #'
 #' @importFrom dplyr %>%
 #' @importFrom pasta %&% %&&%
-#' @importFrom purrr map2 map_chr
+#' @importFrom purrr map map2 map_chr
 #' @keywords internal
 #'
 
 check_parameter <- function(parameter, abs_swat_val) {
+  ## Check for parameter duplicates
+  if(length(names(parameter)) != length(unique(names(parameter)))) {
+    stop("Duplicates in provided parameters were found!")
+  }
+
+  ## Read 'Absolute_SWAT_Values' file from custom file if provided or internal
   if(is.null(abs_swat_val)) {
     abs_swat_file <- readLines(system.file("extdata", "Absolute_SWAT_Values.txt",
-                                           package = "SWATplusR"))
+                                           package = "SWATplusR"), warn = FALSE)
   } else {
     abs_swat_file <- readLines(abs_swat_val, warn = FALSE)
   }

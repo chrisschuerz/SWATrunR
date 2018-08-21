@@ -11,16 +11,13 @@
 #'   custom one found in this path if provided
 #'
 #' @importFrom parallel detectCores
-#' @importFrom dplyr %>%
+#' @importFrom dplyr %>% progress_estimated
 #' @importFrom pasta %//% %_% %&&%
 #' @keywords internal
 #'
 
 build_model_run <- function(project_path, run_path, n_thread,
-                            file_cio, abs_swat_val){
-  # If run_path is not provided '.model_run' is built directly in 'project_path'
-  if(is.null(run_path)) run_path <- project_path
-
+                            abs_swat_val, quiet){
   # Identify operating system and find the SWAT executable in the project folder
   os <- get_os()
   if(os == "win") {
@@ -47,65 +44,57 @@ build_model_run <- function(project_path, run_path, n_thread,
 
   # Create folder structure to execute SWAT
   if(os == "win") {
-    print("Building folder '.model_run' for the SWAT model execution:")
+    if(!quiet) {
+      print("Building folder '.model_run' for the SWAT model execution:")
+    }
     swat_files <- dir(project_path, full.names = TRUE)
     ## To save storage do not copy allready existing output files
     swat_files <- swat_files[!grepl("output.hru|output.pst|output.rch|output.rsv|output.sed|output.std|output.sub",swat_files)]
-    dir.create(run_path%//%".model_run")
+    dir.create(run_path)
     pb <- progress_estimated(n_thread)
     for (i in 1:n_thread){
       pb$begin()$print()
 
       ## Copy all files from the project folder to the respective thread
-      dir.create(run_path%//%".model_run"%//%"thread"%_%i)
-      file.copy(swat_files, run_path%//%".model_run"%//%"thread"%_%i)
+      dir.create(run_path%//%"thread"%_%i)
+      file.copy(swat_files, run_path%//%"thread"%_%i)
 
       ## Create a Backup folder and copy files to there as well
       ## Required for rewriting parameters with Swat_edit.exe
-      dir.create(run_path%//%".model_run"%//%"thread"%_%i%//%"Backup")
-      file.copy(swat_files,
-                run_path%//%".model_run"%//%"thread"%_%i%//%"Backup")
+      dir.create(run_path%//%"thread"%_%i%//%"Backup")
+      file.copy(swat_files, run_path%//%"thread"%_%i%//%"Backup")
 
       ## Write all files required for rewriting parameters using the
       ## Swat_edit.exe from SWAT CUP
-      file.copy(system.file("extdata", "Swat_Edit.exe",
-                            package = "SWATplusR"),
-                run_path%//%".model_run"%//%"thread"%_%i)
+      file.copy(system.file("extdata", "Swat_Edit.exe", package = "SWATplusR"),
+                run_path%//%"thread"%_%i)
       file.copy(system.file("extdata", "SUFI2_execute.exe",
-                            package = "SWATplusR"),
-                run_path%//%".model_run"%//%"thread"%_%i)
+                            package = "SWATplusR"), run_path%//%"thread"%_%i)
       if(is.null(abs_swat_val)) {
         file.copy(system.file("extdata", "Absolute_SWAT_Values.txt",
-                              package = "SWATplusR"),
-                  run_path%//%".model_run"%//%"thread"%_%i)
+                              package = "SWATplusR"), run_path%//%"thread"%_%i)
       } else {
-        file.copy(abs_swat_val, run_path%//%".model_run"%//%"thread"%_%i)
+        file.copy(abs_swat_val, run_path%//%"thread"%_%i)
       }
       swat_edit_config <- "2012 : SWAT Version (2009 | 2012)"
-      writeLines(swat_edit_config, con = run_path%//%".model_run"%//%
-                   "thread"%_%i%//%"Swat_edit.exe.config.txt")
+      writeLines(swat_edit_config, con = run_path%//%"thread"%_%i%//%
+                                         "Swat_edit.exe.config.txt")
 
       ## Create empty dummy folders. The Swat_edit.exe requires these to execute
-      dir.create(run_path%//%".model_run"%//%"thread"%_%i%//%"Echo")
-      dir.create(run_path%//%".model_run"%//%"thread"%_%i%//%"SUFI2.IN")
-      dir.create(run_path%//%".model_run"%//%"thread"%_%i%//%"SUFI2.OUT")
+      dir.create(run_path%//%"thread"%_%i%//%"Echo")
+      dir.create(run_path%//%"thread"%_%i%//%"SUFI2.IN")
+      dir.create(run_path%//%"thread"%_%i%//%"SUFI2.OUT")
 
       ## Write the batch file that will be executed to call the SWAT exe when
       ## executing SWAT in a later step
-      swat_bat <- batch_temp
+      swat_bat <- batch_temp[[os]]
       swat_bat[3] <- swat_bat[3]%//%"thread"%_%i
-      writeLines(swat_bat, con = run_path%//%".model_run"%//%
-                   "thread"%_%i%//%"swat_run.bat")
+      writeLines(swat_bat, con = run_path%//%"thread"%_%i%//%"swat_run.bat")
 
       ## Write the batch file that is called for overwriting parameters
       swatedit_bat <- swat_bat
       swatedit_bat[4] <- "start /min /w SWAT_Edit.exe"
-      writeLines(swatedit_bat, con = run_path%//%".model_run"%//%
-                   "thread"%_%i%//%"swat_edit.bat")
-
-      ## Write modified file_cio into thread folder and respective Backup folder
-      writeLines(file_cio, run_path%//%".model_run"%//%"thread"%_%i)
-      writeLines(file_cio, run_path%//%".model_run"%//%"thread"%_%i%//%"Backup")
+      writeLines(swatedit_bat, con = run_path%//%"thread"%_%i%//%"swat_edit.bat")
 
       pb$tick()
     }
@@ -172,7 +161,7 @@ modify_file_cio <- function(project_path, start_date, end_date,
                             rch_out_var, sub_out_var,
                             hru_out_var, hru_out_nr) {
   ## Read unmodified file.cio
-  file_cio <- readLines(project_path%//%"file.cio")
+  file_cio <- readLines(project_path%//%"file.cio", warn = FALSE)
 
   if(xor(is.null(start_date), is.null(end_date))) {
     stop("'start_date' and 'end_date' must be provided together!")
@@ -232,4 +221,22 @@ modify_file_cio <- function(project_path, start_date, end_date,
     file_cio[71] <- paste0(sprintf("%4d", hru_out_nr), collapse = "")
   }
   return(file_cio)
+}
+
+#' Write the updated file.cio to all parallel folders
+#'
+#' @param run_path Path to the .model_run folder
+#' @param file_cio Updated file_cio to be written
+#'
+#' @keywords internal
+#'
+write_file_cio <- function(run_path, file_cio) {
+  thread_i <- dir(run_path) %>%
+    substr(.,(nchar(.) - 7), nchar(.)) %>%
+    .[grepl("thread_",.)]
+  ## Write modified file_cio into thread folder and respective Backup folder
+  for(i in thread_i) {
+    writeLines(file_cio, run_path%//%i%//%"file.cio")
+    writeLines(file_cio, run_path%//%i%//%"Backup"%//%"file.cio")
+  }
 }

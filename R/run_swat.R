@@ -65,9 +65,16 @@
 #'   case '.model_run' is reused in a new model run if \code{refresh = FALSE}.
 #' @param quiet (optional) Logical. If \code{quiet = TRUE} no messages are
 #'   written.
+#'
 #' @return Returns the simulation results for the defined output variables as a
 #'   named list. If more than one parameter set was provided the list contains a
 #'   tibble where each column is a model run.
+#'
+#' @importFrom doParallel registerDoParallel
+#' @importFrom foreach foreach %dopar% %do%
+#' @importFrom parallel detectCores makeCluster parSapply stopCluster
+#' @importFrom tibble tibble
+#' @export
 
 run_swat2012 <- function(project_path, output, parameter = NULL,
                          start_date = NULL, end_date = NULL,
@@ -99,11 +106,11 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## General function input checks
   stopifnot(is.character(project_path))
   stopifnot(is.character(run_path)|is.null(run_path))
-  stopifnot(is.numeric(n_thread)|is.null(rn_thread))
+  stopifnot(is.numeric(n_thread)|is.null(n_thread))
   stopifnot(is.logical(save_incr))
   stopifnot(is.logical(save_parameter))
   stopifnot(is.logical(return_out))
-  stopifnot(is.logical(refreshr))
+  stopifnot(is.logical(refresh))
   stopifnot(is.logical(keep_folder))
   stopifnot(is.logical(quiet))
 
@@ -118,12 +125,19 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## Identify the required number of parallel threads to build.
   n_thread <- min(max(nrow(parameter),1),
                   max(n_thread,1),
-                  parallel::detectCores())
+                  detectCores())
+
+  ## Set the .model_run folder as the run_path
+  if(is.null(run_path)){
+    run_path <- project_path%//%".model_run"
+  } else {
+    run_path <- run_path%//%".model_run"
+  }
 
   ## Case .model_run exists already and no forced refresh considered
-  if(dir.exists(project_path%//%".model_run") & !refresh) {
+  if(dir.exists(run_path) & !refresh) {
     ## Check how many parallel threads are available
-    n_thread_avail <- list.dirs(project_path%//%".model_run") %>%
+    n_thread_avail <- dir(run_path) %>%
       substr(.,(nchar(.) - 7), nchar(.)) %>%
       grepl("thread_",.) %>%
       sum()
@@ -137,24 +151,57 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     ## If the number of available parallel folders is not sufficient
     ## a new setup of the folder structures is forced
     } else {
-      unlink(project_path%//%".model_run", recursive = TRUE)
+      unlink(run_path, recursive = TRUE)
       if(!quiet) {
         message("The number of existing threads is lower than the required number."%&%
-                "\nParallel folder structure will be created from scratch!"%&%
-                "\nBuilding '.model_run' with"%&&%n_thread%&&%"parallel threads:")
+                "\nParallel folder structure will be created from scratch!\n\n")
       }
-      build_model_run(project_path, run_path, n_thread, file_cio, abs_swat_val)
+      build_model_run(project_path, run_path, n_thread, abs_swat_val, quiet)
     }
     ## Build the parallel folder structure if it does not exist or if a
     ## forced refresh was set with refresh = TRUE
     } else {
-      if(!quiet) {
-        cat("Building '.model_run' with"%&&%n_thread%&&%"parallel threads:")
-      }
-      build_model_run(project_path, run_path, n_thread, file_cio, abs_swat_val)
-  }
+      build_model_run(project_path, run_path, n_thread, abs_swat_val, quiet)
+    }
+
+  ## Write file.cio
+  write_file_cio(run_path, file_cio)
 
 #-------------------------------------------------------------------------------
-#
+  # Initiate foreach loop to run SWAT models
+  ## make and register cluster, create table that links the parallel worker
+  ## with the created parallel thread folders in '.model_run'
+  cl <- makeCluster(n_thread)
+  worker <- tibble(worker_id = parSapply(cl, 1:n_thread,
+                   function(x) paste(Sys.info()[['nodename']],
+                                     Sys.getpid(), sep = "-")),
+                   thread_id = dir(run_path) %>% .[grepl("thread_",.)])
 
+  registerDoParallel(cl)
+#-------------------------------------------------------------------------------
+  # Start parallel SWAT model execution with foreach
+  sim <- foreach(i_run = 1:max(nrow(parameter), 1),
+                 .packages = c("dplyr", "pasta")) %dopar% {
+
+    ## Identify worker of the parallel process and link it with respective thread
+    worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
+    thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
+    thread_path <- run_path%//%thread_id
+
+
+    ## Modify model parameters if parameter set was provided
+    if(!is.null(parameter)) {
+      write_model_in(parameter, thread_path, i_run)
+      system(thread_path%//%"swat_edit.bat")
+    }
+
+    system(thread_path%//%"swat_run.bat")
+    return(c(worker_id, thread_path))
+  }
+
+  ## Stop cluster after parallel run
+  stopCluster(cl)
+  return(sim)
+
+  if(!keep_folder) unlink(project_path%//%".model_run", recursive = TRUE)
 }
