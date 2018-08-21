@@ -105,7 +105,7 @@ define_output <- function(file, variable = NULL, unit = NULL,
     label_ind <- ""
   }
 
-  return(tibble(file = file,
-         expr = expression,
-         label_ind = label_ind))
+  return(tibble(file      = file,
+                expr      = expression,
+                label_ind = label_ind))
 }

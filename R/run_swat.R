@@ -195,7 +195,10 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
       system(thread_path%//%"swat_edit.bat")
     }
 
+    ## Execute the SWAT exe file located in the thread folder
     system(thread_path%//%"swat_run.bat")
+
+
     out_structure <- lapply(out_names, get_outstruct, thread_dir) %>%
       set_names(out_names)
 
