@@ -198,16 +198,9 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     ## Execute the SWAT exe file located in the thread folder
     system(thread_path%//%"swat_run.bat")
 
-
-    out_structure <- lapply(out_names, get_outstruct, thread_dir) %>%
-      set_names(out_names)
-
-    output_file <- lapply(out_names, read_output, out_structure, thread_dir) %>%
-      set_names(out_names)
-
-    sim_lst <- apply(output, 1, extract_var, output_file, ind) %>%
-      set_names(output$label)
-
+    model_output <- read_output(output, thread_path) %>%
+      extract_output(output, .)
+    return(model_output)
   }
 
   ## Stop cluster after parallel run

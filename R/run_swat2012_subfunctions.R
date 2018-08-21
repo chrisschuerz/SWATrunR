@@ -4,6 +4,8 @@
 #' @param thread_path Path to respective thread where parameters are rewritten
 #' @param i_run Index of current run to select the current parameter set
 #'
+#' @importFrom dplyr %>%
+#' @importFrom pasta %//%
 #' @keywords internal
 #'
 
@@ -27,6 +29,8 @@ write_model_in <- function(parameter, thread_path, i_run){
 #' @param output Output defined to read from the SWAT model results
 #' @param thread_path Path to respective thread where SWAT was executed
 #'
+#' @importFrom dplyr %>%
+#' @importFrom pasta %//%
 #' @importFrom purrr map map2 map_chr set_names
 #' @importFrom readr fwf_positions read_fwf
 #' @keywords internal
@@ -55,6 +59,8 @@ read_output <- function(ouput, thread_path) {
 #' @param fwf_pos Fixed width positions for the variables in the output files
 #' @param thread_path Path to respective thread where SWAT was executed
 #'
+#' @importFrom dplyr %>%
+#' @importFrom pasta %//%
 #' @importFrom readr fwf_positions read_fwf
 #' @keywords internal
 #'
@@ -72,6 +78,8 @@ get_file_header <- function(output_i, fwf_pos, thread_path) {
 #' @param output Output defined to read from the SWAT model results
 #' @param thread_path Path to respective thread where SWAT was executed
 #'
+#' @importFrom dplyr %>%
+#' @importFrom pasta %//%
 #' @importFrom readr read_lines
 #' @keywords internal
 #'
@@ -94,6 +102,7 @@ get_fwf_positions <- function(output_i, thread_path) {
 #'
 #' @param string text string that contains words seperated by white spaces
 #'
+#' @importFrom dplyr %>%
 #' @keywords internal
 #'
 
@@ -108,26 +117,40 @@ find_first_space <- function(string) {
 #-------------------------------------------------------------------------------
 # Functions for output variable extraction
 
-## Extract variables from SWAT output file according to "output"
-extract_var <- function(out_var_i, out_file, run_i) {
-  out_file <- out_file[[out_var_i[2]]]
-  extr_tbl <- eval_expr(out_file, out_var_i[3], run_i)
-  tbl_colnames <- colnames(extr_tbl)
-
-  name_idx <- strsplit(tbl_colnames, "_") %>%
-    lapply(.,as.numeric) %>%
-    lapply(., na.exclude) %>%
-    unlist
-
-  if(length(name_idx) == 0 | any(name_idx != run_i)){
-    colnames(extr_tbl) <- tbl_colnames%_%sprintf('%06d',run_i)
-  }
-  return(extr_tbl)
+#' Extract the variables from the model outputs as defined in 'output'
+#'
+#' @param output Output defined to read from the SWAT model results
+#' @param model_output Output files read from the respective thread
+#'
+#' @importFrom dplyr bind_cols bind_rows mutate %>%
+#' @importFrom purrr map map2 pmap set_names
+#' @keywords internal
+#'
+extract_output <- function(output, model_output) {
+  output %>%
+    map2(., names(.), ~mutate(.x, label_ind = paste0(.y, label_ind))) %>%
+    bind_rows(.) %>%
+    map(., ~.x) %>%
+    pmap(., function(file, expr, label_ind, mod_out){
+      mod_out[[file]] %>%
+        evaluate_expression(., expr) %>%
+        set_names(., label_ind)
+    }, mod_out = model_output) %>%
+    bind_cols(.)
 }
 
-## Evaluate expression provided as string in output. Defines mutates on out_tbl
-eval_expr <- function(out_tbl, expr, run_i){
-  paste("out_tbl", expr, sep = " %>% ") %>%
+#' Evaluate the expression defined for a variable in 'output'
+#'
+#' @param output_table Output defined to read from the SWAT model results
+#' @param expression Expression to be applied to extract variable from
+#'   output_table
+#'
+#' @importFrom dplyr %>%
+#' @keywords internal
+#'
+
+evaluate_expression <- function(out_table, expression){
+  paste("out_table", expression, sep = " %>% ") %>%
     parse(text = .) %>%
     eval(.)
 }
