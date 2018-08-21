@@ -201,7 +201,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
   ## Stop cluster after parallel run
   stopCluster(cl)
+  if(!keep_folder)unlink(run_path, recursive = TRUE)
   return(sim)
 
-  if(!keep_folder) unlink(project_path%//%".model_run", recursive = TRUE)
 }
