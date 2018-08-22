@@ -92,9 +92,9 @@ define_output <- function(file, variable = NULL, unit = NULL,
 
   if(is.null(expression)){
     expression <- paste0("dplyr::filter(.[[2]] == ",  unit, ") %>% ",
+                         "dplyr::filter(!is.na(MON)) %>% ",
                          "dplyr::filter(MON > (quantile(MON, probs = 0.75, type = 3) - 300)) %>% ",
                          "dplyr::filter(MON < (quantile(MON, probs = 0.75, type = 3) + 200)) %>% ",
-                         "dplyr::filter(MON <= 366) %>% ",
                          "dplyr::select(", variable, ")")
   }
 

@@ -8,7 +8,6 @@
 #' @importFrom pasta %//%
 #' @keywords internal
 #'
-
 write_model_in <- function(parameter, thread_path, i_run){
   if(!is.null(dim(parameter))){
     parameter <- parameter[i_run,]
@@ -35,8 +34,7 @@ write_model_in <- function(parameter, thread_path, i_run){
 #' @importFrom readr fwf_positions read_fwf
 #' @keywords internal
 #'
-
-read_output <- function(ouput, thread_path) {
+read_output <- function(output, thread_path) {
   ## Get unique output files defined in output
   output_file <- map_chr(output,  ~ unique(.x$file)) %>% unique(.)
   ## Get the variable positions in all output files
@@ -64,7 +62,6 @@ read_output <- function(ouput, thread_path) {
 #' @importFrom readr fwf_positions read_fwf
 #' @keywords internal
 #'
-
 get_file_header <- function(output_i, fwf_pos, thread_path) {
   header <- read_fwf(file = thread_path%//%output_i, skip = 8, n_max = 1,
                      col_positions = fwf_positions(fwf_pos[[1]], fwf_pos[[2]])) %>%
@@ -83,14 +80,14 @@ get_file_header <- function(output_i, fwf_pos, thread_path) {
 #' @importFrom readr read_lines
 #' @keywords internal
 #'
-
 get_fwf_positions <- function(output_i, thread_path) {
   header_line <- read_lines(file = thread_path%//%output_i,
                             skip = 8, n_max = 1)
   first_line <- read_lines(file = thread_path%//%output_i,
                            skip = 9, n_max = 1) %>%
     substr(., 1, nchar(header_line))
-  start_pos <- c(1,find_first_space(header_line),
+  # Start pos must be tweaked due to untidy spacing in output tables -> ugly tweak with 39 :()
+  start_pos <- c(1,find_first_space(header_line)[find_first_space(header_line) < 39],
                    find_first_space(first_line)) %>%
     unique(.) %>%
     sort(.)
@@ -105,7 +102,6 @@ get_fwf_positions <- function(output_i, thread_path) {
 #' @importFrom dplyr %>%
 #' @keywords internal
 #'
-
 find_first_space <- function(string) {
   single_char <- strsplit(string, "") %>% unlist(.)
   space_pos <- which(single_char == " ")
@@ -148,9 +144,102 @@ extract_output <- function(output, model_output) {
 #' @importFrom dplyr %>%
 #' @keywords internal
 #'
-
 evaluate_expression <- function(out_table, expression){
   paste("out_table", expression, sep = " %>% ") %>%
     parse(text = .) %>%
     eval(.)
+}
+
+#' Tidy up simulation results before returning them
+#'
+#' @param sim_results Extracted simulation results from the SWAT model runs
+#' @param parameter Provided parameter set
+#' @param file_cio Modified file.cio
+#' @param save_parameter Logical. If TRUE parameters are saved in outputs
+#' @param add_date Logical. If TRUE Dates are added to the simulation results
+#' @param simple_output Logical. If TRUE and only one parameter set was used
+#'   outputs can be simplyfied to a named list of vectors. This parameter
+#'   overrules \code{add_date} and \code{save_parameter}.
+#'
+#' @importFrom dplyr bind_cols %>%
+#' @importFrom pasta %&%
+#' @importFrom purrr map set_names transpose
+#' @importFrom tibble as_tibble
+#' @keywords internal
+#'
+tidy_results <- function(sim_result, parameter, file_cio, save_parameter,
+                         add_date, simple_output) {
+  if(length(sim_result) == 1) {
+    if(simple_output) {
+      sim_result <- map(sim_result[[1]], ~.x)
+    } else {
+      sim_result <- sim_result[[1]]
+    }
+  } else {
+    n_digit <- length(sim_result) %>% as.character(.) %>% nchar(.)
+    sim_result <- sim_result %>%
+      set_names(., "run"%_%sprintf("%0"%&%n_digit%&%"d", 1:length(sim_result))) %>%
+      transpose(.) %>%
+      map(., ~ as_tibble(.x))
+  }
+
+  if(add_date) {
+    sim_date <- read_date(file_cio)
+
+    if(!simple_output){
+      if(is.data.frame(sim_result)){
+        sim_result <- bind_cols(sim_date, sim_result)
+      } else {
+        sim_result <- map(sim_result, ~ bind_cols(sim_date, .x))
+      }
+    }
+  }
+
+  if(save_parameter) {
+    if(!simple_output) {
+      sim_result <- list(parameter  = parameter,
+                         simulation = sim_result)
+    }
+  }
+
+  return(sim_result)
+}
+
+#' Read file.cio parameters and convert the required ones to a date sequence
+#'
+#' @param file_cio Modified file.cio
+#'
+#' @importFrom dplyr case_when %>%
+#' @importFrom lubridate as_date
+#' @importFrom pasta %_%
+#' @importFrom tibble tibble
+#' @keywords internal
+#'
+read_date <- function(file_cio) {
+  n_year     <- cio_to_numeric(file_cio[8])
+  years_skip <- cio_to_numeric(file_cio[60])
+  start_year <- cio_to_numeric(file_cio[9]) + years_skip
+  end_year   <- start_year + n_year - years_skip - 1
+  start_jdn  <- cio_to_numeric(file_cio[10])
+  end_jdn    <- cio_to_numeric(file_cio[11])
+  time_int   <- cio_to_numeric(file_cio[59])
+
+  start_date <- as_date(start_jdn%_%start_year, format = "%j_%Y", tz = "UTC")
+  end_date  <- as_date(end_jdn%_%end_year, format = "%j_%Y", tz = "UTC")
+
+  by_int <- case_when(time_int == 0 ~ "month",
+                      time_int == 1 ~ "day",
+                      time_int == 2 ~ "year")
+
+  tibble(date = seq(start_date, end_date, by = by_int))
+}
+
+#' Helper function to convert file.cio entries to numerics
+#'
+#' @param cio_entry Line from file.cio
+#'
+#' @keywords internal
+#'
+cio_to_numeric <- function(cio_entry) {
+  cio_entry %>% substr(., 1, 16) %>% as.numeric(.)
 }

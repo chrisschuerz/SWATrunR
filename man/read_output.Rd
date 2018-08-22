@@ -4,12 +4,12 @@
 \alias{read_output}
 \title{Read SWAT output files}
 \usage{
-read_output(ouput, thread_path)
+read_output(output, thread_path)
 }
 \arguments{
-\item{thread_path}{Path to respective thread where SWAT was executed}
-
 \item{output}{Output defined to read from the SWAT model results}
+
+\item{thread_path}{Path to respective thread where SWAT was executed}
 }
 \description{
 Read SWAT output files

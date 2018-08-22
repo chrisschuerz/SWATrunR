@@ -55,7 +55,7 @@
 #' @param save_parameter (optional) Logical. If \code{save_parameter = TRUE}
 #'   used parameter sets are saved and/or returned together with the model
 #'   outputs.
-#' @param return_out (optional) Logical. Whether outputs should be returned or
+#' @param return_output (optional) Logical. Whether outputs should be returned or
 #'   not. Set \code{return_out = FALSE} and provide \code{save_file} if outputs
 #'   should only be saved on hard drive.
 #' @param refresh (optional) Logical. \code{refresh = TRUE} always forces that
@@ -83,7 +83,8 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                          hru_out_var = NULL, hru_out_nr = NULL,
                          abs_swat_val = NULL, run_index = NULL, run_path = NULL,
                          n_thread = NULL, save_file = NULL, save_incr = FALSE,
-                         save_parameter = TRUE, return_out = TRUE,
+                         save_parameter = TRUE, add_date = TRUE,
+                         simple_output = FALSE, return_output = TRUE,
                          refresh = FALSE, keep_folder = FALSE, quiet = FALSE) {
 
 #-------------------------------------------------------------------------------
@@ -109,7 +110,9 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   stopifnot(is.numeric(n_thread)|is.null(n_thread))
   stopifnot(is.logical(save_incr))
   stopifnot(is.logical(save_parameter))
-  stopifnot(is.logical(return_out))
+  stopifnot(is.logical(add_date))
+  stopifnot(is.logical(simple_output))
+  stopifnot(is.logical(return_output))
   stopifnot(is.logical(refresh))
   stopifnot(is.logical(keep_folder))
   stopifnot(is.logical(quiet))
@@ -180,13 +183,14 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   registerDoParallel(cl)
 #-------------------------------------------------------------------------------
   # Start parallel SWAT model execution with foreach
-  sim <- foreach(i_run = 1:max(nrow(parameter), 1),
-                 .packages = c("dplyr", "pasta")) %do% {
-
+  sim_result <- foreach(i_run = 1:max(nrow(parameter), 1),
+                  .packages = c("dplyr", "pasta")) %dopar% {
+  # for(i_run in 1:max(nrow(parameter), 1)) {
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
     thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
     thread_path <- run_path%//%thread_id
+    # thread_path <- "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru/.model_run/thread_1"
 
 
     ## Modify model parameters if parameter set was provided
@@ -206,9 +210,13 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## Stop cluster after parallel run
   stopCluster(cl)
 
+  ## Tidy up simulation results
+  sim_result <- tidy_results(sim_result, parameter, file_cio, save_parameter,
+                             add_date, simple_output)
+
   ## Delete the parallel threads if keep_folder is not TRUE
   if(!keep_folder)unlink(run_path, recursive = TRUE)
 
-  return(sim)
-
+  ## Return simulation results if return_outputis TRUE
+  if(return_output) return(sim_result)
 }
