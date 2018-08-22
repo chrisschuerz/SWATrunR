@@ -7,34 +7,32 @@
 define_output(file, variable = NULL, unit = NULL, expression = NULL)
 }
 \arguments{
-\item{file}{The SWAT output output_file where the output variable is located (so
-far only .sub and .rch are supported!)}
+\item{file}{Character string. The SWAT output output_file where the output
+variable is located (Valid inputs are 'rch', 'sub', 'hru', and 'sed' for
+the respective SWAT output files 'output.rch', 'output.sub', output.hru',
+and 'output.sed')}
 
-\item{variable}{The name of the variable as given in the header of the
-respective output output_file (without unsits!)}
+\item{variable}{Character string. Output variable available from the
+respective SWAT output file. respective output file defined with
+\code{file}. For the correct definition of the output variables please use
+the variable names as defined in the
+\href{https://swat.tamu.edu/media/69395/ch32_output.pdf}{SWAT Output Data
+Documentation}. Optional, also the number of the respective column in the
+output file can be provided.}
 
-\item{unit}{The 'RCH' or 'SUB unit for which the output should be
-written.}
+\item{unit}{Numeric vector. The spatial unit (e.g. the reach, subbasin, or
+HRU) defined by the columns 'RCH', 'SUB', 'HRU' in the respective output
+file for which the outputs should be extracted.}
 
-\item{expr}{Caution! Advanced setting if the output variable should be
-modified or aggregated before writing the output. To do so a piped
-workflow must be provided (see examples).}
-}
-\value{
-The function should only be used as a helper function for
-  \code{define_output()}
+\item{expr}{(optional) Alternative to \code{variable} and \code{unit}. Text
+string of expression to apply to the output table to extract and modify a
+variable before it is returned. To do so a piped workflow must be provided
+(see examples).}
 }
 \description{
-Define which output variables (from the parallel SWAT execution of the
-function \code{\link{run_swat}}) should be saved and returned after finishing
-the model runs. Note that, the variable \code{output} in
-\code{\link{run_swat}} must be defined via this function.
-Helper function for the \code{\link{run_swat}}) output variable definition with
-\code{\link{define_output}}
-}
-\details{
-Each variable provided with the function \code{\link{define_output}}should be
-defined using the helper function \code{\link{variable}}.
+Define the SWAT2012 output variables that should be extracted after the SWAT
+model execution and returned to R. Note that, the variable \code{output} in
+\code{\link{run_swat2012}} must be defined via this function.
 }
 \examples{
 # Writing the discharge for the RCH unsits 1 to 5

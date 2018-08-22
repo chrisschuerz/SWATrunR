@@ -57,8 +57,8 @@ Documentation} p.79ff.}
 
 \item{hru_out_nr}{(optional) Numeric vector of maximum length = 20 for
 providing the HRU numbers for which the HRU variables are written. Optional
-if \code{hru_out_nr = 'all'}, HRU variables are written for all HRU (caution, very
-large output files possible!)}
+if \code{hru_out_nr = 'all'}, HRU variables are written for all HRU
+(caution, very large output files possible!)}
 
 \item{abs_swat_val}{(optional) \code{run_swat2012} uses an internal
 'Absolute_SWAT_Values.txt' file required for overwriting parameters. With
@@ -96,21 +96,22 @@ or not. Set \code{return_out = FALSE} and provide \code{save_file} if
 outputs should only be saved on hard drive.  \code{Default = TRUE}}
 
 \item{refresh}{(optional) Logical. \code{refresh = TRUE} always forces that
-'.model_run' is newly written when SWAT run ins started.
-\code{Default = TRUE}}
+'.model_run' is newly written when SWAT run ins started. \code{Default =
+TRUE}}
 
 \item{keep_folder}{(optional) Logical. If \code{keep_folder = TRUE}
 '.model_run' is kept and not deleted after finishing model runs. In this
 case '.model_run' is reused in a new model run if \code{refresh = FALSE}.
- \code{Default = FALSE}}
+\code{Default = FALSE}}
 
 \item{quiet}{(optional) Logical. If \code{quiet = TRUE} no messages are
 written.  \code{Default = FALSE}}
 }
 \value{
 Returns the simulation results for the defined output variables as a
-  named list. If more than one parameter set was provided the list contains a
-  tibble where each column is a model run.
+  tibble. If more than one parameter set was provided the list of tibbles is
+  returned where each column is a model run and each list entry is an output
+  variable.
 }
 \description{
 This function allows to run a SWAT2012 project in parallel from within R.
