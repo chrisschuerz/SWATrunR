@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_swat.R
 \name{run_swat2012}
 \alias{run_swat2012}
-\title{Run a SWAT project and return ouputs in R}
+\title{Run SWAT2012}
 \usage{
 run_swat2012(project_path, output, parameter = NULL, start_date = NULL,
   end_date = NULL, output_interval = NULL, years_skip = NULL,
@@ -10,7 +10,7 @@ run_swat2012(project_path, output, parameter = NULL, start_date = NULL,
   hru_out_nr = NULL, abs_swat_val = NULL, run_index = NULL,
   run_path = NULL, n_thread = NULL, save_file = NULL, save_incr = FALSE,
   save_parameter = TRUE, add_date = TRUE, simple_output = FALSE,
-  return_output = TRUE, refresh = FALSE, keep_folder = FALSE,
+  return_output = TRUE, refresh = TRUE, keep_folder = FALSE,
   quiet = FALSE)
 }
 \arguments{
@@ -26,7 +26,7 @@ are modified accordingly.}
 
 \item{start_date}{(ptional) Start date of the SWAT simulation. Provided as
 character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
-project are located}
+project are located.}
 
 \item{end_date}{(optional) End date of the SWAT simulation. Provided as
 character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
@@ -57,7 +57,7 @@ Documentation} p.79ff.}
 
 \item{hru_out_nr}{(optional) Numeric vector of maximum length = 20 for
 providing the HRU numbers for which the HRU variables are written. Optional
-if hru_out_nr = 'all', HRU variables are written for all HRU (caution, very
+if \code{hru_out_nr = 'all'}, HRU variables are written for all HRU (caution, very
 large output files possible!)}
 
 \item{abs_swat_val}{(optional) \code{run_swat2012} uses an internal
@@ -81,25 +81,31 @@ model results are saved after all model runs are completed. (Load
 \code{save_file} with \code{file <- readRDS(save_file)}).}
 
 \item{save_incr}{(optional) Logical. If \code{save_incr = TRUE} model runs
-are saved incrementally and can be restored with \code{\link{recover_run}}.}
+are saved incrementally and can be restored with \code{\link{recover_run}}.
+\code{Default = FALSE}}
 
 \item{save_parameter}{(optional) Logical. If \code{save_parameter = TRUE}
 used parameter sets are saved and/or returned together with the model
-outputs.}
+outputs.  \code{Default = TRUE}}
 
-\item{return_output}{(optional) Logical. Whether outputs should be returned or
-not. Set \code{return_out = FALSE} and provide \code{save_file} if outputs
-should only be saved on hard drive.}
+\item{add_date}{(optional) Logical. If \code{add_date = TRUE} a date column
+is added to every simulatiuon output table.  \code{Default = TRUE}}
+
+\item{return_output}{(optional) Logical. Whether outputs should be returned
+or not. Set \code{return_out = FALSE} and provide \code{save_file} if
+outputs should only be saved on hard drive.  \code{Default = TRUE}}
 
 \item{refresh}{(optional) Logical. \code{refresh = TRUE} always forces that
-'.model_run' is newly written when SWAT run ins started.}
+'.model_run' is newly written when SWAT run ins started.
+\code{Default = TRUE}}
 
 \item{keep_folder}{(optional) Logical. If \code{keep_folder = TRUE}
 '.model_run' is kept and not deleted after finishing model runs. In this
-case '.model_run' is reused in a new model run if \code{refresh = FALSE}.}
+case '.model_run' is reused in a new model run if \code{refresh = FALSE}.
+ \code{Default = FALSE}}
 
 \item{quiet}{(optional) Logical. If \code{quiet = TRUE} no messages are
-written.}
+written.  \code{Default = FALSE}}
 }
 \value{
 Returns the simulation results for the defined output variables as a
@@ -107,6 +113,9 @@ Returns the simulation results for the defined output variables as a
   tibble where each column is a model run.
 }
 \description{
-Run a SWAT project and return ouputs in R
+This function allows to run a SWAT2012 project in parallel from within R.
+Basic settings for the SWAT run such as the simulation period or the time
+interval for the outputs can be done directly. SWAT simulation outputs can be
+defined that are returned for defined parameter sets.
 }
 
