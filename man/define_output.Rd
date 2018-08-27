@@ -13,21 +13,20 @@ the respective SWAT output files 'output.rch', 'output.sub', output.hru',
 and 'output.sed')}
 
 \item{variable}{Character string. Output variable available from the
-respective SWAT output file. respective output file defined with
-\code{file}. For the correct definition of the output variables please use
-the variable names as defined in the
-\href{https://swat.tamu.edu/media/69395/ch32_output.pdf}{SWAT Output Data
-Documentation}. Optional, also the number of the respective column in the
-output file can be provided.}
+respective SWAT output file defined with \code{file}. For the correct
+definition of the output variables please use the variable names as defined
+in the \href{https://swat.tamu.edu/media/69395/ch32_output.pdf}{SWAT Output
+Data Documentation}. Optional, also the number of the respective column in
+the output file can be provided. \strong{CAUTION:} spaces (e.g. in P TOT) are
+replaced with underscores (P_TOT)}
 
 \item{unit}{Numeric vector. The spatial unit (e.g. the reach, subbasin, or
 HRU) defined by the columns 'RCH', 'SUB', 'HRU' in the respective output
 file for which the outputs should be extracted.}
 
-\item{expr}{(optional) Alternative to \code{variable} and \code{unit}. Text
-string of expression to apply to the output table to extract and modify a
-variable before it is returned. To do so a piped workflow must be provided
-(see examples).}
+\item{expr}{Alternatively to \code{variable} and \code{unit} an expression to
+extract outputs can be defined directly as a text string. See the examples
+to learn how to use \code{expr}.}
 }
 \description{
 Define the SWAT2012 output variables that should be extracted after the SWAT
@@ -35,35 +34,48 @@ model execution and returned to R. Note that, the variable \code{output} in
 \code{\link{run_swat2012}} must be defined via this function.
 }
 \examples{
-# Writing the discharge for the RCH unsits 1 to 5
-# and the nitrogen load and ET for the RCH or SUB unit 5:
-out_tbl <- define_output(flow = out_var(output_file   = "rch",
-                                        variable = "FLOW_OUT",
-                                        spatial_unit  = 1:5),
-                         no3  = out_var(output_file   = "rch",
-                                        variable = "NO3_OUT",
-                                        spatial_unit  = 5),
-                         ptot = out_var(output_file   = "rch",
-                                        variable = "PTOT",
-                                        spatial_unit  = 5),
-                         et_a = out_var(output_file   = "sub",
-                                        variable = "ET",
-                                        spatial_unit  = 5))
+# A single variable can be defined as follows (e.g. "FLOW_OUT" for
+# the reaches 1 and 5):
+
+out_flow <- define_output(file = "rch",
+                          variable = "FLOW_OUT",
+                          unit = c(1,5))
+# In this case the the variable name of the returned output is then
+# the same as defined with 'variable', here "FLOW_OUT"
+
+# If a custom variable name is preferred for the returned output,
+# the output must be defined as named list:
+
+out_flow <- list(discharge = define_output(file = "rch",
+                                           variable = "FLOW_OUT",
+                                           unit = c(1,5)))
 
 
-# Writing the dicharge for RCH 16,28, and 31 and the sum of discharge for
-# all subbasins and time steps (as defined in sum_expr):
+# Define the discharge for the RCH units 1 to 5 and the
+# nitrate-nitrogen load and ET for the unit 5:
 
-sum_expr <- "dplyr::filter(MON <= 366) \%>\%
-               dplyr::select(FLOW_OUT) \%>\%
-               dplyr::summarise(FLOW_SUM = sum(FLOW_OUT))"
+out_def <- list(flow = define_output(file = "rch",
+                                     variable = "FLOW_OUT",
+                                     unit = 1:5),
+                no3  = define_output(file = "rch",
+                                     variable = "NO3_OUT",
+                                     unit = 5),
+                et_a = define_output(file = "sub",
+                                     variable = "ET",
+                                     unit = 5))
 
-out_tbl <- define_output(flow = out_var(output_file   = "rch",
-                                        variable = "FLOW_OUT",
-                                        spatial_unit  = c(16,28,31)),
-                         flow_sum = out_var(output_file = "rch",
-                                            expression  = sum_expr,
-                                            add_date    = FALSE))
+
+# Define output with an expression:
+# E.g. directly extract P_TOT concentrations for reach 5 from
+# daily simulations:
+
+expr <- paste0("dplyr::filter(., RCH == 5) \%>\% ",
+               "dplyr::filter(., MON \%in\% 1:12) \%>\% ",
+               "dplyr::select(., FLOW_OUT, P_TOT) \%>\% ",
+               "dplyr::mutate(., P_CONC = P_TOT/FLOW_OUT/86.4) \%>\% ",
+               "dplyr::select(., P_CONC)")
+
+out_def <- list(p_conc = define_output(expression = expr))
 
 }
 
