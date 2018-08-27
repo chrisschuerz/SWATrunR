@@ -65,7 +65,7 @@ read_output <- function(output, thread_path) {
 get_file_header <- function(output_i, fwf_pos, thread_path) {
   header <- read_fwf(file = thread_path%//%output_i, skip = 8, n_max = 1,
                      col_positions = fwf_positions(fwf_pos[[1]], fwf_pos[[2]])) %>%
-    gsub("Mg/l|mg/L|mg/kg|kg/ha|kg/h|t/ha|mic/L|\\(mm\\)|kg|cms|tons|mg|mm|km2| ", "", .) %>%
+    gsub("Mg/l|mg/L|mg/kg|kg/ha|kg/h|t/ha|mic/L|\\(mm\\)|kg|cms|tons|mg|mm|km2|", "", .) %>%
     gsub(" ", "_",.)
   header[1] <- "FILE"
   return(header)
@@ -187,7 +187,7 @@ tidy_results <- function(sim_result, parameter, file_cio, save_parameter,
     }
   }
 
-  if(save_parameter) {
+  if(save_parameter & !is.null(parameter)) {
     sim_result <- list(parameter  = parameter,
                        simulation = sim_result)
   }

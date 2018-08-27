@@ -102,7 +102,7 @@ define_output <- function(file, variable = NULL, unit = NULL,
     gsub("Mg/l|mg/L|mg/kg|kg/ha|kg/h|t/ha|mic/L|\\(mm\\)|kg|cms|tons|mg|mm|km2| ", "", .)
 
   if(is.null(expression)){
-    expression <- paste0("dplyr::filter(.[[2]] == ,", unit, ") %>% ",
+    expression <- paste0("dplyr::filter(.[[2]] == ", unit, ") %>% ",
                          "dplyr::filter(!is.na(MON)) %>% ",
                          "dplyr::filter(MON > (quantile(MON, probs = 0.75, type = 3) - 300)) %>% ",
                          "dplyr::filter(MON < (quantile(MON, probs = 0.75, type = 3) + 200)) %>% ",

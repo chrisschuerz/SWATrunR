@@ -81,8 +81,9 @@
 #'   returned where each column is a model run and each list entry is an output
 #'   variable.
 #'
-#' @importFrom doParallel registerDoParallel
+#' @importFrom doSNOW registerDoSNOW
 #' @importFrom foreach foreach %dopar% %do%
+#' @importFrom lubridate as.period interval now seconds
 #' @importFrom parallel detectCores makeCluster parSapply stopCluster
 #' @importFrom tibble tibble
 #' @export
@@ -190,11 +191,29 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                                      Sys.getpid(), sep = "-")),
                    thread_id = dir(run_path) %>% .[grepl("thread_",.)])
 
-  registerDoParallel(cl)
+  registerDoSNOW(cl)
 #-------------------------------------------------------------------------------
   # Start parallel SWAT model execution with foreach
-  sim_result <- foreach(i_run = 1:max(nrow(parameter), 1),
-                  .packages = c("dplyr", "pasta")) %dopar% {
+  display_progress <- function(n){
+    t1 <- now()
+    time_elaps  <- interval(t0,t1) %>%
+      round(.) %>%
+      as.period(.)
+    time_remain <- (as.numeric(time_elaps, "seconds")*(n_run-n)/n) %>%
+      round(.) %>%
+      seconds(.) %>%
+      as.period(., unit = "days")
+
+    cat("\r","Simulation:", n, "of", n_run,
+        "  Time elapsed:", as.character(time_elaps),
+        "  Time remaining:", as.character(time_remain),
+        "      ")
+  }
+  opts <- list(progress = display_progress)
+  n_run <- max(nrow(parameter), 1)
+  t0 <- now()
+  sim_result <- foreach(i_run = 1:n_run,
+  .packages = c("dplyr", "pasta", "lubridate"), .options.snow = opts) %dopar% {
   # for(i_run in 1:max(nrow(parameter), 1)) {
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
@@ -219,6 +238,8 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
   ## Stop cluster after parallel run
   stopCluster(cl)
+  ## Delete the time stamp t0 created for the progress estimation
+  rm(t0)
 
   ## Tidy up simulation results
   sim_result <- tidy_results(sim_result, parameter, file_cio, save_parameter,
