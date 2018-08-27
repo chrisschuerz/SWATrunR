@@ -175,6 +175,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     ## Build the parallel folder structure if it does not exist or if a
     ## forced refresh was set with refresh = TRUE
     } else {
+      unlink(run_path, recursive = TRUE)
       build_model_run(project_path, run_path, n_thread, abs_swat_val, quiet)
     }
 
@@ -194,22 +195,30 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   registerDoSNOW(cl)
 #-------------------------------------------------------------------------------
   # Start parallel SWAT model execution with foreach
-  display_progress <- function(n){
-    t1 <- now()
-    time_elaps  <- interval(t0,t1) %>%
-      round(.) %>%
-      as.period(.)
-    time_remain <- (as.numeric(time_elaps, "seconds")*(n_run-n)/n) %>%
-      round(.) %>%
-      seconds(.) %>%
-      as.period(., unit = "days")
 
-    cat("\r","Simulation:", n, "of", n_run,
-        "  Time elapsed:", as.character(time_elaps),
-        "  Time remaining:", as.character(time_remain),
-        "      ")
+  ## If not quiet a function for displaying the simulation progress is generated
+  ## and provided to foreach via the SNOW options
+  if(!quiet) {
+    display_progress <- function(n){
+      t1 <- now()
+      time_elaps  <- interval(t0,t1) %>%
+        round(.) %>%
+        as.period(.)
+      time_remain <- (as.numeric(time_elaps, "seconds")*(n_run-n)/n) %>%
+        round(.) %>%
+        seconds(.) %>%
+        as.period(., unit = "days")
+
+      cat("\r","Simulation:", n, "of", n_run,
+          "  Time elapsed:", as.character(time_elaps),
+          "  Time remaining:", as.character(time_remain),
+          "      ")
+    }
+    opts <- list(progress = display_progress)
+  } else {
+    opts <- list()
   }
-  opts <- list(progress = display_progress)
+
   n_run <- max(nrow(parameter), 1)
   t0 <- now()
   sim_result <- foreach(i_run = 1:n_run,
