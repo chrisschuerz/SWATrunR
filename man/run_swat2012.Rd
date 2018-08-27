@@ -9,9 +9,8 @@ run_swat2012(project_path, output, parameter = NULL, start_date = NULL,
   rch_out_var = NULL, sub_out_var = NULL, hru_out_var = NULL,
   hru_out_nr = NULL, abs_swat_val = NULL, run_index = NULL,
   run_path = NULL, n_thread = NULL, save_file = NULL, save_incr = FALSE,
-  save_parameter = TRUE, add_date = TRUE, simple_output = FALSE,
-  return_output = TRUE, refresh = TRUE, keep_folder = FALSE,
-  quiet = FALSE)
+  save_parameter = TRUE, add_date = TRUE, return_output = TRUE,
+  refresh = TRUE, keep_folder = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}

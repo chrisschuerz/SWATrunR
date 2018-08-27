@@ -4,8 +4,7 @@
 \alias{tidy_results}
 \title{Tidy up simulation results before returning them}
 \usage{
-tidy_results(sim_result, parameter, file_cio, save_parameter, add_date,
-  simple_output)
+tidy_results(sim_result, parameter, file_cio, save_parameter, add_date)
 }
 \arguments{
 \item{parameter}{Provided parameter set}
@@ -15,10 +14,6 @@ tidy_results(sim_result, parameter, file_cio, save_parameter, add_date,
 \item{save_parameter}{Logical. If TRUE parameters are saved in outputs}
 
 \item{add_date}{Logical. If TRUE Dates are added to the simulation results}
-
-\item{simple_output}{Logical. If TRUE and only one parameter set was used
-outputs can be simplyfied to a named list of vectors. This parameter
-overrules \code{add_date} and \code{save_parameter}.}
 
 \item{sim_results}{Extracted simulation results from the SWAT model runs}
 }

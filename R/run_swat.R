@@ -63,10 +63,6 @@
 #'   outputs.  \code{Default = TRUE}
 #' @param add_date (optional) Logical. If \code{add_date = TRUE} a date column
 #'   is added to every simulatiuon output table.  \code{Default = TRUE}
-#' @param simple_output (optional) Logical. If \code{simple_output = TRUE}
-#'   outputs are returned as as named list of results vectors. Only active if
-#'   one simulation was performed. \code{simple_output} overrules \{add_date}
-#'   and \{save_parameter}.  \code{Default = FALSE}
 #' @param return_output (optional) Logical. Whether outputs should be returned
 #'   or not. Set \code{return_out = FALSE} and provide \code{save_file} if
 #'   outputs should only be saved on hard drive.  \code{Default = TRUE}
@@ -99,8 +95,8 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                          abs_swat_val = NULL, run_index = NULL, run_path = NULL,
                          n_thread = NULL, save_file = NULL, save_incr = FALSE,
                          save_parameter = TRUE, add_date = TRUE,
-                         simple_output = FALSE, return_output = TRUE,
-                         refresh = TRUE, keep_folder = FALSE, quiet = FALSE) {
+                         return_output = TRUE, refresh = TRUE,
+                         keep_folder = FALSE, quiet = FALSE) {
 
 #-------------------------------------------------------------------------------
   # Check settings before starting to set up '.model_run'
@@ -126,7 +122,6 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   stopifnot(is.logical(save_incr))
   stopifnot(is.logical(save_parameter))
   stopifnot(is.logical(add_date))
-  stopifnot(is.logical(simple_output))
   stopifnot(is.logical(return_output))
   stopifnot(is.logical(refresh))
   stopifnot(is.logical(keep_folder))
@@ -227,7 +222,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
   ## Tidy up simulation results
   sim_result <- tidy_results(sim_result, parameter, file_cio, save_parameter,
-                             add_date, simple_output)
+                             add_date)
 
   ## Delete the parallel threads if keep_folder is not TRUE
   if(!keep_folder)unlink(run_path, recursive = TRUE)

@@ -65,7 +65,8 @@ read_output <- function(output, thread_path) {
 get_file_header <- function(output_i, fwf_pos, thread_path) {
   header <- read_fwf(file = thread_path%//%output_i, skip = 8, n_max = 1,
                      col_positions = fwf_positions(fwf_pos[[1]], fwf_pos[[2]])) %>%
-    gsub("Mg/l|mg/L|mg/kg|kg/ha|kg/h|t/ha|mic/L|\\(mm\\)|kg|cms|tons|mg|mm|km2| ", "", .)
+    gsub("Mg/l|mg/L|mg/kg|kg/ha|kg/h|t/ha|mic/L|\\(mm\\)|kg|cms|tons|mg|mm|km2| ", "", .) %>%
+    gsub(" ", "_",.)
   header[1] <- "FILE"
   return(header)
 }
@@ -157,9 +158,6 @@ evaluate_expression <- function(out_table, expression){
 #' @param file_cio Modified file.cio
 #' @param save_parameter Logical. If TRUE parameters are saved in outputs
 #' @param add_date Logical. If TRUE Dates are added to the simulation results
-#' @param simple_output Logical. If TRUE and only one parameter set was used
-#'   outputs can be simplyfied to a named list of vectors. This parameter
-#'   overrules \code{add_date} and \code{save_parameter}.
 #'
 #' @importFrom dplyr bind_cols %>%
 #' @importFrom pasta %&%
@@ -168,13 +166,9 @@ evaluate_expression <- function(out_table, expression){
 #' @keywords internal
 #'
 tidy_results <- function(sim_result, parameter, file_cio, save_parameter,
-                         add_date, simple_output) {
+                         add_date) {
   if(length(sim_result) == 1) {
-    if(simple_output) {
-      sim_result <- map(sim_result[[1]], ~.x)
-    } else {
       sim_result <- sim_result[[1]]
-    }
   } else {
     n_digit <- length(sim_result) %>% as.character(.) %>% nchar(.)
     sim_result <- sim_result %>%
@@ -186,20 +180,16 @@ tidy_results <- function(sim_result, parameter, file_cio, save_parameter,
   if(add_date) {
     sim_date <- read_date(file_cio)
 
-    if(!simple_output){
-      if(is.data.frame(sim_result)){
-        sim_result <- bind_cols(sim_date, sim_result)
-      } else {
-        sim_result <- map(sim_result, ~ bind_cols(sim_date, .x))
-      }
+    if(is.data.frame(sim_result)){
+      sim_result <- bind_cols(sim_date, sim_result)
+    } else {
+      sim_result <- map(sim_result, ~ bind_cols(sim_date, .x))
     }
   }
 
   if(save_parameter) {
-    if(!simple_output) {
-      sim_result <- list(parameter  = parameter,
-                         simulation = sim_result)
-    }
+    sim_result <- list(parameter  = parameter,
+                       simulation = sim_result)
   }
 
   return(sim_result)
