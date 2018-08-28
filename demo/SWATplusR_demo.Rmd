@@ -1,0 +1,65 @@
+---
+title: "Demo examples: use of SWATplusR"
+author: "Christoph Schuerz"
+output: 
+  html_notebook:
+    highlight: tango
+    theme: paper
+    toc: yes
+    toc_float: yes
+---
+
+# Sensitivity analysis of discharge
+
+## R packages
+```{r}
+library(SWATplusR)
+library(sensitivity)
+library(fast)
+library(tidyverse)
+library(lubridate)
+```
+
+## Discharge observation data
+For the demonstration example discharge data for the catchment outlet of the Schwechat catchment was selected providing daily mean discharge records for the period 2003-01-01 to 2012-12-31.
+
+```{r}
+obs_data <- readRDS("D:/UnLoadC3/00_SW_SWAT/var_observ/obs.rds")
+
+q_trais <- obs_data$q_trais %>% 
+  filter(date >= ymd("2003-01-01") & date <= ymd("2012-12-31"))
+
+ggplot(data = q_trais) + 
+  geom_line(aes(x = date, y = q), col = "steelblue") + 
+  theme_bw()
+```
+
+## Define Objective function
+As objective function to evaluate the simulated discharge the Nash Sutcliffe Efficiency criterion (NSE) was selected. NSE is defined as follows:
+```{r}
+nse <- function(sim, obs) {
+  1 - (sum((sim - obs)^2)/ sum((obs - mean(obs))^2))}
+```
+
+## Define the SWAT model
+To keep the SWAT model call shorter in the application the run_swat function was defined with preset parameters here:
+```{r}
+run_swat_parallel <- function(param) {
+  run_swat2012(project_path = "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru", output = list(flow = define_output(file = "rch", variable = "FLOW_OUT", unit = 3)), parameter = param, start_date = "2001-01-01", end_date = "2012-12-31", output_interval = "day", years_skip = 2, n_thread = 4, save_parameter = FALSE, refresh = TRUE, keep_folder = FALSE)
+}
+```
+
+## Sensitivity analysis using FAST
+```{r}
+fast_param <- fast_parameters(minimum = c(-0.25, -0.9, 0, 0, -2.5),
+                              maximum = c(0.25, 3, 1, 300, 2.5), 
+                              names = c("r__CNOP{[],6}.mgt", "r__SOL_AWC().sol", "v__ESCO.hru", "v__GW_DELAY.gw", "v__SFTMP.bsn"))
+
+fast_q_trais <- run_swat_parallel(fast_param)
+
+fast_q_trais <- run_swat2012(project_path = "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru", output = list(flow = define_output(file = "rch", variable = "FLOW_OUT", unit = 3)), parameter = fast_param, start_date = "2001-01-01", end_date = "2012-12-31", output_interval = "day", years_skip = 2, n_thread = 4, save_parameter = FALSE, refresh = TRUE, keep_folder = FALSE)
+```
+
+
+CNOP_till, SOL_AWC, ESCO, GW_DELAY, SFTMP
+

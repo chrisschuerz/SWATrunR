@@ -106,7 +106,7 @@ define_output <- function(file, variable = NULL, unit = NULL,
                          "dplyr::filter(!is.na(MON)) %>% ",
                          "dplyr::filter(MON > (quantile(MON, probs = 0.75, type = 3) - 300)) %>% ",
                          "dplyr::filter(MON < (quantile(MON, probs = 0.75, type = 3) + 200)) %>% ",
-                         "dplyr::select( '", variable, "' )")
+                         "dplyr::select( ", variable, " )")
   }
 
   if(length(unit) > 1){

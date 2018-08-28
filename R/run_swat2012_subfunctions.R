@@ -44,11 +44,22 @@ read_output <- function(output, thread_path) {
                       ~ get_file_header(.x, .y, thread_path))
 
   ## Read all output files, assign column names and assign output file names
-  map2(output_file, fwf_pos, ~ read_fwf(file = thread_path%//%.x,
-                                        col_positions = fwf_positions(.y[[1]], .y[[2]]),
-                                        skip = 9, guess_max = 3)) %>%
+  out_tables <- map2(output_file, fwf_pos,
+                     ~ read_fwf(file = thread_path%//%.x,
+                                col_positions = fwf_positions(.y[[1]], .y[[2]]),
+                                skip = 9, guess_max = 3)) %>%
     map2(., file_header, ~set_names(.x, .y)) %>%
     set_names(., output_file)
+
+  tables_nrow <- map(out_tables, ~nrow(.x)) %>% unlist(.)
+  if(any(tables_nrow == 0)){
+    stop("\nOne of the SWAT runs was not successful!\n"%&&%
+         "A reason can be the defined model parameters.\n"%&&%
+         "Please checkif any change in the model parametrization"%&&%
+         "Caused any parameter to be out of bounds!")
+  }
+
+  return(out_tables)
 }
 
 #' Read the column names for the SWAT output files
