@@ -82,9 +82,11 @@
 #'   variable.
 #'
 #' @importFrom doSNOW registerDoSNOW
-#' @importFrom foreach foreach %dopar% %do%
-#' @importFrom lubridate as.period interval now seconds
+#' @importFrom dplyr %>%
+#' @importFrom foreach foreach %dopar%
+#' @importFrom lubridate now
 #' @importFrom parallel detectCores makeCluster parSapply stopCluster
+#' @importFrom pasta %//%
 #' @importFrom tibble tibble
 #' @export
 
@@ -198,29 +200,19 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
   ## If not quiet a function for displaying the simulation progress is generated
   ## and provided to foreach via the SNOW options
+  n_run <- max(nrow(parameter), 1)
+  cat("Performing", n_run, ifelse(n_run == 1, "simulation", "simulations"),
+      "on", n_thread, "cores:", "\n")
   if(!quiet) {
-    display_progress <- function(n){
-      t1 <- now()
-      time_elaps  <- interval(t0,t1) %>%
-        round(.) %>%
-        as.period(.)
-      time_remain <- (as.numeric(time_elaps, "seconds")*(n_run-n)/n) %>%
-        round(.) %>%
-        seconds(.) %>%
-        as.period(., unit = "days")
-
-      cat("\r","Simulation:", n, "of", n_run,
-          "  Time elapsed:", as.character(time_elaps),
-          "  Time remaining:", as.character(time_remain),
-          "      ")
+    t0 <- now()
+    progress <- function(n){
+      display_progress(n, n_run, t0, "Simulation")
     }
-    opts <- list(progress = display_progress)
+    opts <- list(progress = progress)
   } else {
     opts <- list()
   }
 
-  n_run <- max(nrow(parameter), 1)
-  t0 <- now()
   sim_result <- foreach(i_run = 1:n_run,
   .packages = c("dplyr", "pasta", "lubridate"), .options.snow = opts) %dopar% {
   # for(i_run in 1:max(nrow(parameter), 1)) {
@@ -247,8 +239,13 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
   ## Stop cluster after parallel run
   stopCluster(cl)
+
+  ## Show total runs and elapsed time in console if not quiet
+  if(!quiet) {
+    finish_progress(n_run, t0, "simulation")
   ## Delete the time stamp t0 created for the progress estimation
-  rm(t0)
+    rm(t0)
+  }
 
   ## Tidy up simulation results
   sim_result <- tidy_results(sim_result, parameter, file_cio, save_parameter,

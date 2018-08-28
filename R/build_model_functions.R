@@ -12,6 +12,7 @@
 #'
 #' @importFrom parallel detectCores
 #' @importFrom dplyr %>% progress_estimated
+#' @importFrom lubridate now
 #' @importFrom pasta %//% %_% %&&%
 #' @keywords internal
 #'
@@ -44,7 +45,7 @@ build_model_run <- function(project_path, run_path, n_thread,
 
   if(!quiet) {
     plural <- ifelse(n_thread == 1, "", "s")
-    cat("Building"%&&%n_thread%&&%"thread"%&%plural%&&%"in '.model_run'")
+    cat("Building", n_thread, "thread"%&%plural, "in","'"%&%run_path%&%"':", "\n")
   }
 
   # Create folder structure to execute SWAT
@@ -53,8 +54,7 @@ build_model_run <- function(project_path, run_path, n_thread,
     ## To save storage do not copy allready existing output files
     swat_files <- swat_files[!grepl("output.hru|output.pst|output.rch|output.rsv|output.sed|output.std|output.sub",swat_files)]
     dir.create(run_path)
-    pb <- progress_estimated(n = n_thread)
-    pb
+    t0 <- now()
     for (i in 1:n_thread){
       ## Copy all files from the project folder to the respective thread
       dir.create(run_path%//%"thread"%_%i)
@@ -97,9 +97,9 @@ build_model_run <- function(project_path, run_path, n_thread,
       swatedit_bat[4] <- "start /min /w SWAT_Edit.exe"
       writeLines(swatedit_bat, con = run_path%//%"thread"%_%i%//%"swat_edit.bat")
 
-      pb$tick()
+      display_progress(i, n_thread, t0, "Thread")
     }
-    pb$stop()
+    finish_progress(n_thread, t0, "thread")
   }
 }
 
