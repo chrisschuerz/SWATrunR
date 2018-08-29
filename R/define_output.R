@@ -119,3 +119,24 @@ define_output <- function(file, variable = NULL, unit = NULL,
                 expr      = expression,
                 label_ind = label_ind))
 }
+
+#' Check output if is a data.frame and convert in case to named list
+#'
+#' @param output Defined output
+#'
+#' @keywords internal
+#'
+check_output <- function(output) {
+  if(is.data.frame(output)) {
+    var_name <- output$expr[1] %>%
+      strsplit(., " %>%") %>%
+      unlist(.) %>%
+      .[[length(.)]] %>%
+      gsub("dplyr\\:\\:select\\(", "", .) %>%
+      gsub("\\)", "", .) %>% trimws(., "both")
+
+    output <- list(output)
+    names(output) <- var_name
+  }
+  return(output)
+}

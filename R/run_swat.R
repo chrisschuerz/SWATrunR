@@ -136,6 +136,8 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                               rch_out_var, sub_out_var,
                               hru_out_var, hru_out_nr)
 
+  ## Convert output to named list in case single unnamed output was defined
+  output <- check_output(output)
 #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
   ## Identify the required number of parallel threads to build.

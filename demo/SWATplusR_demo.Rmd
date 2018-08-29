@@ -155,7 +155,7 @@ run_swat_calibration <- function(param) {
                n_thread = 4, 
                save_parameter = TRUE, 
                # run_path = "C:/swat_demo",
-               # quiet = TRUE,
+               quiet = TRUE,
                refresh = TRUE, keep_folder = FALSE)
 }
 
@@ -165,7 +165,7 @@ q_calibr <- run_swat_calibration(param)
 ## Evaluation of simulation runs using NSE
 In this example simulations are compared to observations at two gauges:
 ```{r}
-obs_q <- obs_data[c("q_chol", "q_trais")] %>% 
+q_obs <- obs_data[c("q_chol", "q_trais")] %>% 
   map(., ~ filter(.x, date >= ymd("2003-01-01") & 
                       date <= ymd("2012-12-31"))) 
 
@@ -173,9 +173,9 @@ obs_q <- obs_data[c("q_chol", "q_trais")] %>%
 
 The simulations at the two gauges are evalulated with the respective observed gauge data using the NSE
 ```{r}
-eval_q <- q_calibr$simulation %>% 
+q_eval <- q_calibr$simulation %>% 
   map(., ~ select(.x, -date)) %>% 
-  map2(., obs_q, ~ map_dbl(.x, function(sim,obs = .y$q){nse(sim, obs)})) %>% 
+  map2(., q_obs, ~ map_dbl(.x, function(sim,obs = .y$q){nse(sim, obs)})) %>% 
   bind_cols(.) %>% 
   set_names(., c("nse_2", "nse_3"))
 ```
@@ -183,21 +183,21 @@ eval_q <- q_calibr$simulation %>%
 ### Visualization
 #### Dotty plots
 ```{r}
-dotty_q <- plot_dotty(q_calibr$parameter, eval_q)
+q_dotty <- plot_dotty(q_calibr$parameter, q_eval)
 ```
 
 ```{r, fig.height= 6, fig.width=6}
-dotty_q$nse_2
+q_dotty$nse_2
 ```
 ```{r, fig.height= 6, fig.width=6}
-dotty_q$nse_3
+q_dotty$nse_3
 ```
 
 #### Discharge time series
 ```{r, fig.height= 4, fig.width=7.5}
-plot_timeseries(q_calibr$simulation$flow_2, obs_q$q_chol, eval_q$nse_2, ">", 0.4)
+plot_timeseries(q_calibr$simulation$flow_2, q_obs$q_chol, q_eval$nse_2, ">", 0.4)
 ```
 
 ```{r, fig.height= 4, fig.width=7.5}
-plot_timeseries(q_calibr$simulation$flow_3, obs_q$q_trais, eval_q$nse_3, ">", 0.4)
+plot_timeseries(q_calibr$simulation$flow_3, q_obs$q_trais, q_eval$nse_3, ">", 0.4)
 ```
