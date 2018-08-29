@@ -128,6 +128,7 @@ plot(sobol_q_trais)
 
 ## Parameter sets
 ```{r}
+library(lhs)
 par_bound <- tibble("r__CNOP{[],6}.mgt" = c(-0.3, -0.05),
                     "r__SOL_AWC().sol" =  c(-0.9,   1.5),
                     "v__SURLAG.bsn" =     c(   0,     1),
@@ -161,4 +162,42 @@ run_swat_calibration <- function(param) {
 q_calibr <- run_swat_calibration(param)
 ```
 
+## Evaluation of simulation runs using NSE
+In this example simulations are compared to observations at two gauges:
+```{r}
+obs_q <- obs_data[c("q_chol", "q_trais")] %>% 
+  map(., ~ filter(.x, date >= ymd("2003-01-01") & 
+                      date <= ymd("2012-12-31"))) 
 
+```
+
+The simulations at the two gauges are evalulated with the respective observed gauge data using the NSE
+```{r}
+eval_q <- q_calibr$simulation %>% 
+  map(., ~ select(.x, -date)) %>% 
+  map2(., obs_q, ~ map_dbl(.x, function(sim,obs = .y$q){nse(sim, obs)})) %>% 
+  bind_cols(.) %>% 
+  set_names(., c("nse_2", "nse_3"))
+```
+
+### Visualization
+#### Dotty plots
+```{r}
+dotty_q <- plot_dotty(q_calibr$parameter, eval_q)
+```
+
+```{r, fig.height= 6, fig.width=6}
+dotty_q$nse_2
+```
+```{r, fig.height= 6, fig.width=6}
+dotty_q$nse_3
+```
+
+#### Discharge time series
+```{r, fig.height= 4, fig.width=7.5}
+plot_timeseries(q_calibr$simulation$flow_2, obs_q$q_chol, eval_q$nse_2, ">", 0.4)
+```
+
+```{r, fig.height= 4, fig.width=7.5}
+plot_timeseries(q_calibr$simulation$flow_3, obs_q$q_trais, eval_q$nse_3, ">", 0.4)
+```
