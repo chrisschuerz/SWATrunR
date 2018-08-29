@@ -4,14 +4,14 @@
 \alias{tidy_results}
 \title{Tidy up simulation results before returning them}
 \usage{
-tidy_results(sim_result, parameter, file_cio, save_parameter, add_date)
+tidy_results(sim_result, parameter, file_cio, add_parameter, add_date)
 }
 \arguments{
 \item{parameter}{Provided parameter set}
 
 \item{file_cio}{Modified file.cio}
 
-\item{save_parameter}{Logical. If TRUE parameters are saved in outputs}
+\item{add_parameter}{Logical. If TRUE parameters are saved in outputs}
 
 \item{add_date}{Logical. If TRUE Dates are added to the simulation results}
 

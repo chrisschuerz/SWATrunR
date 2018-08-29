@@ -8,8 +8,8 @@ run_swat2012(project_path, output, parameter = NULL, start_date = NULL,
   end_date = NULL, output_interval = NULL, years_skip = NULL,
   rch_out_var = NULL, sub_out_var = NULL, hru_out_var = NULL,
   hru_out_nr = NULL, abs_swat_val = NULL, run_index = NULL,
-  run_path = NULL, n_thread = NULL, save_file = NULL, save_incr = FALSE,
-  save_parameter = TRUE, add_date = TRUE, return_output = TRUE,
+  run_path = NULL, n_thread = NULL, save_path = NULL, save_file = NULL,
+  return_output = TRUE, add_parameter = TRUE, add_date = TRUE,
   refresh = TRUE, keep_folder = FALSE, quiet = FALSE)
 }
 \arguments{
@@ -75,24 +75,19 @@ all provided parameter sets are used.}
 \item{n_thread}{(optional) Number of threads to be used for the parallel
 model run. If not provided models are run on single core}
 
-\item{save_file}{(optional) Character string that provides file path to which
-model results are saved after all model runs are completed. (Load
-\code{save_file} with \code{file <- readRDS(save_file)}).}
+\item{save_file}{(optional) Character string to define the name of the file
+where the simulations are saved.}
 
-\item{save_incr}{(optional) Logical. If \code{save_incr = TRUE} model runs
-are saved incrementally and can be restored with \code{\link{recover_run}}.
-\code{Default = FALSE}}
+\item{return_output}{(optional) Logical. Whether outputs should be returned
+or not. Set \code{return_out = FALSE} and provide \code{save_file} if
+outputs should only be saved on hard drive.  \code{Default = TRUE}}
 
-\item{save_parameter}{(optional) Logical. If \code{save_parameter = TRUE}
+\item{add_parameter}{(optional) Logical. If \code{add_parameter = TRUE}
 used parameter sets are saved and/or returned together with the model
 outputs.  \code{Default = TRUE}}
 
 \item{add_date}{(optional) Logical. If \code{add_date = TRUE} a date column
 is added to every simulatiuon output table.  \code{Default = TRUE}}
-
-\item{return_output}{(optional) Logical. Whether outputs should be returned
-or not. Set \code{return_out = FALSE} and provide \code{save_file} if
-outputs should only be saved on hard drive.  \code{Default = TRUE}}
 
 \item{refresh}{(optional) Logical. \code{refresh = TRUE} always forces that
 '.model_run' is newly written when SWAT run ins started. \code{Default =

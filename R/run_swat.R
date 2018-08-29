@@ -52,20 +52,19 @@
 #'   '.model_run' is built in the project folder.
 #' @param n_thread (optional) Number of threads to be used for the parallel
 #'   model run. If not provided models are run on single core
-#' @param save_file (optional) Character string that provides file path to which
-#'   model results are saved after all model runs are completed. (Load
-#'   \code{save_file} with \code{file <- readRDS(save_file)}).
-#' @param save_incr (optional) Logical. If \code{save_incr = TRUE} model runs
-#'   are saved incrementally and can be restored with \code{\link{recover_run}}.
-#'   \code{Default = FALSE}
-#' @param save_parameter (optional) Logical. If \code{save_parameter = TRUE}
-#'   used parameter sets are saved and/or returned together with the model
-#'   outputs.  \code{Default = TRUE}
-#' @param add_date (optional) Logical. If \code{add_date = TRUE} a date column
-#'   is added to every simulatiuon output table.  \code{Default = TRUE}
+#' @param save_path (optional) Character string to define the path where the
+#'   model runs are saved if save_file is defined. If \code{save_path = NULL}
+#'   the \code(save_file} is saved in the project_path.
+#' @param save_file (optional) Character string to define the name of the file
+#'   where the simulations are saved.
 #' @param return_output (optional) Logical. Whether outputs should be returned
 #'   or not. Set \code{return_out = FALSE} and provide \code{save_file} if
 #'   outputs should only be saved on hard drive.  \code{Default = TRUE}
+#' @param add_date (optional) Logical. If \code{add_date = TRUE} a date column
+#'   is added to every simulatiuon output table.  \code{Default = TRUE}
+#' @param add_parameter (optional) Logical. If \code{add_parameter = TRUE}
+#'   used parameter sets are saved and/or returned together with the model
+#'   outputs.  \code{Default = TRUE}
 #' @param refresh (optional) Logical. \code{refresh = TRUE} always forces that
 #'   '.model_run' is newly written when SWAT run ins started. \code{Default =
 #'   TRUE}
@@ -96,10 +95,9 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                          rch_out_var = NULL, sub_out_var = NULL,
                          hru_out_var = NULL, hru_out_nr = NULL,
                          abs_swat_val = NULL, run_index = NULL, run_path = NULL,
-                         n_thread = NULL, save_file = NULL, save_incr = FALSE,
-                         save_parameter = TRUE, add_date = TRUE,
-                         return_output = TRUE, refresh = TRUE,
-                         keep_folder = FALSE, quiet = FALSE) {
+                         n_thread = NULL, save_path = NULL, save_file = NULL,
+                         return_output = TRUE, add_parameter = TRUE, add_date = TRUE,
+                         refresh = TRUE, keep_folder = FALSE, quiet = FALSE) {
 
 #-------------------------------------------------------------------------------
   # Check settings before starting to set up '.model_run'
@@ -122,8 +120,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   stopifnot(is.character(project_path))
   stopifnot(is.character(run_path)|is.null(run_path))
   stopifnot(is.numeric(n_thread)|is.null(n_thread))
-  stopifnot(is.logical(save_incr))
-  stopifnot(is.logical(save_parameter))
+  stopifnot(is.logical(add_parameter))
   stopifnot(is.logical(add_date))
   stopifnot(is.logical(return_output))
   stopifnot(is.logical(refresh))
@@ -215,14 +212,14 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     opts <- list()
   }
 
-  sim_result <- foreach(i_run = 1:n_run,
-  .packages = c("dplyr", "pasta", "lubridate"), .options.snow = opts) %dopar% {
-  # for(i_run in 1:max(nrow(parameter), 1)) {
+  # sim_result <- foreach(i_run = 1:n_run,
+  # .packages = c("dplyr", "pasta", "lubridate"), .options.snow = opts) %dopar% {
+  for(i_run in 1:max(nrow(parameter), 1)) {
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
     thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
     thread_path <- run_path%//%thread_id
-    # thread_path <- "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru/.model_run/thread_1"
+    thread_path <- "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru/.model_run/thread_1"
 
 
     ## Modify model parameters if parameter set was provided
@@ -236,6 +233,11 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
     model_output <- read_output(output, thread_path) %>%
       extract_output(output, .)
+
+    if(!is.null(save_path)) {
+      save_run(save_path, model_output, parameter, i_run)
+    }
+
     return(model_output)
   }
 
@@ -249,13 +251,13 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     rm(t0)
   }
 
-  ## Tidy up simulation results
-  sim_result <- tidy_results(sim_result, parameter, file_cio, save_parameter,
-                             add_date)
-
   ## Delete the parallel threads if keep_folder is not TRUE
   if(!keep_folder)unlink(run_path, recursive = TRUE)
 
-  ## Return simulation results if return_outputis TRUE
-  if(return_output) return(sim_result)
+  ##Tidy up and return simulation results if return_output is TRUE
+  if(return_output) {
+    sim_result <- tidy_results(sim_result, parameter, file_cio, add_parameter,
+                               add_date)
+    return(sim_result)
+  }
 }

@@ -167,7 +167,7 @@ evaluate_expression <- function(out_table, expression){
 #' @param sim_results Extracted simulation results from the SWAT model runs
 #' @param parameter Provided parameter set
 #' @param file_cio Modified file.cio
-#' @param save_parameter Logical. If TRUE parameters are saved in outputs
+#' @param add_parameter Logical. If TRUE parameters are saved in outputs
 #' @param add_date Logical. If TRUE Dates are added to the simulation results
 #'
 #' @importFrom dplyr bind_cols %>%
@@ -176,7 +176,7 @@ evaluate_expression <- function(out_table, expression){
 #' @importFrom tibble as_tibble
 #' @keywords internal
 #'
-tidy_results <- function(sim_result, parameter, file_cio, save_parameter,
+tidy_results <- function(sim_result, parameter, file_cio, add_parameter,
                          add_date) {
   if(length(sim_result) == 1) {
       sim_result <- sim_result[[1]]
@@ -198,7 +198,7 @@ tidy_results <- function(sim_result, parameter, file_cio, save_parameter,
     }
   }
 
-  if(save_parameter & !is.null(parameter)) {
+  if(add_parameter & !is.null(parameter)) {
     sim_result <- list(parameter  = parameter,
                        simulation = sim_result)
   }
