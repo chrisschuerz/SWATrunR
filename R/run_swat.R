@@ -179,9 +179,16 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
       unlink(run_path, recursive = TRUE)
       build_model_run(project_path, run_path, n_thread, abs_swat_val, quiet)
     }
-
+#-------------------------------------------------------------------------------
+  # Write files
   ## Write file.cio
   write_file_cio(run_path, file_cio)
+
+  ## Initialize the save_file if defined
+  if(!is.null(save_file)) {
+    save_path <- set_save_path(project_path, save_path, save_file)
+    initialize_save_file()
+  }
 
 #-------------------------------------------------------------------------------
   # Initiate foreach loop to run SWAT models
@@ -212,14 +219,14 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     opts <- list()
   }
 
-  # sim_result <- foreach(i_run = 1:n_run,
-  # .packages = c("dplyr", "pasta", "lubridate"), .options.snow = opts) %dopar% {
-  for(i_run in 1:max(nrow(parameter), 1)) {
+  sim_result <- foreach(i_run = 1:n_run,
+  .packages = c("dplyr", "pasta", "lubridate"), .options.snow = opts) %dopar% {
+  # for(i_run in 1:max(nrow(parameter), 1)) {
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
     thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
     thread_path <- run_path%//%thread_id
-    thread_path <- "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru/.model_run/thread_1"
+    # thread_path <- "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru/.model_run/thread_1"
 
 
     ## Modify model parameters if parameter set was provided
