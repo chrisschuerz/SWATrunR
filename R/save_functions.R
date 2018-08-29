@@ -81,7 +81,7 @@ initialize_save_file <- function(save_path, parameter, file_cio) {
     }
   }
 
-  date <- read_date(file_cio)
+  date <- read_date(file_cio) %>%
     mutate(year  = year(date),
            month = month(date),
            day   = day(date),

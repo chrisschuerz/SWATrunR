@@ -187,7 +187,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## Initialize the save_file if defined
   if(!is.null(save_file)) {
     save_path <- set_save_path(project_path, save_path, save_file)
-    initialize_save_file()
+    initialize_save_file(save_path, parameter, file_cio)
   }
 
 #-------------------------------------------------------------------------------
