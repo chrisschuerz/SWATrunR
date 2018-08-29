@@ -201,9 +201,9 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## If not quiet a function for displaying the simulation progress is generated
   ## and provided to foreach via the SNOW options
   n_run <- max(nrow(parameter), 1)
-  cat("Performing", n_run, ifelse(n_run == 1, "simulation", "simulations"),
-      "on", n_thread, "cores:", "\n")
   if(!quiet) {
+    cat("Performing", n_run, ifelse(n_run == 1, "simulation", "simulations"),
+        "on", n_thread, "cores:", "\n")
     t0 <- now()
     progress <- function(n){
       display_progress(n, n_run, t0, "Simulation")

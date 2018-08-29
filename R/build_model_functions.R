@@ -53,7 +53,7 @@ build_model_run <- function(project_path, run_path, n_thread,
     swat_files <- dir(project_path, full.names = TRUE)
     ## To save storage do not copy allready existing output files
     swat_files <- swat_files[!grepl("output.hru|output.pst|output.rch|output.rsv|output.sed|output.std|output.sub",swat_files)]
-    dir.create(run_path)
+    dir.create(run_path, recursive = TRUE)
     t0 <- now()
     for (i in 1:n_thread){
       ## Copy all files from the project folder to the respective thread
@@ -96,10 +96,13 @@ build_model_run <- function(project_path, run_path, n_thread,
       swatedit_bat <- swat_bat
       swatedit_bat[4] <- "start /min /w SWAT_Edit.exe"
       writeLines(swatedit_bat, con = run_path%//%"thread"%_%i%//%"swat_edit.bat")
-
-      display_progress(i, n_thread, t0, "Thread")
+      if(!quiet) {
+        display_progress(i, n_thread, t0, "Thread")
+      }
     }
-    finish_progress(n_thread, t0, "thread")
+    if(!quiet){
+      finish_progress(n_thread, t0, "thread")
+    }
   }
 }
 
