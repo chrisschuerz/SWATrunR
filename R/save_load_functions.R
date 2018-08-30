@@ -106,3 +106,62 @@ initialize_save_file <- function(save_path, parameter, file_cio) {
   }
   dbDisconnect(output_con)
 }
+
+scan_swat_run <- function(save_dir) {
+  # Acquire the paths of all '.sqlite' in the provided save folder paths
+  sq_file <- save_dir %>%
+    map(., ~list.files(path = .x, pattern = ".sqlite$", full.names = TRUE)) %>%
+    unlist(.)
+
+  # split the files into parameter/date files and simulation files
+  par_dat_file <- sq_file[grepl("par_dat.sqlite$", sq_file)]
+  sim_file <- sq_file[!grepl("par_dat.sqlite$", sq_file)]
+
+
+  par_dat_con <- map(par_dat_file, ~ dbConnect(SQLite(), .x))
+  par_dat_db <- map(par_dat_con, ~src_dbi(.x))
+
+  par_data <- map(par_dat_con, ~tbl(.x, "parameter") %>% collect(.))
+  if(!is_identical(par_data)) {
+    stop("The parameter sets in the provided save folders differ!")
+  }
+
+  date_data <- map(par_dat_con, ~tbl(.x, "date") %>% collect(.))
+  if(!is_identical(date_data)) {
+    stop("The dates in the provided save folders differ!")
+  }
+
+
+  sim_con <- map(sim_file, ~ dbConnect(SQLite(), .x))
+  sim_db <- map(sim_con, ~src_dbi(.x))
+
+  map(sim_db, ~src_tbls(.x)) %>%
+    map(.,     ~tibble(tbl_name = .x,
+                       variable = strsplit(tbl_name, "\\$\\$from\\$\\$") %>%
+                                    map(., ~.x[1]) %>%
+                                    unlist(.),
+                       run      = strsplit(tbl_name, "\\$\\$from\\$\\$") %>%
+                                    map(., ~.x[2]) %>%
+                                    unlist(.) %>%
+                                    gsub("run_", "", .) %>%
+                                    as.integer(.))) %>%
+    map2(., 1:length(.), ~ mutate(.x, con_number = .y)) %>%
+    bind_rows(.)
+
+}
+
+merge_swat_run <- function(save_dir) {
+
+}
+
+load_swat_run <- function(save_dir, variable = NULL, run = NULL) {
+
+}
+
+
+is_identical <- function(tbl_list) {
+  tbl_list %>%
+    map2(.,.[1], ~identical(.x,.y)) %>%
+    unlist(.) %>%
+    all(.)
+}

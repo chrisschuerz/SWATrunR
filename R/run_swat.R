@@ -12,7 +12,7 @@
 #' @param parameter (optional) SWAT model parameters either provided as named
 #'   vector or data.frame. If \code{parameter} is provided respective parameters
 #'   are modified accordingly.
-#' @param start_date (ptional) Start date of the SWAT simulation. Provided as
+#' @param start_date (optional) Start date of the SWAT simulation. Provided as
 #'   character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
 #'   project are located.
 #' @param end_date (optional) End date of the SWAT simulation. Provided as
