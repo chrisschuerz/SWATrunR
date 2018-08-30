@@ -242,7 +242,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
       extract_output(output, .)
 
     if(!is.null(save_path)) {
-      save_run(save_path, model_output, parameter, i_run)
+      save_run(save_path, model_output, parameter, i_run, thread_id)
     }
 
     return(model_output)

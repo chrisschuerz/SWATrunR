@@ -4,7 +4,7 @@
 \alias{set_save_path}
 \title{Set the save path to the sqlite data base file}
 \usage{
-set_save_path(project_path, save_path, save_file)
+set_save_path(project_path, save_path, save_dir)
 }
 \arguments{
 \item{project_path}{Character string. Path of SWAT project}
@@ -12,7 +12,7 @@ set_save_path(project_path, save_path, save_file)
 \item{save_path}{(optional) character string. save path if different to
 project path}
 
-\item{save_file}{character string. Name of the sqlite data base}
+\item{save_dir}{character string. Name of the sqlite data base directory}
 }
 \description{
 Set the save path to the sqlite data base file

@@ -6,12 +6,14 @@
 #' @param i_run The i'th run of the SWAT simulation
 #'
 #' @importFrom dplyr copy_to src_sqlite %>%
-#' @importFrom pasta %&%
+#' @importFrom dbplyr src_dbi
+#' @importFrom pasta %&% %_% %.%
 #' @importFrom purrr map map2 set_names
+#' @importFrom RSQLite dbConnect dbDisconnect SQLite
 #' @importFrom tibble tibble
 #' @keywords internal
 #'
-save_run <- function(save_path, model_output, parameter, i_run) {
+save_run <- function(save_path, model_output, parameter, i_run, i_thread) {
   if(is.data.frame(parameter)) {
     n_digit <- parameter %>%
       nrow(.) %>%
@@ -23,10 +25,13 @@ save_run <- function(save_path, model_output, parameter, i_run) {
     map(.,  ~tibble(.x) %>% set_names(.,run_name)) %>%
     set_names(names(.)%&%"$$from$$"%&%run_name)
 
-  output_db <- src_sqlite(save_path)
+  output_con <- dbConnect(SQLite(), save_path%//%"sim"%_%i_thread%.%"sqlite")
+  output_db <- src_dbi(output_con)
 
   map2(save_list, names(save_list),
        ~copy_to(dest = output_db, df = .x, name = .y, temporary = F))
+
+  dbDisconnect(output_con)
 }
 
 #' Set the save path to the sqlite data base file
@@ -34,16 +39,16 @@ save_run <- function(save_path, model_output, parameter, i_run) {
 #' @param project_path Character string. Path of SWAT project
 #' @param save_path (optional) character string. save path if different to
 #'   project path
-#' @param save_file character string. Name of the sqlite data base
+#' @param save_dir character string. Name of the sqlite data base directory
 #'
-#' @importFrom pasta %.% %//%
+#' @importFrom pasta %//%
 #' @keywords internal
 #'
-set_save_path <- function(project_path, save_path, save_file) {
-  if(!grepl("\\.sqlite$", save_file)) save_file <- save_file%.%"sqlite"
+set_save_path <- function(project_path, save_path, save_dir) {
   if(is.null(save_path)) save_path <- project_path
-
-  return(save_path%//%save_file)
+  save_path <- save_path%//%save_dir
+  dir.create(save_path, recursive = TRUE)
+  return(save_path)
 }
 
 #' Initialize the data base wher model outputs are saved
@@ -53,16 +58,15 @@ set_save_path <- function(project_path, save_path, save_file) {
 #' @param file_cio The modified file.cio required to calculate the date
 #'
 #' @importFrom dplyr collect copy_to mutate select src_sqlite tbl %>%
+#' @importFrom dbplyr src_dbi
 #' @importFrom lubridate year month day hour minute second
 #' @importFrom pasta %.% %//%
+#' @importFrom RSQLite dbConnect dbDisconnect SQLite
 #' @keywords internal
 #'
 initialize_save_file <- function(save_path, parameter, file_cio) {
-  if(file.exists(save_path)){
-    output_db <- src_sqlite(save_path)
-  } else {
-    output_db <- src_sqlite(save_path, create = TRUE)
-  }
+  output_con <- dbConnect(SQLite(), save_path%//%"par_dat.sqlite")
+  output_db <- src_dbi(output_con)
 
   table_names <- src_tbls(output_db)
 
@@ -100,4 +104,5 @@ initialize_save_file <- function(save_path, parameter, file_cio) {
     copy_to(dest = output_db, df = date,
             name = "date", temporary = FALSE)
   }
+  dbDisconnect(output_con)
 }

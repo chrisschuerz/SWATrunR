@@ -4,7 +4,7 @@
 \alias{save_run}
 \title{Save results of model run i in existing sql data base}
 \usage{
-save_run(save_path, model_output, parameter, i_run)
+save_run(save_path, model_output, parameter, i_run, i_thread)
 }
 \arguments{
 \item{save_path}{Path of the sql data base}
