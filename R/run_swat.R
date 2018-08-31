@@ -263,7 +263,8 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
   ##Tidy up and return simulation results if return_output is TRUE
   if(return_output) {
-    sim_result <- tidy_results(sim_result, parameter, file_cio, add_parameter,
+    date <- read_date(file_cio)
+    sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
                                add_date)
     return(sim_result)
   }

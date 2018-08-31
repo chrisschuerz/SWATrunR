@@ -176,7 +176,7 @@ evaluate_expression <- function(out_table, expression){
 #' @importFrom tibble as_tibble
 #' @keywords internal
 #'
-tidy_results <- function(sim_result, parameter, file_cio, add_parameter,
+tidy_results <- function(sim_result, parameter, date, add_parameter,
                          add_date) {
   if(length(sim_result) == 1) {
       sim_result <- sim_result[[1]]
@@ -189,7 +189,7 @@ tidy_results <- function(sim_result, parameter, file_cio, add_parameter,
   }
 
   if(add_date) {
-    sim_date <- read_date(file_cio)
+    sim_date <- date
 
     if(is.data.frame(sim_result)){
       sim_result <- bind_cols(sim_date, sim_result)
