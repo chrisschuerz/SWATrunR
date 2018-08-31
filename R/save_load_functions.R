@@ -117,13 +117,10 @@ initialize_save_file <- function(save_path, parameter, file_cio) {
 #' @param add_date Logical. If \code{add_date = TRUE} a date column is added to
 #'   the simulation results of each variable
 #'
-#' @importFrom dplyr %>%
-#' @importFrom dbplyr src_dbi
-#' @importFrom pasta %&% %_% %.%
-#' @importFrom purrr map map2 set_names
-#' @importFrom RSQLite dbConnect dbDisconnect SQLite
-#' @importFrom tibble tibble
-#' @keywords internal
+#' @importFrom dplyr filter %>%
+#' @importFrom purrr map walk
+#' @importFrom RSQLite dbDisconnect
+#' @export
 #'
 load_swat_run <- function(save_dir, variable = NULL, run = NULL,
                           add_parameter = TRUE, add_date = TRUE) {
@@ -148,6 +145,19 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
   return(sim_results)
 }
 
+#' Helper function to collect a table from a sqlite date base according to the
+#' information given in one line of the table_overview
+#'
+#' @param sim_i One line of the overview_table providing with the columns
+#'   tbl_name (the name of a table in one of the sqlite db's), var (name of the
+#'   variable), run_label, run_num (the numeric representation of a run), and
+#'   the con_number (providing the number of the data base connection that
+#'   stores the results for this variable and run)
+#'
+#' @importFrom dplyr collect tbl %>%
+#' @importFrom purrr set_names
+#' @keywords internal
+#'
 collect_sim_i <- function(sim_i){
   con <- save_list$sim_db[[sim_i$con_number]]
   tbl <- sim_i$tbl_name
@@ -157,11 +167,35 @@ collect_sim_i <- function(sim_i){
     set_names(.,var_name)
 }
 
+#' Wrapper for sim_i that collects all variables for a simulation run
+#'
+#' @param sim_i same as sim_i above but multiple lines where each line is a
+#'   variable for the run_i
+#'
+#' @importFrom dplyr bind_cols %>%
+#' @importFrom purrr map
+#' @keywords internal
+#'
 collect_sim_run <- function(sim_run) {
   map(sim_run, collect_sim_i) %>%
     bind_cols(.)
 }
 
+#' Retrieve information on saved SWAT runs
+#'
+#' Scan one or multiple save folders that belong to the same SWAT simulation and
+#' get information on the simulation period, simulated variables and used
+#' parameter sets.
+#'
+#' @param save_dir Character string or vector of character strings that provide
+#'   the path/s to the save folder/s.
+#'
+#' @importFrom dplyr bind_cols %>%
+#' @importFrom pasta %&%
+#' @importFrom purrr map walk walk2
+#' @importFrom RSQLite dbDisconnect
+#' @export
+#'
 scan_swat_run <- function(save_dir) {
   save_list <- scan_save_files(save_dir)
 
@@ -204,6 +238,19 @@ scan_swat_run <- function(save_dir) {
   walk(save_list$sim_con, ~ dbDisconnect(.x))
 }
 
+#' Scan the save folders of a SWAT run and return all meta data of this
+#' simulation
+#'
+#' @param save_dir Character string or vector of character strings that provide
+#'   the path/s to the save folder/s.
+#'
+#' @importFrom dplyr bind_rows collect filter mutate src_tbls tbl %>%
+#' @importFrom dbplyr src_dbi
+#' @importFrom purrr map map2
+#' @importFrom RSQLite dbConnect SQLite
+#' @importFrom tibble tibble
+#' @keywords internal
+#'
 scan_save_files <- function(save_dir) {
   # Acquire the paths of all '.sqlite' in the provided save folder paths
   sq_file <- save_dir %>%
@@ -269,6 +316,14 @@ merge_swat_run <- function(save_dir) {
 
 }
 
+#' Check if tabls in a list are identical
+#'
+#' @param tbl_list List of data.frames
+#'
+#' @importFrom dplyr %>%
+#' @importFrom purrr map
+#' @keywords internal
+#'
 is_identical <- function(tbl_list) {
   tbl_list %>%
     map2(.,.[1], ~identical(.x,.y)) %>%
@@ -276,6 +331,15 @@ is_identical <- function(tbl_list) {
     all(.)
 }
 
+#' Find simulation runs that are duplicated in the provided sqlite data bases
+#'
+#' @param tbl overview table that provides meta data for all simulation runs for
+#'   all variables saved in the data bases
+#'
+#' @importFrom dplyr %>%
+#' @importFrom purrr map
+#' @keywords internal
+#'
 find_duplicate <- function(tbl) {
   tbl %>%
     split(., as.factor(.$var)) %>%
@@ -283,6 +347,16 @@ find_duplicate <- function(tbl) {
     map(., ~.x[.x > 1])
 }
 
+#' Convert the information on available runs for the simulated variables into
+#' strings that are printed
+#'
+#' @param tbl overview table that provides meta data for all simulation runs for
+#'   all variables saved in the data bases
+#'
+#' @importFrom dplyr %>%
+#' @importFrom purrr map map2
+#' @keywords internal
+#'
 display_runs <- function(tbl) {
   runs <- tbl %>%
     split(., as.factor(.$var)) %>%
@@ -300,6 +374,14 @@ display_runs <- function(tbl) {
   })
 }
 
+#' Convert the information on the dates for the simulated variables into strings
+#' that are printed
+#'
+#' @param date_data Tables holding the dates loaded from the sqlite data bases
+#'
+#' @importFrom dplyr filter %>%
+#' @keywords internal
+#'
 display_date <- function(date_data) {
   date_data[[1]] %>%
     convert_date(.) %>%
@@ -309,6 +391,17 @@ display_date <- function(date_data) {
     paste(., collapse = " to ")
 }
 
+#' Convert dates from date format to year/month/day/hour/min/sec columns or vice
+#' versa
+#'
+#' @param date_tbl Table holding either one date column or the splitted date
+#'   columns
+#'
+#' @importFrom dplyr transmute %>%
+#' @importFrom lubridate year month day hour minute second ymd_hms
+#' @importFrom pasta %//% %&&%
+#' @keywords internal
+#'
 convert_date <- function(date_tbl) {
   if(ncol(date_tbl) == 1){
     date_tbl %>%
