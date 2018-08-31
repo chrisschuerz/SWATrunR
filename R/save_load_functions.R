@@ -86,13 +86,7 @@ initialize_save_file <- function(save_path, parameter, file_cio) {
   }
 
   date <- read_date(file_cio) %>%
-    mutate(year  = year(date),
-           month = month(date),
-           day   = day(date),
-           hour  = hour(date),
-           min   = minute(date),
-           sec   = second(date)) %>%
-    select(-date)
+    convert_date(.)
 
   if("date"%in% table_names) {
     date_db <- tbl(output_db, "date") %>% collect(.)
@@ -135,7 +129,7 @@ scan_swat_run <- function(save_dir) {
   sim_con <- map(sim_file, ~ dbConnect(SQLite(), .x))
   sim_db <- map(sim_con, ~src_dbi(.x))
 
-  map(sim_db, ~src_tbls(.x)) %>%
+  table_overview <- map(sim_db, ~src_tbls(.x)) %>%
     map(.,     ~tibble(tbl_name = .x,
                        variable = strsplit(tbl_name, "\\$\\$from\\$\\$") %>%
                                     map(., ~.x[1]) %>%
@@ -146,8 +140,28 @@ scan_swat_run <- function(save_dir) {
                                     gsub("run_", "", .) %>%
                                     as.integer(.))) %>%
     map2(., 1:length(.), ~ mutate(.x, con_number = .y)) %>%
-    bind_rows(.)
+    bind_rows(.) %>%
+    filter(!is.na(run))
 
+  duplicates <- find_duplicate(table_overview)
+  run_display <- present_runs(table_overview)
+  date_display <- present_date(date_data)
+
+  name_length <- run_display %>%
+    names(.) %>%
+    map(., ~nchar(.x)) %>%
+    unlist(.) %>%
+    max(.) %>%
+    paste0("%-", ., "s")
+
+  cat("Simulation period:\n", date_display, "\n")
+  cat("\n")
+  cat("Simulated variables:\n")
+  walk2(names(run_display), run_display,
+        ~ cat(sprintf(name_length, .x)%&%":", "runs", .y,"\n"))
+  cat("\n")
+  cat("Parameter set:\n")
+  par_data[[1]]
 }
 
 merge_swat_run <- function(save_dir) {
@@ -164,4 +178,52 @@ is_identical <- function(tbl_list) {
     map2(.,.[1], ~identical(.x,.y)) %>%
     unlist(.) %>%
     all(.)
+}
+
+find_duplicate <- function(tbl) {
+  tbl %>%
+    split(., as.factor(.$variable)) %>%
+    map(., ~table(.x$run)) %>%
+    map(., ~.x[.x > 1])
+}
+
+present_runs <- function(tbl) {
+  runs <- tbl %>%
+    split(., as.factor(.$variable)) %>%
+    map(., ~table(.x$run)) %>%
+    map(., ~ names(.x) %>% as.numeric(.))
+
+  runs_consistent <- map(runs, ~ diff(.x) %>% .[.!= 1])
+
+  map2(runs, runs_consistent, function(x,y){
+    if(length(y) == 0) {
+      paste(min(x), max(x), sep = " to ")
+    } else {
+      paste(c(x[1:10], "..."), collapse = ", ")
+    }
+  })
+}
+
+present_date <- function(date_data) {
+  date_data[[1]] %>%
+    convert_date(.) %>%
+    filter(date == min(date) | date == max(date)) %>%
+    .$date %>%
+    as.character(.) %>%
+    paste(., collapse = " to ")
+}
+
+convert_date <- function(date_tbl) {
+  if(ncol(date) == 1){
+    date_tbl %>%
+      transmute(year  = year(date),
+                month = month(date),
+                day   = day(date),
+                hour  = hour(date),
+                min   = minute(date),
+                sec   = second(date))
+  } else {
+    date_tbl %>%
+      transmute(date = ymd_hms(year%//%month%//%day%&&%hour%&&%min%&&%sec))
+  }
 }
