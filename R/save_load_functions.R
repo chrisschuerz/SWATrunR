@@ -194,6 +194,7 @@ collect_sim_run <- function(sim_run) {
 #' @importFrom pasta %&%
 #' @importFrom purrr map walk walk2
 #' @importFrom RSQLite dbDisconnect
+#' @importFrom tibble tibble
 #' @export
 #'
 scan_swat_run <- function(save_dir) {
@@ -228,8 +229,8 @@ scan_swat_run <- function(save_dir) {
   }
   cat("\n")
   cat("Parameter set:\n")
-  if(par_available) {
-    par_data[[1]]
+  if(!is.null(save_list$par_data[[1]])) {
+    print(save_list$par_data[[1]])
   } else {
     cat("No data set provided in the save files.")
   }
@@ -343,7 +344,7 @@ is_identical <- function(tbl_list) {
 find_duplicate <- function(tbl) {
   tbl %>%
     split(., as.factor(.$var)) %>%
-    map(., ~table(.x$run)) %>%
+    map(., ~table(.x$run_num)) %>%
     map(., ~.x[.x > 1])
 }
 
@@ -360,7 +361,7 @@ find_duplicate <- function(tbl) {
 display_runs <- function(tbl) {
   runs <- tbl %>%
     split(., as.factor(.$var)) %>%
-    map(., ~table(.x$run)) %>%
+    map(., ~table(.x$run_num)) %>%
     map(., ~ names(.x) %>% as.numeric(.))
 
   runs_consistent <- map(runs, ~ diff(.x) %>% .[.!= 1])
