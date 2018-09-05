@@ -1,7 +1,7 @@
 #' Generate folder structure for parallel SWAT execution
 #'
 #' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
-#' @param project_path Path where the '.model_run' folder is built. If NULL the
+#' @param run_path Path where the '.model_run' folder is built. If NULL the
 #'   executable model is built in the 'project_path'
 #' @param n_thread Number of parallel threads that will be created. This number
 #'   must be in accordance to the number of cores of the PC
@@ -11,7 +11,7 @@
 #'   custom one found in this path if provided
 #'
 #' @importFrom parallel detectCores
-#' @importFrom dplyr %>% progress_estimated
+#' @importFrom dplyr %>%
 #' @importFrom lubridate now
 #' @importFrom pasta %//% %_% %&&%
 #' @keywords internal
