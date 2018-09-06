@@ -4,8 +4,9 @@
 #'
 #' @importFrom dplyr %>%
 #' @importFrom purrr map set_names
-#' @keywords internal
+#' @export
 #'
+
 read_par_files <- function(project_path) {
   file_meta <- read_file_meta(project_path)
 
@@ -87,7 +88,7 @@ get_hru_meta <- function(hru_file_i) {
 #'
 #' @importFrom dplyr %>% filter
 #' @importFrom pasta %//%
-#'  @importFrom purrr map map_dfc set_names
+#' @importFrom purrr map map_dfc set_names
 #' @importFrom readr read_lines
 #' @importFrom tibble as_tibble
 #' @keywords internal
@@ -192,7 +193,7 @@ read_mgt <- function(file_meta, project_path) {
 
   file_sel <- filter(file_meta, file_sfx == "mgt")
   col_pos   <-  c(1, 4, 7, 15, 17, 21, 24, 26, 38, 44, 55, 59, 65, 70)
-  par_name  <- c("MON", "DAY", "HU", "MGT_OP", "MGT"%&%1:9, "file_code")
+  par_name  <- c("mon", "day", "hu", "op", "mgt"%&%1:9, "file_code")
 
   par_table <- map(file_list$file, ~ get_table(.x, 31:length(.x), col_pos)) %>%
     map(., t) %>%
@@ -267,7 +268,7 @@ get_table <- function(file_i, table_pos, col_pos) {
 #' @param file_i The i'th parameter file for a file suffix
 #' @param start Index vector indicating the start values of a value
 #' @param end Index vector indicating the end values of a value
-#' @importFrom purrr map2_dfc
+#' @importFrom purrr map2_chr
 #' @keywords internal
 #'
 split_line <- function(chr, start, end) {

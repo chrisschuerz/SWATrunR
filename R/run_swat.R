@@ -54,7 +54,7 @@
 #'   model run. If not provided models are run on single core
 #' @param save_path (optional) Character string to define the path where the
 #'   model runs are saved if save_file is defined. If \code{save_path = NULL}
-#'   the \code(save_file} is saved in the project_path.
+#'   the \code{save_file} is saved in the project_path.
 #' @param save_file (optional) Character string to define the name of the file
 #'   where the simulations are saved.
 #' @param return_output (optional) Logical. Whether outputs should be returned

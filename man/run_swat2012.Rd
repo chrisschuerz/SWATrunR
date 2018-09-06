@@ -75,6 +75,10 @@ all provided parameter sets are used.}
 \item{n_thread}{(optional) Number of threads to be used for the parallel
 model run. If not provided models are run on single core}
 
+\item{save_path}{(optional) Character string to define the path where the
+model runs are saved if save_file is defined. If \code{save_path = NULL}
+the \code{save_file} is saved in the project_path.}
+
 \item{save_file}{(optional) Character string to define the name of the file
 where the simulations are saved.}
 
@@ -113,4 +117,3 @@ Basic settings for the SWAT run such as the simulation period or the time
 interval for the outputs can be done directly. SWAT simulation outputs can be
 defined that are returned for defined parameter sets.
 }
-

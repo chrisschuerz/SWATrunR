@@ -16,4 +16,3 @@ Convert dates from date format to year/month/day/hour/min/sec columns or vice
 versa
 }
 \keyword{internal}
-

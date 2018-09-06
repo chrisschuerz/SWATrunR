@@ -16,4 +16,3 @@ output_table}
 Evaluate the expression defined for a variable in 'output'
 }
 \keyword{internal}
-
