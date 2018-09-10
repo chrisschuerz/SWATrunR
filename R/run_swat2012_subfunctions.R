@@ -55,8 +55,8 @@ read_output <- function(output, thread_path) {
   if(any(tables_nrow == 0)){
     stop("\nOne of the SWAT runs was not successful!\n"%&&%
          "A reason can be the defined model parameters.\n"%&&%
-         "Please checkif any change in the model parametrization"%&&%
-         "Caused any parameter to be out of bounds!")
+         "Please check if any change in the model parametrization"%&&%
+         "caused any parameter to be out of bounds!")
   }
 
   return(out_tables)

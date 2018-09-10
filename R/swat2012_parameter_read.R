@@ -37,7 +37,7 @@ read_par_files <- function(project_path) {
 read_file_meta <- function(project_path) {
   tibble(file = list.files(project_path) %>%  .[!grepl("output", .)],
          file_code = gsub("\\..*$", "", file),
-         file_sfx  = gsub(".*\\.","", file)) %>%
+         file_name  = gsub(".*\\.","", file)) %>%
     left_join(., read_hru(project_path), by = "file_code") %>%
     mutate(modified = FALSE)
 }
