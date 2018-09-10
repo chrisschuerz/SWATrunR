@@ -2,18 +2,18 @@ library(tidyverse)
 library(pasta)
 
 
-translate_parameter_constraints <- function(parameter) {
+translate_parameter_constraints <- function(par) {
   bool_op <- "\\=|\\=\\=|\\!\\=|\\<|\\<\\=|\\>|\\>\\="
 
-  model_par <- tibble(par_name  = gsub("\\:\\:.*", "", a) %>% trimws(.),
-                      parameter = gsub(".*\\:\\:|\\|.*","", a) %>% trimws(.)) %>%
+  model_par <- tibble(par_name  = gsub("\\:\\:.*", "", par) %>% trimws(.),
+                      parameter = gsub(".*\\:\\:|\\|.*","", par) %>% trimws(.)) %>%
     mutate(file_name  = gsub(".*\\.","", parameter),
            parameter = gsub("\\..*","", parameter),
-           change    = gsub(".*change|\\|.*", "", a) %>%
+           change    = gsub(".*change|\\|.*", "", par) %>%
              gsub(bool_op, "",.) %>%
              trimws(.))
 
-  filter_expr <- a %>%
+  filter_expr <- par %>%
     strsplit(., "\\|") %>%
     map(., ~ .x[2:length(.x)] %>% .[!grepl("change",.)])
 
@@ -32,8 +32,9 @@ translate_parameter_constraints <- function(parameter) {
     map_df(., as_tibble)
 
   model_par <- map2(filter_op, filter_val, paste) %>%
-    map2(.,filter_var, ~ as.list(.x) %>% set_names(., .y) %>% as_tibble(.)) %>%
+    map2(.,filter_var, ~ as.list(c(NA,.x)) %>% set_names(., c("idx",.y)) %>% as_tibble(.)) %>%
     bind_rows(.) %>%
+    select(-idx) %>%
     select(one_of("subbasin", "hru", "luse", "soil", "slope"), everything()) %>%
     bind_cols(model_par, ., expressions)
 
@@ -50,7 +51,8 @@ concat_values <- function(x){
 
 build_expr <- function(var, val, op) {
   is_file_var <- var %in% c("subbasin", "hru", "luse", "soil", "slope")
-  file_filter <- pmap_chr(list(var[is_file_var], val[is_file_var], op[is_file_var]),
+
+    file_filter <- pmap_chr(list(var[is_file_var], val[is_file_var], op[is_file_var]),
            build_filter) %>%
     paste(., collapse = " %>% ")
   spec_filter <- pmap_chr(list(var[!is_file_var], val[!is_file_var], op[!is_file_var]),
