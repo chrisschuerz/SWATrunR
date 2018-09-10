@@ -3,15 +3,34 @@ library(pasta)
 
 
 translate_parameter_constraints <- function(par) {
+
+  has_par_name <- map_lgl(par, ~ grepl("\\:\\:", .x))
+  has_change   <- map_lgl(par, ~ grepl("change", .x))
+
+  if(any(!has_change)) stop("Type of change must be provided for all parameters!")
+
   bool_op <- "\\=|\\=\\=|\\!\\=|\\<|\\<\\=|\\>|\\>\\="
 
   model_par <- tibble(par_name  = gsub("\\:\\:.*", "", par) %>% trimws(.),
                       parameter = gsub(".*\\:\\:|\\|.*","", par) %>% trimws(.)) %>%
     mutate(file_name  = gsub(".*\\.","", parameter),
-           parameter = gsub("\\..*","", parameter),
-           change    = gsub(".*change|\\|.*", "", par) %>%
+           parameter  = gsub("\\..*","", parameter),
+           par_name   = ifelse(has_par_name, par_name, parameter),
+           change     = gsub(".*change|\\|.*", "", par) %>%
              gsub(bool_op, "",.) %>%
-             trimws(.))
+             trimws(.) %>%
+             substr(., 1, 3))
+
+  is_correct_change <- model_par$change %in% c("rel", "abs", "rep")
+  if(any(!is_correct_change)) {
+    stop("Wrong input for change type. Must be either 'rel', 'abs', or 'rep'.")
+  }
+
+  unique_par <- table(model_par$par_name)
+  if(any(unique_par > 1)) {
+    stop("Duplicated parameter names found! Define individual names with:\n"%&%
+         "par_name::parameter|...")
+  }
 
   filter_expr <- par %>%
     strsplit(., "\\|") %>%
