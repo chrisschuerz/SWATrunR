@@ -26,6 +26,15 @@ translate_parameter_constraints <- function(par) {
     stop("Wrong input for change type. Must be either 'rel', 'abs', or 'rep'.")
   }
 
+  is_correct_file <- model_par$file_name %in%
+    c("pnd", "rte", "sub", "swq", "hru", "gw", "sdr", "sep", "bsn", "wwq",
+      "res", "ops", "sol", "mgt", "chm")
+
+  if(any(!is_correct_file)) {
+    stop(paste(model_par$file_name[!is_correct_file], collapse = ", ")%&&%
+         "files are no valid file type!")
+  }
+
   unique_par <- table(model_par$par_name)
   if(any(unique_par > 1)) {
     stop("Duplicated parameter names found! Define individual names with:\n"%&%
