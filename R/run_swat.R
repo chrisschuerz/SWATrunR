@@ -102,13 +102,20 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 #-------------------------------------------------------------------------------
   # Check settings before starting to set up '.model_run'
   ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
-  if(!is.null(parameter)) check_parameter(parameter, abs_swat_val)
+  if(!is.null(parameter)) {
+    parameter <- format_parameter(parameter)
+    file_meta <- read_file_meta(project_path, par_constrain)
+    swat_parameter <- read_swat2012_files(project_path,file_meta)
 
+    # here would be clever to implement parameter boundary checkup
+    # keep parameter boundary file in R package and write to project folder when
+    # it does not exist. Otherwise read boundary file from there and do check!
+  }
   ## Check values provided with run_index and prepare run_index for simulation
   if(!is.null(run_index)){
-    run_index <- check_run_index(run_index, parameter)
+    run_index <- check_run_index(run_index, parameter$values)
   } else {
-    run_index <- 1:max(nrow(parameter), 1)
+    run_index <- 1:max(nrow(parameter$values), 1)
   }
 
   ## Check if save file already exists
@@ -138,7 +145,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
   ## Identify the required number of parallel threads to build.
-  n_thread <- min(max(nrow(parameter),1),
+  n_thread <- min(max(nrow(parameter$values),1),
                   max(n_thread,1),
                   detectCores())
 

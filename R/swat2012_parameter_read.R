@@ -23,8 +23,8 @@ format_parameter <- function(parameter) {
 #' @importFrom purrr map set_names
 #' @keywords internal
 #'
-read_swat2012_files <- function(project_path, par_constrain) {
-  file_meta <- read_file_meta(project_path, par_constrain)
+read_swat2012_files <- function(project_path, file_meta) {
+
 
   list_par_files <- c("pnd", "rte", "sub", "swq", "hru", "gw",
                       "sdr", "sep", "bsn", "wwq", "res", "ops")
@@ -42,8 +42,6 @@ read_swat2012_files <- function(project_path, par_constrain) {
   if("mgt" %in% file_meta$file_name) {
     backup$mgt <- suppressWarnings(read_mgt(file_meta, project_path))
   }
-
-  backup$file_meta <- file_meta
 
   return(backup)
 }

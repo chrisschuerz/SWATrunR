@@ -14,8 +14,8 @@
 #' @keywords internal
 #'
 save_run <- function(save_path, model_output, parameter, i_run, i_thread) {
-  if(is.data.frame(parameter)) {
-    n_digit <- parameter %>%
+  if(is.data.frame(parameter$values)) {
+    n_digit <- parameter$values %>%
       nrow(.) %>%
       as.character(.) %>%
       nchar(.)
@@ -72,16 +72,20 @@ initialize_save_file <- function(save_path, parameter, file_cio) {
 
   if("parameter"%in% table_names) {
     par_db <- tbl(output_db, "parameter") %>% collect(.)
-    if(!identical(as.matrix(parameter), as.matrix(par_db))) {
+    if(!identical(as.matrix(parameter$values), as.matrix(par_db))) {
       stop("Parameters of current SWAT simulations and the parameters"%&&%
            "saved in 'save_file' differ!")
     }
   } else {
     if(!is.null(parameter)){
-      if(!is.data.frame(parameter)) parameter <-  map_dfc(parameter, ~.x)
+      if(!is.data.frame(parameter$values))
+        parameter$values <-  map_dfc(parameter$values, ~.x)
 
-      copy_to(dest = output_db, df = parameter,
+      copy_to(dest = output_db, df = parameter$values,
               name = "parameter", temporary = FALSE)
+
+      copy_to(dest = output_db, df = parameter$parameter_constrain,
+              name = "parameter_constrain", temporary = FALSE)
     }
   }
 
