@@ -1,12 +1,29 @@
-#' Read the original parameter values from the parameter files in project_path
+#' Translate the parameter inputs into a parameter input table and a separarate
+#' table providing the file constraints and the filter expressions for the
+#' respective parameter
+#'
+#' @param parameter Model parameters as named vector or tibble
+#'
+#' @keywords internal
+#'
+format_parameter <- function(parameter) {
+  par_constrain <- suppressWarnings(translate_parameter_constraints(names(parameter)))
+  names(parameter) <- par_constrain$par_name
+  return(list(values = parameter, parameter_constrain = par_constrain))
+}
+
+#' Read the original swat parameter values from the parameter files in
+#' project_path
 #'
 #' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param par_constrain Table providing the file constraints for the respective
+#'   parameter that will be modified
 #'
 #' @importFrom dplyr %>%
 #' @importFrom purrr map set_names
 #' @keywords internal
 #'
-read_par_files <- function(project_path, par_constrain) {
+read_swat2012_files <- function(project_path, par_constrain) {
   file_meta <- read_file_meta(project_path, par_constrain)
 
   list_par_files <- c("pnd", "rte", "sub", "swq", "hru", "gw",
