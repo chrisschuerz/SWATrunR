@@ -12,3 +12,4 @@ read_par_files(project_path)
 \description{
 Read the original parameter values from the parameter files in project_path
 }
+\keyword{internal}

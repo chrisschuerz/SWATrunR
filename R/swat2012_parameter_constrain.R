@@ -1,7 +1,13 @@
-library(tidyverse)
-library(pasta)
-
-
+#' Translate the parameter inputs and the set constraints into lookup table
+#'
+#' @param par Character string vector providing parameters and constraints
+#'
+#' @importFrom dplyr %>% bind_cols bind_rows everything mutate one_of select
+#' @importFrom pasta %//%
+#' @importFrom purrr map map2 map_lgl pmap set_names
+#' @importFrom tibble as_tibble tibble
+#' @keywords internal
+#'
 translate_parameter_constraints <- function(par) {
 
   has_par_name <- map_lgl(par, ~ grepl("\\:\\:", .x))
@@ -70,13 +76,27 @@ translate_parameter_constraints <- function(par) {
 }
 
 
-
+#' Helper function to wrap text string with "c(...)" to concatenate values
+#'
+#' @param x Text string
+#' @keywords internal
+#'
 concat_values <- function(x){
   x[!grepl("c\\((.*?)\\)",x) & grepl("\\,", x)] <-
     "c("%&%x[!grepl("c\\((.*?)\\)",x) & grepl("\\,", x)]%&%")"
   return(x)
 }
 
+#' Build expresions used to filter parameter values in parameter modification
+#' step
+#'
+#' @param var List of filter variables
+#' @param val List of values for the respective filter variables
+#' @param op  List of logical operators for the respective filter variables
+#'
+#' @importFrom purrr pmap
+#' @keywords internal
+#'
 build_expr <- function(var, val, op) {
   is_file_var <- var %in% c("subbasin", "hru", "luse", "soil", "slope")
 
@@ -90,6 +110,17 @@ build_expr <- function(var, val, op) {
   return(list(file_expression = file_filter, spec_expression = spec_filter))
 }
 
+#' Build filter expresions for one sequence of variable, operator and values
+#'
+#' @param var Character string providing the filter variable
+#' @param val Character string providing the values for the respective filter
+#'   variable
+#' @param op  Character string providing the logical operator for the filter
+#'   operation
+#'
+#' @importFrom purrr pmap
+#' @keywords internal
+#'
 build_filter <- function(var, val, op) {
   if(grepl("\\,|\\:", val)){
     if(op == "==") {

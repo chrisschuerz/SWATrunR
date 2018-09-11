@@ -4,7 +4,7 @@
 #'
 #' @importFrom dplyr %>%
 #' @importFrom purrr map set_names
-#' @export
+#' @keywords internal
 #'
 
 read_par_files <- function(project_path) {
