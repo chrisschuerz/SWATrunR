@@ -74,7 +74,7 @@ translate_parameter_constraints <- function(par) {
     map2(.,filter_var, ~ as.list(c(NA,.x)) %>% set_names(., c("idx",.y)) %>% as_tibble(.)) %>%
     bind_rows(.) %>%
     select(-idx) %>%
-    select(one_of("subbasin", "hru", "luse", "soil", "slope"), everything()) %>%
+    select(one_of("sub", "hru", "luse", "soil", "slope"), everything()) %>%
     bind_cols(model_par, ., expressions)
 
   return(model_par)
@@ -115,7 +115,7 @@ concat_values <- function(x){
 #' @keywords internal
 #'
 build_expr <- function(var, val, op) {
-  is_file_var <- var %in% c("subbasin", "hru", "luse", "soil", "slope")
+  is_file_var <- var %in% c("sub", "hru", "luse", "soil", "slope")
 
     file_filter <- pmap_chr(list(var[is_file_var], val[is_file_var], op[is_file_var]),
            build_filter) %>%

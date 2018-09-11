@@ -9,7 +9,7 @@ update_par <- function(par, par_up, change){
   case_when(
     change == "rep" ~ par_up,
     change == "rel" ~ par * (1 + par_up),
-    change == "abs" = par_old + par_up
+    change == "abs" ~ par_old + par_up
     )
 }
 
