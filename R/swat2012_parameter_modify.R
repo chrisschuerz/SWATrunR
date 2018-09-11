@@ -1,7 +1,7 @@
 
 thread_parameter <- swat_parameter
 
-
+parameter$parameter_constrain
 
 
 

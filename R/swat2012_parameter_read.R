@@ -136,7 +136,8 @@ read_par_list <- function(file_meta, file_suffix, project_path){
     par_table <- map_dfc(files, ~ get_value(.x, par_pos)) %>%
       t(.) %>%
       as_tibble(.) %>%
-      set_names(., par_name)
+      set_names(., par_name) %>%
+      mutate(file_code = file_sel$file_code)
 
     return(list(file = files, value = par_table))
   }
