@@ -6,19 +6,25 @@
 #' @importFrom purrr map set_names
 #' @keywords internal
 #'
-
 read_par_files <- function(project_path, par_constrain) {
   file_meta <- read_file_meta(project_path, par_constrain)
 
   list_par_files <- c("pnd", "rte", "sub", "swq", "hru", "gw",
                       "sdr", "sep", "bsn", "wwq", "res", "ops")
 
+  list_par_files <- list_par_files[list_par_files %in% file_meta$file_name]
+
   backup <- map(list_par_files, ~ read_par_list(file_meta, .x, project_path)) %>%
     set_names(., list_par_files)
-
-  backup$chm <- read_chm(file_meta, project_path)
-  backup$sol <- read_sol(file_meta, project_path)
-  backup$mgt <- suppressWarnings(read_mgt(file_meta, project_path))
+  if("chm" %in% file_meta$file_name) {
+    backup$chm <- read_chm(file_meta, project_path)
+  }
+  if("sol" %in% file_meta$file_name) {
+    backup$sol <- read_sol(file_meta, project_path)
+  }
+  if("mgt" %in% file_meta$file_name) {
+    backup$mgt <- suppressWarnings(read_mgt(file_meta, project_path))
+  }
 
   backup$file_meta <- file_meta
 
@@ -104,7 +110,7 @@ get_hru_meta <- function(hru_file_i) {
 #' @keywords internal
 #'
 read_par_list <- function(file_meta, file_suffix, project_path){
-  file_sel <- filter(file_meta, file_sfx == file_suffix)
+  file_sel <- filter(file_meta, file_name == file_suffix)
   if(nrow(file_sel) > 0) {
     tmp <- read_lines(file = project_path%//%file_sel$file[1])
     par_pos <- is_par(tmp)
@@ -132,7 +138,7 @@ read_par_list <- function(file_meta, file_suffix, project_path){
 #' @keywords internal
 #'
 read_chm <- function(file_meta, project_path) {
-  file_sel <- filter(file_meta, file_sfx == "chm")
+  file_sel <- filter(file_meta, file_name == "chm")
 
   files <- map(project_path%//%file_sel$file, read_lines)
 
@@ -162,7 +168,7 @@ read_chm <- function(file_meta, project_path) {
 #' @keywords internal
 #'
 read_sol <- function(file_meta, project_path) {
-  file_sel <- filter(file_meta, file_sfx == "sol")
+  file_sel <- filter(file_meta, file_name == "sol")
 
   files <- map(project_path%//%file_sel$file, read_lines)
 
@@ -201,7 +207,7 @@ read_sol <- function(file_meta, project_path) {
 read_mgt <- function(file_meta, project_path) {
   file_list <- read_par_list(file_meta, "mgt", project_path)
 
-  file_sel <- filter(file_meta, file_sfx == "mgt")
+  file_sel <- filter(file_meta, file_name == "mgt")
   col_pos   <-  c(1, 4, 7, 15, 17, 21, 24, 26, 38, 44, 55, 59, 65, 70)
   par_name  <- c("mon", "day", "hu", "op", "mgt"%&%1:9, "file_code")
 
