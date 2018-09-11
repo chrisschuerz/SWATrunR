@@ -7,8 +7,8 @@
 #' @keywords internal
 #'
 
-read_par_files <- function(project_path) {
-  file_meta <- read_file_meta(project_path)
+read_par_files <- function(project_path, par_constrain) {
+  file_meta <- read_file_meta(project_path, par_constrain)
 
   list_par_files <- c("pnd", "rte", "sub", "swq", "hru", "gw",
                       "sdr", "sep", "bsn", "wwq", "res", "ops")
@@ -34,12 +34,22 @@ read_par_files <- function(project_path) {
 #' @importFrom tibble tibble
 #' @keywords internal
 #'
-read_file_meta <- function(project_path) {
-  tibble(file = list.files(project_path) %>%  .[!grepl("output", .)],
-         file_code = gsub("\\..*$", "", file),
-         file_name  = gsub(".*\\.","", file)) %>%
+read_file_meta <- function(project_path, par_constrain) {
+  file_meta <- tibble(file = list.files(project_path) %>%
+                               .[!grepl("output", .)],
+                      file_code = gsub("\\..*$", "", file),
+                      file_name  = gsub(".*\\.","", file)) %>%
     left_join(., read_hru(project_path), by = "file_code") %>%
-    mutate(modified = FALSE)
+    mutate(idx = 1:nrow(.))
+
+  idx_sel <- map(par_constrain$file_expression,
+                 ~ evaluate_expression(file_meta, .x) %>% .[["idx"]]) %>%
+    unlist(.) %>%
+    unique(.)
+
+  file_meta %>%
+    filter(., idx %in% idx_sel) %>%
+    select(-idx)
 }
 
 #' Read all '.hru' files in the project_path and extract the meta data from

@@ -4,7 +4,7 @@
 \alias{read_par_files}
 \title{Read the original parameter values from the parameter files in project_path}
 \usage{
-read_par_files(project_path)
+read_par_files(project_path, par_constrain)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}

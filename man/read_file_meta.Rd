@@ -4,7 +4,7 @@
 \alias{read_file_meta}
 \title{Read the meta information for the parameter files}
 \usage{
-read_file_meta(project_path)
+read_file_meta(project_path, par_constrain)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}

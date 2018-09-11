@@ -47,6 +47,8 @@ translate_parameter_constraints <- function(par) {
          "par_name::parameter|...")
   }
 
+  file_expr <- "filter(., file_name == '"%&%model_par$file_name%&%"')"
+
   filter_expr <- par %>%
     strsplit(., "\\|") %>%
     map(., ~ .x[2:length(.x)] %>% .[!grepl("change",.)])
@@ -55,7 +57,8 @@ translate_parameter_constraints <- function(par) {
     map(., ~ trimws(.x)) %>%
     map(., ~ tolower(.x))
   filter_val <- map(filter_expr, ~ gsub(".*["%&%bool_op%&%"]", "", .x)) %>%
-    map(., ~ trimws(.x)) %>%
+    map(., ~ gsub("c\\(|\\)", "", .x)) %>%
+    map(., ~ add_quotes_if_chr(.x)) %>%
     map(., ~ concat_values(.x))
   filter_op  <- map(filter_expr, ~ gsub("[^"%&%bool_op%&%"]", "", .x)) %>%
     map(., ~ trimws(.x)) %>%
@@ -63,7 +66,9 @@ translate_parameter_constraints <- function(par) {
     map(., ~ substr(.x, 1, 2))
 
   expressions <- pmap(list(filter_var, filter_val, filter_op), build_expr) %>%
-    map_df(., as_tibble)
+    map_df(., as_tibble) %>%
+    mutate(file_expression = paste(file_expr, file_expression, sep = " %>% ") %>%
+             gsub(" %>% $", "", .))
 
   model_par <- map2(filter_op, filter_val, paste) %>%
     map2(.,filter_var, ~ as.list(c(NA,.x)) %>% set_names(., c("idx",.y)) %>% as_tibble(.)) %>%
@@ -75,6 +80,18 @@ translate_parameter_constraints <- function(par) {
   return(model_par)
 }
 
+add_quotes_if_chr <- function(chr) {
+  is_chr <- chr %>%
+    strsplit(., ",") %>%
+    map(., ~ as_num(.x)) %>%
+    map_lgl(.,  ~ is.na(.x) %>% any(.))
+
+  chr %>%
+    strsplit(., ",") %>%
+    map(., ~ trimws(.x)) %>%
+    map_if(., is_chr, ~ paste0("'",.x, "'")) %>%
+    map_chr(., ~ paste(.x, collapse = ", "))
+}
 
 #' Helper function to wrap text string with "c(...)" to concatenate values
 #'
@@ -135,4 +152,3 @@ build_filter <- function(var, val, op) {
   }
   return(expr)
 }
-
