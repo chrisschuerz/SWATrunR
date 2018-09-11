@@ -82,7 +82,7 @@ translate_parameter_constraints <- function(par) {
 
 add_quotes_if_chr <- function(chr) {
   is_chr <- chr %>%
-    strsplit(., ",") %>%
+    strsplit(., ",|:") %>%
     map(., ~ as_num(.x)) %>%
     map_lgl(.,  ~ is.na(.x) %>% any(.))
 
