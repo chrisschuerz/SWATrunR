@@ -80,6 +80,14 @@ translate_parameter_constraints <- function(par) {
   return(model_par)
 }
 
+#' Add quotes to character values of vector in filter expression
+#'
+#' @param chr Character string providing values for filter variable
+#'
+#' @importFrom dplyr %>%
+#' @importFrom purrr map map_chr map_lgl map_if
+#' @keywords internal
+#'
 add_quotes_if_chr <- function(chr) {
   is_chr <- chr %>%
     strsplit(., ",|:") %>%
@@ -111,7 +119,7 @@ concat_values <- function(x){
 #' @param val List of values for the respective filter variables
 #' @param op  List of logical operators for the respective filter variables
 #'
-#' @importFrom purrr pmap
+#' @importFrom purrr pmap_chr
 #' @keywords internal
 #'
 build_expr <- function(var, val, op) {
