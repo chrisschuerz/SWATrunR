@@ -42,3 +42,25 @@ finish_progress <- function(nmax, t0, word) {
       as.character(.) %>%
       cat("\r","Completed",nmax, word%&%plural, "in", ., "\n")
 }
+
+#' Evaluate the expression defined for a variable in 'output'
+#'
+#' @param table Table to which dplyr expression should be applied
+#' @param expression Expression to be applied to table
+#'
+#' @importFrom dplyr %>%
+#' @keywords internal
+#'
+evaluate_expression <- function(table, expression){
+  paste("table", expression, sep = " %>% ") %>%
+    parse(text = .) %>%
+    eval(.)
+}
+
+#' Convert character string to numeric without displaying warnings
+#'
+#' @param chr Character string
+#' @keywords internal
+#'
+as_num <- function(chr) {suppressWarnings(as.numeric(chr))}
+

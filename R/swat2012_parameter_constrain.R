@@ -125,9 +125,11 @@ concat_values <- function(x){
 build_expr <- function(var, val, op) {
   is_file_var <- var %in% c("sub", "hru", "luse", "soil", "slope")
 
-    file_filter <- pmap_chr(list(var[is_file_var], val[is_file_var], op[is_file_var]),
+  file_filter <- pmap_chr(list(var[is_file_var], val[is_file_var], op[is_file_var]),
            build_filter) %>%
     paste(., collapse = " %>% ")
+
+  var[!is_file_var] <- toupper(var[!is_file_var])
   spec_filter <- pmap_chr(list(var[!is_file_var], val[!is_file_var], op[!is_file_var]),
                           build_filter) %>%
     paste(., collapse = " %>% ")

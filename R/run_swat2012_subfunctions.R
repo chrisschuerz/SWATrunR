@@ -146,21 +146,6 @@ extract_output <- function(output, model_output) {
     bind_cols(.)
 }
 
-#' Evaluate the expression defined for a variable in 'output'
-#'
-#' @param output_table Output defined to read from the SWAT model results
-#' @param expression Expression to be applied to extract variable from
-#'   output_table
-#'
-#' @importFrom dplyr %>%
-#' @keywords internal
-#'
-evaluate_expression <- function(out_table, expression){
-  paste("out_table", expression, sep = " %>% ") %>%
-    parse(text = .) %>%
-    eval(.)
-}
-
 #' Tidy up simulation results before returning them
 #'
 #' @param sim_results Extracted simulation results from the SWAT model runs

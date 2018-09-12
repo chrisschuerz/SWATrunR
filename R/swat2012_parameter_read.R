@@ -226,7 +226,7 @@ read_mgt <- function(file_meta, project_path) {
 
   file_sel <- filter(file_meta, file_name == "mgt")
   col_pos   <-  c(1, 4, 7, 15, 17, 21, 24, 26, 38, 44, 55, 59, 65, 70)
-  par_name  <- c("mon", "day", "hu", "op", "mgt"%&%1:9, "file_code")
+  par_name  <- c("MON", "DAY", "HU", "OP", "MGT"%&%1:9, "file_code")
 
   par_table <- map(file_list$file, ~ get_table(.x, 31:length(.x), col_pos)) %>%
     map(., t) %>%
@@ -238,13 +238,6 @@ read_mgt <- function(file_meta, project_path) {
   file_list$mgt_table <- par_table
   return(file_list)
 }
-
-#' Convert character string to numeric without displaying warnings
-#'
-#' @param chr Character string
-#' @keywords internal
-#'
-as_num <- function(chr) {suppressWarnings(as.numeric(chr))}
 
 #' Check which row in a character vector file holds a model parameter
 #'
