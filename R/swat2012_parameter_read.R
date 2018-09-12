@@ -137,7 +137,8 @@ read_par_list <- function(file_meta, file_suffix, project_path){
       t(.) %>%
       as_tibble(.) %>%
       set_names(., par_name) %>%
-      mutate(file_code = file_sel$file_code)
+      mutate(file_code = file_sel$file_code) %>%
+      mutate(idx = 1:nrow(.))
 
     return(list(file = files, value = par_table))
   }
@@ -167,7 +168,8 @@ read_chm <- function(file_meta, project_path) {
   par_table <- map(files, ~ get_table(.x, table_pos, col_pos)) %>%
     map(., ~ set_names(.x, par_name)) %>%
     map2(., file_sel$file_code, ~ mutate(.x, file_code = .y)) %>%
-    bind_rows(.)
+    bind_rows(.) %>%
+    mutate(idx = 1:nrow(.))
 
   return(list(file = files, value = par_table))
 }
@@ -204,9 +206,11 @@ read_sol <- function(file_meta, project_path) {
 
   par_table <-  map(files, ~ get_table(.x, table_pos, col_pos)) %>%
     map(., ~ set_names(.x, par_name)) %>%
+    map(., ~ mutate(.x, LAYER = 1:nrow(.x))) %>%
     map2(., file_sel$file_code, ~ mutate(.x, file_code = .y)) %>%
     bind_rows(.) %>%
-    left_join(., par_list, by = "file_code")
+    left_join(., par_list, by = "file_code") %>%
+    mutate(idx = 1:nrow(.))
 
   return(list(file = files, value = par_table))
 }
@@ -233,7 +237,8 @@ read_mgt <- function(file_meta, project_path) {
     map(., as_tibble) %>%
     map2(., file_sel$file_code, ~ mutate(.x, file_code = .y)) %>%
     bind_rows(.) %>%
-    set_names(., par_name)
+    set_names(., par_name) %>%
+    mutate(idx = 1:nrow(.))
 
   file_list$mgt_table <- par_table
   return(file_list)
