@@ -229,8 +229,8 @@ read_mgt <- function(file_meta, project_path) {
   file_list <- read_par_list(file_meta, "mgt", project_path)
 
   file_sel <- filter(file_meta, file_name == "mgt")
-  col_pos   <-  c(1, 4, 7, 15, 17, 21, 24, 26, 38, 44, 55, 59, 65, 70)
-  par_name  <- c("MON", "DAY", "HU", "OP", "MGT"%&%1:9, "file_code")
+  col_pos   <-  c(1, 4, 7, 16, 19, 24, 28, 31, 44, 51, 63, 68, 75, 81)
+  par_name  <- c("MON", "DAY", "HU", "MGT_OP", "MGT"%&%1:9, "file_code")
 
   par_table <- map(file_list$file, ~ get_table(.x, 31:length(.x), col_pos)) %>%
     map(., t) %>%

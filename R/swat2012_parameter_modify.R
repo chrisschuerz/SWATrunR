@@ -2,7 +2,7 @@ parameter <- c("sft::SFTMP.bsn|change = rep" = 0.75,
                "snocmx::SNOCOVMX.bsn|change = rep" = 0.5,
                "gw_del::GW_DELAY.gw|change = rel|" = 0.2,
                "bio_init::BIO_INIT.mgt|change = rel|" = 0.2,
-               "cnop_till::CNOP.mgt|change = rel|mgt_op = 6" = 0.2)
+               "cnop_till::CNOP_TILL.mgt|change = rel|" = 0.2)
 parameter <- SWATplusR:::format_parameter(parameter)
 project_path <- "/home/christoph/Documents/projects/SWATtapiR/swat_test"
 file_meta <- SWATplusR:::read_file_meta(project_path, parameter$parameter_constrain)
@@ -53,7 +53,8 @@ modify_par <- function(parameter, model_parameter, file_meta,
   return(model_parameter)
 }
 
-modify_mgt_par <- function() {
+modify_mgt_par <- function(parameter, model_parameter, file_meta,
+                           i_par, i_run) {
   mgt_lookup <- tribble(
     ~par,           ~mgt_op,     ~mgt_i,
     "PLANT_ID",     1,           "MGT1",
@@ -63,7 +64,7 @@ modify_mgt_par <- function() {
     "BIO_INIT",     1,           "MGT6",
     "HI_TARG",      1,           "MGT7",
     "BIO_TARG",     1,           "MGT8",
-    "CNOP_TILL",    1,           "MGT9",
+    "CNOP_PLANT",   1,           "MGT9",
     "IRR_AMT",      2,           "MGT4",
     "FERT_ID",      3,           "MGT1",
     "FRT_KG",       3,           "MGT4",
@@ -96,7 +97,25 @@ modify_mgt_par <- function() {
     "IFRT_FREQ",    14,          "MGT3",
     "CFRT_KG",      14,          "MGT4")
 
+  par_i <- parameter$parameter_constrain[i_par, ]
+  par_up_i <- parameter$values[[par_i$par_name]][i_run]
+  file_code_i <- par_i$file_expression %>%
+    evaluate_expression(file_meta, .) %>%
+    .[["file_code"]]
 
+  mgt_i <- filter(mgt_lookup, par == par_i$parameter)
+
+  idx_i <- model_parameter$mgt$mgt_table %>%
+    filter(file_code %in% file_code_i) %>%
+    filter(MGT_OP == mgt_i[["mgt_op"]]) %>%
+    .[["idx"]]
+
+  model_parameter$mgt$mgt_table[,mgt_i[["mgt_i"]]] <-
+    model_parameter$mgt$mgt_table[,mgt_i[["mgt_i"]]] %>%
+    .[[1]] %>%
+    update_par(., par_up_i, par_i$change, idx_i)
+
+  return(model_parameter)
 }
 
 update_par <- function(par, par_up, change, to_chg){
