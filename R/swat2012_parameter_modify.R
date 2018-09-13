@@ -1,9 +1,8 @@
 parameter <- c("sft::SFTMP.bsn|change = rep" = 0.75,
                "snocmx::SNOCOVMX.bsn|change = rep" = 0.5,
                "gw_del::GW_DELAY.gw|change = rel|" = 0.2,
-               "no3_sol::SOL_NO3.chm|change = rel|" = 0.2,
-               "bd_sol::SOL_BD.sol|change = rel|" = 0.2,
-               "p_sol::SOL_SOLP.chm|change = rel|layer < 3" = 0.2)
+               "bio_init::BIO_INIT.mgt|change = rel|" = 0.2,
+               "cnop_till::CNOP.mgt|change = rel|mgt_op = 6" = 0.2)
 parameter <- SWATplusR:::format_parameter(parameter)
 project_path <- "/home/christoph/Documents/projects/SWATtapiR/swat_test"
 file_meta <- SWATplusR:::read_file_meta(project_path, parameter$parameter_constrain)
@@ -11,23 +10,27 @@ swat_parameter <- SWATplusR:::read_swat2012_files(project_path,file_meta)
 
 thread_parameter <- swat_parameter
 
-
 i_run <- 1
 
 for (i_par in 1:ncol(parameter$values)) {
   file_i <- parameter$parameter_constrain[i_par, ]$file_name
 
-  case_when(
-    file_i %in% c("pnd", "rte", "sub", "swq", "hru", "gw",
-                  "sdr", "sep", "bsn", "wwq", "res", "ops") ~ {
+  if(file_i == "mgt") {
+    swat_par_i <- parameter$parameter_constrain$parameter[i_par]
+    if(swat_par_i %in% names(thread_parameter$mgt$value)){
+      thread_parameter <-
+        modify_par(parameter, thread_parameter, file_meta, i_par, i_run)
+    } else {
+      thread_parameter <-
+        modify_mgt_par(parameter, thread_parameter, file_meta, i_par, i_run)
+    }
+  } else {
     thread_parameter <-
-    modify_list_par(parameter, thread_parameter, file_meta, i_par, i_run)
-    },
-    file_i == "mgt" ~ {thread_parameter <- thread_parameter}
-    )
+      modify_par(parameter, thread_parameter, file_meta, i_par, i_run)
+  }
 }
 
-modify_list_par <- function(parameter, model_parameter, file_meta,
+modify_par <- function(parameter, model_parameter, file_meta,
                             i_par, i_run) {
   par_i <- parameter$parameter_constrain[i_par, ]
   par_up_i <- parameter$values[[par_i$par_name]][i_run]
@@ -45,18 +48,6 @@ modify_list_par <- function(parameter, model_parameter, file_meta,
     update_par(., par_up_i, par_i$change, idx_i)
 
   return(model_parameter)
-}
-
-modify_chm_par <- function(parameter, model_parameter, file_meta,
-                           i_par, i_run) {
-  par_i <- parameter$parameter_constrain[i_par, ]
-  par_up_i <- parameter$values[[par_i$par_name]][i_run]
-
-
-}
-
-modify_sol_par <- function() {
-
 }
 
 modify_mgt_par <- function() {
