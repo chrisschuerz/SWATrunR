@@ -238,8 +238,10 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
     ## Modify model parameters if parameter set was provided
     if(!is.null(parameter)) {
-      write_model_in(parameter, thread_path, i_run)
-      system(thread_path%//%"swat_edit.bat")
+      thread_parameter <- swat_parameter
+      thread_parameter <- modify_parameter(parameter, thread_parameter,
+                                           file_meta, i_run)
+      write_parameter(file_meta, thread_parameter, thread_path)
     }
 
     ## Execute the SWAT exe file located in the thread folder
