@@ -1,39 +1,72 @@
-parameter <- c("sft::SFTMP.bsn|change = rep" = 0.75,
-               "snocmx::SNOCOVMX.bsn|change = rep" = 0.5,
-               "gw_del::GW_DELAY.gw|change = rel|" = 0.2,
-               "bio_init::BIO_INIT.mgt|change = rel|" = 0.2,
-               "cnop_till::CNOP_TILL.mgt|change = rel|" = 0.2)
-parameter <- SWATplusR:::format_parameter(parameter)
-project_path <- "/home/christoph/Documents/projects/SWATtapiR/swat_test"
-file_meta <- SWATplusR:::read_file_meta(project_path, parameter$parameter_constrain)
-swat_parameter <- SWATplusR:::read_swat2012_files(project_path,file_meta)
+# parameter <- c("sft::SFTMP.bsn|change = rep" = 0.75,
+#                "snocmx::SNOCOVMX.bsn|change = rep" = 0.5,
+#                "gw_del::GW_DELAY.gw|change = rel|" = 0.2,
+#                "bio_init::BIO_INIT.mgt|change = rel|" = 0.2,
+#                "cnop_till::CNOP_TILL.mgt|change = rel|" = 0.2)
+# parameter <- SWATplusR:::format_parameter(parameter)
+# project_path <- "/home/christoph/Documents/projects/SWATtapiR/swat_test"
+# file_meta <- SWATplusR:::read_file_meta(project_path, parameter$parameter_constrain)
+# swat_parameter <- SWATplusR:::read_swat2012_files(project_path,file_meta)
+#
+# thread_parameter <- swat_parameter
+#
+# i_run <- 1
 
-thread_parameter <- swat_parameter
+#' Modify the model parameters of the thread that runs the simulation rin_i
+#'
+#' @param parameter List providing the parameter table and the parameter
+#'   constraints
+#' @param thread_parameter The swat_parameter set that will be modified
+#'   according to the parpameter set used in the respective thread
+#' @param file_meta Table with the meta informations on the swat model parameter
+#'   files
+#' @param i_run Index that gives the number of the current run simulated in the
+#'   respective thread
+#'
+#' @keywords internal
+#'
+modify_parameter <- function(parameter, thread_parameter, file_meta, i_run) {
+  for (i_par in 1:ncol(parameter$values)) {
+    file_i <- parameter$parameter_constrain[i_par, ]$file_name
 
-i_run <- 1
-
-for (i_par in 1:ncol(parameter$values)) {
-  file_i <- parameter$parameter_constrain[i_par, ]$file_name
-
-  if(file_i == "mgt") {
-    swat_par_i <- parameter$parameter_constrain$parameter[i_par]
-    gen_mgt_par <- c("IGRO", "PHU_PLT", "BIOMIX", "CN2", "USLE_P", "BIO_MIN",
-                     "FILTERW", "IURBAN", "URBLU", "IRRSC", "IRRNO", "FLOWMIN",
-                     "DIVMAX", "FLOWFR", "DDRAIN", "TDRAIN", "GDRAIN")
-    if(swat_par_i %in% gen_mgt_par){
-      thread_parameter <-
-        modify_par(parameter, thread_parameter, file_meta, i_par, i_run)
+    if(file_i == "mgt") {
+      swat_par_i <- parameter$parameter_constrain$parameter[i_par]
+      gen_mgt_par <- c("IGRO", "PHU_PLT", "BIOMIX", "CN2", "USLE_P", "BIO_MIN",
+                       "FILTERW", "IURBAN", "URBLU", "IRRSC", "IRRNO", "FLOWMIN",
+                       "DIVMAX", "FLOWFR", "DDRAIN", "TDRAIN", "GDRAIN")
+      if(swat_par_i %in% gen_mgt_par){
+        thread_parameter <-
+          modify_gen_par(parameter, thread_parameter, file_meta, i_par, i_run)
+      } else {
+        thread_parameter <-
+          modify_mgt_par(parameter, thread_parameter, file_meta, i_par, i_run)
+      }
     } else {
       thread_parameter <-
-        modify_mgt_par(parameter, thread_parameter, file_meta, i_par, i_run)
+        modify_gen_par(parameter, thread_parameter, file_meta, i_par, i_run)
     }
-  } else {
-    thread_parameter <-
-      modify_par(parameter, thread_parameter, file_meta, i_par, i_run)
   }
 }
 
-modify_par <- function(parameter, model_parameter, file_meta,
+#' General function to modify parameters that are provided in linear table
+#' format
+#'
+#' @param parameter List providing the parameter table and the parameter
+#'   constraints
+#' @param model_parameter The swat_parameter set that will be modified according
+#'   to the parpameter i_par
+#' @param file_meta Table with the meta informations on the swat model parameter
+#'   files
+#' @param i_par Index that gives the number of the curent parameter that is
+#'   modified in this step
+#' @param i_run Index that gives the number of the current run simulated in the
+#'   respective thread
+#'
+#' @importFrom dplyr %>% filter
+#'
+#' @keywords internal
+#'
+modify_gen_par <- function(parameter, model_parameter, file_meta,
                             i_par, i_run) {
   par_i <- parameter$parameter_constrain[i_par, ]
   par_up_i <- parameter$values[[par_i$par_name]][i_run]
@@ -53,6 +86,24 @@ modify_par <- function(parameter, model_parameter, file_meta,
   return(model_parameter)
 }
 
+#' Modify parameters that are provided in the management table format
+#'
+#' @param parameter List providing the parameter table and the parameter
+#'   constraints
+#' @param model_parameter The swat_parameter set that will be modified according
+#'   to the parpameter i_par
+#' @param file_meta Table with the meta informations on the swat model parameter
+#'   files
+#' @param i_par Index that gives the number of the curent parameter that is
+#'   modified in this step
+#' @param i_run Index that gives the number of the current run simulated in the
+#'   respective thread
+#'
+#' @importFrom dplyr %>% filter
+#' @importFrom tibble tribble
+#'
+#' @keywords internal
+#'
 modify_mgt_par <- function(parameter, model_parameter, file_meta,
                            i_par, i_run) {
   mgt_lookup <- tribble(
@@ -71,7 +122,7 @@ modify_mgt_par <- function(parameter, model_parameter, file_meta,
     "FRT_SURFACE",  3,           "MGT5",
     "PEST_ID",      4,           "MGT1",
     "PST_KG",       4,           "MGT4",
-    "CNOP_HRVST",   5,           "MGT4",
+    "CNOP_HRVKILL", 5,           "MGT4",
     "TILL_ID",      6,           "MGT1",
     "CNOP_TILL",    6,           "MGT4",
     "HARVEFF",      7,           "MGT4",
@@ -118,6 +169,19 @@ modify_mgt_par <- function(parameter, model_parameter, file_meta,
   return(model_parameter)
 }
 
+#' Update parameter values according to the different options 'abs', 'rep', and
+#' 'rel'
+#'
+#' @param par Vector with parameter values that are updated
+#' @param par_up Value that is applied to the paramter values for updating
+#' @param change Type of change, either: abs', 'rep', or 'rel'
+#' @param to_chg Index vector that indicates the values of the parameter vector
+#'   that should be updated
+#'
+#' @importFrom dplyr case_when
+#'
+#' @keywords internal
+#'
 update_par <- function(par, par_up, change, to_chg){
   par[to_chg] <- case_when(
     change == "rep" ~ par_up,
@@ -127,13 +191,16 @@ update_par <- function(par, par_up, change, to_chg){
   return(par)
 }
 
-is_in_file_codes <- function(code_chg, code_file) {
-  code_file %in% code_chg
-}
-
-filter_spec_expr <- function(table, expr) {
+#' Filter a parameter table for the specific expression if available
+#'
+#' @param par_table Parameter table
+#' @param expr Expression to evaluate
+#'
+#' @keywords internal
+#'
+filter_spec_expr <- function(par_table, expr) {
   if(nchar(expr) > 0) {
-    table <- evaluate_expression(table, expr)
+    table <- evaluate_expression(par_table, expr)
   }
-  return(table)
+  return(par_table)
 }
