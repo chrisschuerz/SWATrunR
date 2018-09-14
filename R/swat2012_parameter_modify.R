@@ -1,17 +1,3 @@
-# parameter <- c("sft::SFTMP.bsn|change = rep" = 0.75,
-#                "snocmx::SNOCOVMX.bsn|change = rep" = 0.5,
-#                "gw_del::GW_DELAY.gw|change = rel|" = 0.2,
-#                "bio_init::BIO_INIT.mgt|change = rel|" = 0.2,
-#                "cnop_till::CNOP_TILL.mgt|change = rel|" = 0.2)
-# parameter <- SWATplusR:::format_parameter(parameter)
-# project_path <- "/home/christoph/Documents/projects/SWATtapiR/swat_test"
-# file_meta <- SWATplusR:::read_file_meta(project_path, parameter$parameter_constrain)
-# swat_parameter <- SWATplusR:::read_swat2012_files(project_path,file_meta)
-#
-# thread_parameter <- swat_parameter
-#
-# i_run <- 1
-
 #' Modify the model parameters of the thread that runs the simulation rin_i
 #'
 #' @param parameter List providing the parameter table and the parameter
