@@ -60,42 +60,12 @@ build_model_run <- function(project_path, run_path, n_thread,
       dir.create(run_path%//%"thread"%_%i)
       file.copy(swat_files, run_path%//%"thread"%_%i)
 
-      ## Create a Backup folder and copy files to there as well
-      ## Required for rewriting parameters with Swat_edit.exe
-      dir.create(run_path%//%"thread"%_%i%//%"Backup")
-      file.copy(swat_files, run_path%//%"thread"%_%i%//%"Backup")
-
-      ## Write all files required for rewriting parameters using the
-      ## Swat_edit.exe from SWAT CUP
-      file.copy(system.file("extdata", "Swat_Edit.exe", package = "SWATplusR"),
-                run_path%//%"thread"%_%i)
-      file.copy(system.file("extdata", "SUFI2_execute.exe",
-                            package = "SWATplusR"), run_path%//%"thread"%_%i)
-      if(is.null(abs_swat_val)) {
-        file.copy(system.file("extdata", "Absolute_SWAT_Values.txt",
-                              package = "SWATplusR"), run_path%//%"thread"%_%i)
-      } else {
-        file.copy(abs_swat_val, run_path%//%"thread"%_%i)
-      }
-      swat_edit_config <- "2012 : SWAT Version (2009 | 2012)"
-      writeLines(swat_edit_config, con = run_path%//%"thread"%_%i%//%
-                                         "Swat_edit.exe.config.txt")
-
-      ## Create empty dummy folders. The Swat_edit.exe requires these to execute
-      dir.create(run_path%//%"thread"%_%i%//%"Echo")
-      dir.create(run_path%//%"thread"%_%i%//%"SUFI2.IN")
-      dir.create(run_path%//%"thread"%_%i%//%"SUFI2.OUT")
-
       ## Write the batch file that will be executed to call the SWAT exe when
       ## executing SWAT in a later step
       swat_bat <- batch_temp[[os]]
       swat_bat[3] <- swat_bat[3]%//%"thread"%_%i
       writeLines(swat_bat, con = run_path%//%"thread"%_%i%//%"swat_run.bat")
 
-      ## Write the batch file that is called for overwriting parameters
-      swatedit_bat <- swat_bat
-      swatedit_bat[4] <- "start /min /w SWAT_Edit.exe"
-      writeLines(swatedit_bat, con = run_path%//%"thread"%_%i%//%"swat_edit.bat")
       if(!quiet) {
         display_progress(i, n_thread, t0, "Thread")
       }
