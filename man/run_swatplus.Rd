@@ -6,11 +6,9 @@
 \usage{
 run_swatplus(project_path, output, parameter = NULL, start_date = NULL,
   end_date = NULL, output_interval = NULL, years_skip = NULL,
-  rch_out_var = NULL, sub_out_var = NULL, hru_out_var = NULL,
-  hru_out_nr = NULL, abs_swat_val = NULL, run_index = NULL,
-  run_path = NULL, n_thread = NULL, save_path = NULL, save_file = NULL,
-  return_output = TRUE, add_parameter = TRUE, add_date = TRUE,
-  refresh = TRUE, keep_folder = FALSE, quiet = FALSE)
+  run_index = NULL, run_path = NULL, n_thread = NULL, save_path = NULL,
+  save_file = NULL, return_output = TRUE, add_parameter = TRUE,
+  add_date = TRUE, refresh = TRUE, keep_folder = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
@@ -38,31 +36,6 @@ outputs are written. Provided either as character string ("d" for daily,
 
 \item{years_skip}{(optional) Integer value that provides the numbe of years
 to be skipped during writing the SWAT model outputs}
-
-\item{rch_out_var}{(optional) Numeric vector of maximum length = 20 for
-customized output of reach variables.For output codes see
-\href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
-Documentation} p.77ff.}
-
-\item{sub_out_var}{(optional) Numeric vector of maximum length = 15 for
-customized output of subbasin variables.For output codes see
-\href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
-Documentation} p.78ff.}
-
-\item{hru_out_var}{(optional) Numeric vector of maximum length = 20 for
-customized output of HRU variables.For output codes see
-\href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
-Documentation} p.79ff.}
-
-\item{hru_out_nr}{(optional) Numeric vector of maximum length = 20 for
-providing the HRU numbers for which the HRU variables are written. Optional
-if \code{hru_out_nr = 'all'}, HRU variables are written for all HRU
-(caution, very large output files possible!)}
-
-\item{abs_swat_val}{(optional) \code{run_swat2012} uses an internal
-'Absolute_SWAT_Values.txt' file required for overwriting parameters. With
-this parameter the path to a custom 'Absolute_SWAT_Values' file can be
-provided in case it is necessary.}
 
 \item{run_index}{(optional) Numeric vector (e.g.\code{run_index = c(1:100,
 110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL

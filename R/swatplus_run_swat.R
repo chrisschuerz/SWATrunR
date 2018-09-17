@@ -24,26 +24,6 @@
 #'   1 for daily, 2 for yearly).
 #' @param years_skip (optional) Integer value that provides the numbe of years
 #'   to be skipped during writing the SWAT model outputs
-#' @param rch_out_var (optional) Numeric vector of maximum length = 20 for
-#'   customized output of reach variables.For output codes see
-#'   \href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
-#'   Documentation} p.77ff.
-#' @param sub_out_var (optional) Numeric vector of maximum length = 15 for
-#'   customized output of subbasin variables.For output codes see
-#'   \href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
-#'   Documentation} p.78ff.
-#' @param hru_out_var (optional) Numeric vector of maximum length = 20 for
-#'   customized output of HRU variables.For output codes see
-#'   \href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
-#'   Documentation} p.79ff.
-#' @param hru_out_nr (optional) Numeric vector of maximum length = 20 for
-#'   providing the HRU numbers for which the HRU variables are written. Optional
-#'   if \code{hru_out_nr = 'all'}, HRU variables are written for all HRU
-#'   (caution, very large output files possible!)
-#' @param abs_swat_val (optional) \code{run_swat2012} uses an internal
-#'   'Absolute_SWAT_Values.txt' file required for overwriting parameters. With
-#'   this parameter the path to a custom 'Absolute_SWAT_Values' file can be
-#'   provided in case it is necessary.
 #' @param run_index (optional) Numeric vector (e.g.\code{run_index = c(1:100,
 #'   110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL
 #'   all provided parameter sets are used.
@@ -92,9 +72,7 @@
 run_swatplus <- function(project_path, output, parameter = NULL,
                          start_date = NULL, end_date = NULL,
                          output_interval = NULL, years_skip = NULL,
-                         rch_out_var = NULL, sub_out_var = NULL,
-                         hru_out_var = NULL, hru_out_nr = NULL,
-                         abs_swat_val = NULL, run_index = NULL, run_path = NULL,
+                         run_index = NULL, run_path = NULL,
                          n_thread = NULL, save_path = NULL, save_file = NULL,
                          return_output = TRUE, add_parameter = TRUE, add_date = TRUE,
                          refresh = TRUE, keep_folder = FALSE, quiet = FALSE) {
@@ -103,9 +81,9 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   # Check settings before starting to set up '.model_run'
   ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
   if(!is.null(parameter)) {
-    parameter <- format_parameter(parameter)
-    file_meta <- read_file_meta(project_path, parameter$parameter_constrain)
-    swat_parameter <- read_swat2012_files(project_path,file_meta)
+    parameter <- format_swatplus_parameter(parameter)
+
+    # Here function for writing 'calibration.cal'
 
     # here would be clever to implement parameter boundary checkup
     # keep parameter boundary file in R package and write to project folder when
@@ -135,10 +113,10 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   stopifnot(is.logical(quiet))
 
   ## Read and modify the projects' file.cio, internal variable checks done.
-  file_cio <- modify_file_cio(project_path, start_date, end_date,
-                              output_interval, years_skip,
-                              rch_out_var, sub_out_var,
-                              hru_out_var, hru_out_nr)
+  # file_cio <- modify_file_cio(project_path, start_date, end_date,
+  #                             output_interval, years_skip,
+  #                             rch_out_var, sub_out_var,
+  #                             hru_out_var, hru_out_nr)
 
   ## Convert output to named list in case single unnamed output was defined
   output <- check_output(output)

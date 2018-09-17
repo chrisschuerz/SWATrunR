@@ -103,7 +103,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   # Check settings before starting to set up '.model_run'
   ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
   if(!is.null(parameter)) {
-    parameter <- format_parameter(parameter)
+    parameter <- format_swat2012_parameter(parameter)
     file_meta <- read_file_meta(project_path, parameter$parameter_constrain)
     swat_parameter <- read_swat2012_files(project_path,file_meta)
 

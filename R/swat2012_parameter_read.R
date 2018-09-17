@@ -6,7 +6,7 @@
 #'
 #' @keywords internal
 #'
-format_parameter <- function(parameter) {
+format_swat2012_parameter <- function(parameter) {
   par_constrain <- suppressWarnings(translate_parameter_constraints(names(parameter)))
   names(parameter) <- par_constrain$par_name
   if(!is.data.frame(parameter)) parameter <- map_dfc(parameter, ~.x)
@@ -25,7 +25,6 @@ format_parameter <- function(parameter) {
 #' @keywords internal
 #'
 read_swat2012_files <- function(project_path, file_meta) {
-
 
   list_par_files <- c("pnd", "rte", "sub", "swq", "hru", "gw",
                       "sdr", "sep", "bsn", "wwq", "res", "ops")
