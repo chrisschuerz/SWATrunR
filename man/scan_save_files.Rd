@@ -16,4 +16,3 @@ Scan the save folders of a SWAT run and return all meta data of this
 simulation
 }
 \keyword{internal}
-

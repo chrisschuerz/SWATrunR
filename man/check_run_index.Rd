@@ -15,4 +15,3 @@ check_run_index(run_index, parameter)
 Checks the provided run_index vector in accordance with provided parameters
 }
 \keyword{internal}
-

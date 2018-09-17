@@ -15,4 +15,3 @@ get_fwf_positions(output_i, thread_path)
 Derive the fixed with positions of the columns in the SWAT output files
 }
 \keyword{internal}
-

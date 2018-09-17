@@ -9,29 +9,36 @@ define_output(file, variable = NULL, unit = NULL, expression = NULL)
 \arguments{
 \item{file}{Character string. The SWAT output output_file where the output
 variable is located (Valid inputs are 'rch', 'sub', 'hru', and 'sed' for
-the respective SWAT output files 'output.rch', 'output.sub', output.hru',
-and 'output.sed')}
+the respective SWAT2012 output files 'output.rch', 'output.sub',
+output.hru', and 'output.sed'. For the respective SWAT+ output files see
+the available options in the 'print.prt' file of your SWAT+ project).}
 
 \item{variable}{Character string. Output variable available from the
 respective SWAT output file defined with \code{file}. For the correct
-definition of the output variables please use the variable names as defined
-in the \href{https://swat.tamu.edu/media/69395/ch32_output.pdf}{SWAT Output
-Data Documentation}. Optional, also the number of the respective column in
-the output file can be provided. \strong{CAUTION:} spaces (e.g. in P TOT) are
-replaced with underscores (P_TOT)}
+definition of the output variables of a SWAT2012 project please use the
+variable names as defined in the
+\href{https://swat.tamu.edu/media/69395/ch32_output.pdf}{SWAT Output Data
+Documentation}. For SWAT+ output variables please use the header names from
+the respective output table, \strong{without the units!} Optional, also the
+number of the respective column in the output file can be provided.
+\strong{CAUTION:} spaces (e.g. in P TOT) must be replaced with underscores
+(P_TOT).}
 
 \item{unit}{Numeric vector. The spatial unit (e.g. the reach, subbasin, or
-HRU) defined by the columns 'RCH', 'SUB', 'HRU' in the respective output
-file for which the outputs should be extracted.}
+HRU) defined by the columns 'RCH', 'SUB', 'HRU' in the respective SWAT2012
+output file or the 'unit' column in the SWAT+ output file for which the
+outputs should be extracted.}
 
-\item{expr}{Alternatively to \code{variable} and \code{unit} an expression to
-extract outputs can be defined directly as a text string. See the examples
-to learn how to use \code{expr}.}
+\item{expression}{Alternatively to \code{variable} and \code{unit} an
+expression can be defined to extract outputs directly as a text string. See
+the examples to learn how to use \code{expr}.}
 }
 \description{
-Define the SWAT2012 output variables that should be extracted after the SWAT
-model execution and returned to R. Note that, the variable \code{output} in
-\code{\link{run_swat2012}} must be defined via this function.
+Define the SWAT output variables that should be extracted after the SWAT
+model execution and be returned to R. The function works with
+\code{\link{run_swat2012}} as well as with \code{\link{run_swatplus}}. See
+the examples how to use the \code{output} definition together with
+\code{\link{run_swat2012}} or \code{\link{run_swatplus}}.
 }
 \examples{
 # A single variable can be defined as follows (e.g. "FLOW_OUT" for
@@ -78,4 +85,3 @@ expr <- paste0("dplyr::filter(., RCH == 5) \%>\% ",
 out_def <- list(p_conc = define_output(expression = expr))
 
 }
-

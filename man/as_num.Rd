@@ -13,4 +13,3 @@ as_num(chr)
 Convert character string to numeric without displaying warnings
 }
 \keyword{internal}
-

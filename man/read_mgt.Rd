@@ -15,4 +15,3 @@ read_mgt(file_meta, project_path)
 Read parameters from the '.mgt' file (as it has an individual file structure)
 }
 \keyword{internal}
-
