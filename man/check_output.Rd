@@ -13,3 +13,4 @@ check_output(output)
 Check output if is a data.frame and convert in case to named list
 }
 \keyword{internal}
+

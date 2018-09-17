@@ -82,11 +82,11 @@ write_chm <- function(file_meta, thread_parameter, thread_path) {
   par_files <-  map(file_sel$file_code,
                   ~ filter(thread_parameter$chm$value, file_code == .x)) %>%
     map(., ~ select(.x, -file_code, -idx)) %>%
-    map(., ~map_df(.x, ~sprintf("%12s", .x))) %>%
+    map(., ~map_df(.x, ~sprintf("%12.2f", .x))) %>%
     # map(., ~t(.x)) %>%
     map(., ~map(.x, ~paste0(.x, collapse = ""))) %>%
     map(., ~unlist(.x)) %>%
-    map(., ~paste(line_name, .x)) %>%
+    map(., ~paste0(line_name, .x)) %>%
     map2(., thread_parameter$chm$file, function(x, y, pos){y[pos] <- x
                                          return(y)}, table_pos)
   walk2(par_files, file_sel$file, ~ write_lines(.x, thread_path%//%.y))
@@ -120,10 +120,10 @@ write_sol <- function(file_meta, thread_parameter, thread_path) {
   par_file <- map(file_sel$file_code,
                     ~ filter(thread_parameter$sol$value, file_code == .x)) %>%
     map(., ~.x[,1:14]) %>%
-    map(., ~map_df(.x, ~sprintf("%12s", .x))) %>%
+    map(., ~map_df(.x, ~sprintf("%12.2f", .x))) %>%
     map(., ~map(.x, ~paste0(.x, collapse = ""))) %>%
     map(., ~unlist(.x)) %>%
-    map(., ~paste(table_name, .x)) %>%
+    map(., ~paste0(table_name, .x)) %>%
     map2(., thread_parameter$sol$file, function(x, y, pos){y[pos] <- x
     return(y)}, table_pos)
 
@@ -175,7 +175,7 @@ write_mgt <- function(file_meta, thread_parameter, thread_path) {
     map(., ~apply(.x, 1, paste, collapse = " ")) %>%
     map2(par_files, ., ~c(.x, .y))
 
-  walk2(par_file, file_sel$file, ~ write_lines(.x, thread_path%//%.y))
+  walk2(par_files, file_sel$file, ~ write_lines(.x, thread_path%//%.y))
 }
 
 #' Format a line in the mgt table for writing in correct format to file

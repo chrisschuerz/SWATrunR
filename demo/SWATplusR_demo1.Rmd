@@ -46,7 +46,7 @@ nse <- function(sim, obs) {
 To keep the SWAT model call shorter in the application the run_swat function was defined with preset parameters here:
 ```{r}
 run_swat_parallel <- function(param) {
-  run_swat2012(project_path = "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru",
+  run_swat2012(project_path = "C:/sb14_full",
                output = list(flow = define_output(file = "rch", 
                                                   variable = "FLOW_OUT", 
                                                   unit = 3)), 
@@ -63,11 +63,12 @@ run_swat_parallel <- function(param) {
 
 ## Sensitivity analysis using FAST
 ```{r, message=FALSE, error=FALSE, warning=FALSE}
-par_names <- c("r__CNOP{[],6}.mgt", "r__SOL_AWC().sol", "v__ESCO.hru", "v__GW_DELAY.gw", "v__SFTMP.bsn")
+par_names <- c("cnop_till::CNOP_TILL.mgt|change = rel", "awc::SOL_AWC.sol|change = rel", "esco::ESCO.hru|change = rep", "ge_del::GW_DELAY.gw|change = rep", "sft::SFTMP.bsn|change = rep")
 
 fast_param <- fast_parameters(minimum = c(-0.25, -0.9, 0, 0, -2.5),
                               maximum = c(0.1, 3, 1, 300, 2.5), 
-                              names = par_names)
+                              names = par_names) %>% 
+  as_tibble
 
 fast_q_trais <- run_swat_parallel(fast_param)
 

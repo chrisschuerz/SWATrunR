@@ -17,3 +17,4 @@ display_progress(n, nmax, t0, word)
 Display the progress if iterative processes
 }
 \keyword{internal}
+

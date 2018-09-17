@@ -228,6 +228,5 @@ write_file_cio <- function(run_path, file_cio) {
   ## Write modified file_cio into thread folder and respective Backup folder
   for(i in thread_i) {
     writeLines(file_cio, run_path%//%i%//%"file.cio")
-    writeLines(file_cio, run_path%//%i%//%"Backup"%//%"file.cio")
   }
 }

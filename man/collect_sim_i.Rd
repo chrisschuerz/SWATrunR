@@ -19,3 +19,4 @@ Helper function to collect a table from a sqlite date base according to the
 information given in one line of the table_overview
 }
 \keyword{internal}
+

@@ -13,3 +13,4 @@ add_quotes_if_chr(chr)
 Add quotes to character values of vector in filter expression
 }
 \keyword{internal}
+

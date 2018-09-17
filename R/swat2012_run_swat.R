@@ -213,7 +213,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
   ## If not quiet a function for displaying the simulation progress is generated
   ## and provided to foreach via the SNOW options
-  n_run <- max(nrow(parameter), 1)
+  n_run <- max(nrow(parameter$values), 1)
   if(!quiet) {
     cat("Performing", n_run, ifelse(n_run == 1, "simulation", "simulations"),
         "on", n_thread, "cores:", "\n")

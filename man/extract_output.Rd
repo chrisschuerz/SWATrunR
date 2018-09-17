@@ -15,3 +15,4 @@ extract_output(output, model_output)
 Extract the variables from the model outputs as defined in 'output'
 }
 \keyword{internal}
+

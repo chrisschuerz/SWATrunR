@@ -32,6 +32,7 @@ modify_parameter <- function(parameter, thread_parameter, file_meta, i_run) {
         modify_gen_par(parameter, thread_parameter, file_meta, i_par, i_run)
     }
   }
+  return(thread_parameter)
 }
 
 #' General function to modify parameters that are provided in linear table
