@@ -129,88 +129,83 @@ get_os <- function() {
 #' @importFrom pasta %//% %&%
 #' @keywords internal
 #'
-modify_file_cio <- function(project_path, start_date, end_date,
-                            output_interval, years_skip,
-                            rch_out_var, sub_out_var,
-                            hru_out_var, hru_out_nr) {
-  ## Read unmodified file.cio
-  file_cio <- readLines(project_path%//%"file.cio", warn = FALSE)
+setup_run_files <- function(project_path, parameter, output,
+                            start_date, end_date,
+                            output_interval, years_skip) {
+  ## Read unmodified time.sim, calibration.cal and print.prt
+  run_files <- list()
+  run_files$time.sim <- read_lines(project_path%//%"time.sim")
+  run_files$print.prt <- read_lines(project_path%//%"print.prt")
+
+  print_table <- read_table(project_path%//%"print.prt", skip = 9,
+                            col_names = TRUE)
 
   if(xor(is.null(start_date), is.null(end_date))) {
     stop("'start_date' and 'end_date' must be provided together!")
   } else if (!is.null(start_date)) {
-    ## Determine required date indices for writing to file.cio
+    ## Determine required date indices for writing to time.sim
     time_interval <- interval(ymd(start_date),  ymd(end_date))
-    n_year        <- ceiling(time_interval / years(1))
     start_year    <- year(int_start(time_interval))
     start_jdn     <- yday(int_start(time_interval))
+    end_year      <- year(int_end(time_interval))
     end_jdn       <- yday(int_end(time_interval))
 
-    file_cio[8]  <- sprintf("%16d", n_year)%&%    "    | NBYR : Number of years simulated"
-    file_cio[9]  <- sprintf("%16d", start_year)%&%"    | IYR : Beginning year of simulation"
-    file_cio[10] <- sprintf("%16d", start_jdn)%&% "    | IDAF : Beginning julian day of simulation"
-    file_cio[11] <- sprintf("%16d", end_jdn)%&%   "    | IDAL : Ending julian day of simulation"
+    run_files$time.sim[3] <- c(start_jdn, start_year, end_jdn, end_year, 0) %>%
+      sprintf("%10d",.) %>%
+      paste(., collapse = "")
   }
-  ## Overwrite output interval if value was provided
-  if(!is.null(output_interval)){
-    output_interval <- substr(output_interval, 1,1) %>% tolower(.)
-    output_interval <- case_when(output_interval %in% c("m", "0") ~ 0,
-                                 output_interval %in% c("d", "1") ~ 1,
-                                 output_interval %in% c("y", "2") ~ 2)
-    file_cio[59] <- sprintf("%16d", output_interval)%&%"    | IPRINT: print code (month, day, year)"
-  }
+  ## Overwrite output interval if value was provided. Default is 'daily'
+  if(is.null(output_interval)) output_interval <- "d"
+  output_interval <- substr(output_interval, 1,1) %>% tolower(.)
+  output_interval <-
+    case_when(output_interval == "d" ~ "daily",
+              output_interval == "m" ~ "monthly",
+              output_interval == "y" ~ "yearly",
+              output_interval == "a" ~ "avann")
+
+  # Set all outputs to no, except the output files defined in output and only
+  # for the defined time interval
+  object_names <- map_chr(output, ~ .x[["file"]][1])
+  print_table[,2:5] <- "n"
+  print_table[print_table$objects %in% object_names, output_interval] <- "y"
+
+  print_table <- print_table %>%
+    mutate(objects = sprintf("%-16s", objects),
+           daily   = sprintf("%14s", daily),
+           monthly = sprintf("%14s", monthly),
+           yearly  = sprintf("%14s", yearly),
+           avann   = sprintf("%14s", avann)) %>%
+    apply(., 1, paste, collapse = "")
+
+  run_files$print.prt <- c(run_files$print.prt[1:10], print_table)
 
   ## Overwrite number of years to skip if value was provided
   if(!is.null(years_skip)) {
     if(!is.numeric(years_skip)) stop("'years_skip' must be numeric!")
-    file_cio[60] <- sprintf("%16d", years_skip)%&%"    | NYSKIP: number of years to skip output printing/summarization"
+    years_skip <- sprintf("%-12d", years_skip)
+    run_files$print.prt[3] <- run_files$print.prt[3] %>%
+      strsplit(., "\\s+") %>%
+      unlist(.) %>%
+      .[2:length(.)] %>%
+      sprintf("%-10s",. ) %>%
+      c(years_skip, .) %>%
+      paste(., collapse = "")
   }
 
-  ## Overwrite custom reach variables if values are provided
-  if(!is.null(rch_out_var)){
-    if(!is.numeric(rch_out_var)) stop("'rch_out_var' must be numeric!")
-    if(length(rch_out_var) > 20){
-      stop("Maximum number of reach variables for custom outputs in file.cio is 20!")
-    }
-    rch_out_var <- c(rch_out_var, rep(0, 20 - length(rch_out_var)))
-    file_cio[65] <- paste0(sprintf("%4d", rch_out_var), collapse = "")
+  # So far avoid any other output files to be written
+  run_files$print.prt[7] <- "n             n             n             "
+  run_files$print.prt[7] <- "n             n             n             n             "
+
+  # Current implementation of parameter calibration does not allow any constraints!
+  if(!is.null(parameter)) {
+    run_files$calibration.cal <- parameter$parameter_constrain %>%
+      select(., parameter, change) %>%
+      set_names(c("NAME", "CHG_TYPE")) %>%
+      mutate(VAL = NA, CONDS = 0, LYR1 = 0, LYR2 = 0, YEAR1 = 0, YEAR2 = 0,
+             DAY1 = 0, DAY2 = 0, OBJ_TOT = 0)
   }
 
-  ## Overwrite custom subbasin variables if values are provided
-  if(!is.null(sub_out_var)){
-    if(!is.numeric(sub_out_var)) stop("'sub_out_var' must be numeric!")
-    if(length(sub_out_var) > 15){
-      stop("Maximum number of subbasin variables for custom outputs in file.cio is 15!")
-    }
-    sub_out_var <- c(sub_out_var, rep(0, 15 - length(sub_out_var)))
-    file_cio[67] <- paste0(sprintf("%4d", sub_out_var), collapse = "")
-  }
-
-  ## Overwrite custom HRU variables if values are provided
-  if(!is.null(hru_out_var)){
-    if(!is.numeric(hru_out_var)) stop("'hru_out_var' must be numeric!")
-    if(length(hru_out_var) > 20){
-      stop("Maximum number of HRU variables for custom outputs in file.cio is 20!")
-    }
-    hru_out_var <- c(hru_out_var, rep(0, 20 - length(hru_out_var)))
-    file_cio[69] <- paste0(sprintf("%4d", hru_out_var), collapse = "")
-  }
-
-  ## Overwrite HRU numbers for which HRU outputs are written if values are provided
-  if(!is.null(hru_out_nr)){
-    if(is.numeric(hru_out_nr)){
-      if(length(hru_out_nr) > 20){
-        stop("Maximum number of HRUs for custom outputs in file.cio is 20!")
-      }
-      hru_out_nr <- c(hru_out_nr, rep(0, 20 - length(hru_out_nr)))
-    } else if(hru_out_nr == "all") {
-      hru_out_nr <- rep(0, 20)
-    } else {
-      stop("Input for 'hru_out_nr' must be either numeric vector or string 'all'!")
-    }
-    file_cio[71] <- paste0(sprintf("%4d", hru_out_nr), collapse = "")
-  }
-  return(file_cio)
+  return(run_files)
 }
 
 #' Write the updated file.cio to all parallel folders

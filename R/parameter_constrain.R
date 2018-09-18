@@ -25,13 +25,16 @@ translate_parameter_constraints <- function(par) {
            change     = gsub(".*change|\\|.*", "", par) %>%
              gsub(bool_op, "",.) %>%
              trimws(.) %>%
-             substr(., 1, 3))
+             substr(., 1, 6))
 
   is_correct_change <- model_par$change %in% c("relchg", "pctchg", "abschg", "absval")
   if(any(!is_correct_change)) {
-    stop("Wrong input for change type. Must be either"%&%
+    stop("Wrong input for change type. Must be either"%&&%
          "'relchg', 'pctchg', 'abschg', or 'absval'.")
   }
+
+  # Here future!: add reading file_name frome par_lookup.csv --> check if file
+  # name is given or add if per name is not ambiguous!
 
   is_correct_file <- model_par$file_name %in%
     c("pnd", "rte", "sub", "swq", "hru", "gw", "sdr", "sep", "bsn", "wwq",

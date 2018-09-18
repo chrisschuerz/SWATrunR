@@ -83,8 +83,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   if(!is.null(parameter)) {
     parameter <- format_swatplus_parameter(parameter)
 
-    # Here function for writing 'calibration.cal'
-
     # here would be clever to implement parameter boundary checkup
     # keep parameter boundary file in R package and write to project folder when
     # it does not exist. Otherwise read boundary file from there and do check!
