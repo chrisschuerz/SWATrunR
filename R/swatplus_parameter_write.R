@@ -13,3 +13,7 @@ format_swatplus_parameter <- function(parameter) {
   if(!is.data.frame(parameter)) parameter <- map_dfc(parameter, ~.x)
   return(list(values = parameter, parameter_constrain = par_constrain))
 }
+
+write_calibration <- function(thread_path, parameter, run_files, i_run) {
+
+}
