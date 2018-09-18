@@ -27,14 +27,15 @@ translate_parameter_constraints <- function(par) {
              trimws(.) %>%
              substr(., 1, 3))
 
-  is_correct_change <- model_par$change %in% c("rel", "abs", "rep")
+  is_correct_change <- model_par$change %in% c("relchg", "pctchg", "abschg", "absval")
   if(any(!is_correct_change)) {
-    stop("Wrong input for change type. Must be either 'rel', 'abs', or 'rep'.")
+    stop("Wrong input for change type. Must be either"%&%
+         "'relchg', 'pctchg', 'abschg', or 'absval'.")
   }
 
   is_correct_file <- model_par$file_name %in%
     c("pnd", "rte", "sub", "swq", "hru", "gw", "sdr", "sep", "bsn", "wwq",
-      "res", "ops", "sol", "mgt", "chm")
+      "res", "ops", "sol", "mgt", "chm", "swq", "hlt", "plt", "pst", "cli")
 
   if(any(!is_correct_file)) {
     stop(paste(model_par$file_name[!is_correct_file], collapse = ", ")%&&%

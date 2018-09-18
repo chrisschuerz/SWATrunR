@@ -171,9 +171,10 @@ modify_mgt_par <- function(parameter, model_parameter, file_meta,
 #'
 update_par <- function(par, par_up, change, to_chg){
   par[to_chg] <- case_when(
-    change == "rep" ~ par_up,
-    change == "rel" ~ par[to_chg] * (1 + par_up),
-    change == "abs" ~ par[to_chg] + par_up
+    change == "relchg" ~ par[to_chg] * (1 + par_up),
+    change == "pctchg" ~ par[to_chg] * (1 + par_up/100),
+    change == "abschg" ~ par[to_chg] + par_up,
+    change == "absval" ~ par_up
     )
   return(par)
 }
