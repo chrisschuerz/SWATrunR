@@ -73,8 +73,9 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                          start_date = NULL, end_date = NULL,
                          output_interval = NULL, years_skip = NULL,
                          run_index = NULL, run_path = NULL,
-                         n_thread = NULL, save_path = NULL, save_file = NULL,
-                         return_output = TRUE, add_parameter = TRUE, add_date = TRUE,
+                         n_thread = NULL, save_path = NULL,
+                         save_file = NULL, return_output = TRUE,
+                         add_parameter = TRUE, add_date = TRUE,
                          refresh = TRUE, keep_folder = FALSE, quiet = FALSE) {
 
   #-------------------------------------------------------------------------------

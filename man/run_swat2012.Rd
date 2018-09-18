@@ -7,10 +7,10 @@
 run_swat2012(project_path, output, parameter = NULL, start_date = NULL,
   end_date = NULL, output_interval = NULL, years_skip = NULL,
   rch_out_var = NULL, sub_out_var = NULL, hru_out_var = NULL,
-  hru_out_nr = NULL, abs_swat_val = NULL, run_index = NULL,
-  run_path = NULL, n_thread = NULL, save_path = NULL, save_file = NULL,
-  return_output = TRUE, add_parameter = TRUE, add_date = TRUE,
-  refresh = TRUE, keep_folder = FALSE, quiet = FALSE)
+  hru_out_nr = NULL, run_index = NULL, run_path = NULL, n_thread = NULL,
+  save_path = NULL, save_file = NULL, return_output = TRUE,
+  add_parameter = TRUE, add_date = TRUE, refresh = TRUE,
+  keep_folder = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
@@ -58,11 +58,6 @@ Documentation} p.79ff.}
 providing the HRU numbers for which the HRU variables are written. Optional
 if \code{hru_out_nr = 'all'}, HRU variables are written for all HRU
 (caution, very large output files possible!)}
-
-\item{abs_swat_val}{(optional) \code{run_swat2012} uses an internal
-'Absolute_SWAT_Values.txt' file required for overwriting parameters. With
-this parameter the path to a custom 'Absolute_SWAT_Values' file can be
-provided in case it is necessary.}
 
 \item{run_index}{(optional) Numeric vector (e.g.\code{run_index = c(1:100,
 110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL

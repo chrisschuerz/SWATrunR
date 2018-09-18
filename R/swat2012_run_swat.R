@@ -40,10 +40,6 @@
 #'   providing the HRU numbers for which the HRU variables are written. Optional
 #'   if \code{hru_out_nr = 'all'}, HRU variables are written for all HRU
 #'   (caution, very large output files possible!)
-#' @param abs_swat_val (optional) \code{run_swat2012} uses an internal
-#'   'Absolute_SWAT_Values.txt' file required for overwriting parameters. With
-#'   this parameter the path to a custom 'Absolute_SWAT_Values' file can be
-#'   provided in case it is necessary.
 #' @param run_index (optional) Numeric vector (e.g.\code{run_index = c(1:100,
 #'   110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL
 #'   all provided parameter sets are used.
@@ -94,9 +90,10 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                          output_interval = NULL, years_skip = NULL,
                          rch_out_var = NULL, sub_out_var = NULL,
                          hru_out_var = NULL, hru_out_nr = NULL,
-                         abs_swat_val = NULL, run_index = NULL, run_path = NULL,
-                         n_thread = NULL, save_path = NULL, save_file = NULL,
-                         return_output = TRUE, add_parameter = TRUE, add_date = TRUE,
+                         run_index = NULL, run_path = NULL,
+                         n_thread = NULL, save_path = NULL,
+                         save_file = NULL, return_output = TRUE,
+                         add_parameter = TRUE, add_date = TRUE,
                          refresh = TRUE, keep_folder = FALSE, quiet = FALSE) {
 
 #-------------------------------------------------------------------------------
