@@ -165,7 +165,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   #-------------------------------------------------------------------------------
   # Write files
   ## Write file.cio
-  write_file_cio(run_path, file_cio)
+  write_run_files(run_path, run_files)
 
   ## Initialize the save_file if defined
   if(!is.null(save_file)) {
@@ -203,35 +203,33 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   }
 
   sim_result <- foreach(i_run = 1:n_run,
-                        .packages = c("dplyr", "pasta", "lubridate"), .options.snow = opts) %dopar% {
-                          # for(i_run in 1:max(nrow(parameter), 1)) {
-                          ## Identify worker of the parallel process and link it with respective thread
-                          worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
-                          thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
-                          thread_path <- run_path%//%thread_id
-                          # thread_path <- "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru/.model_run/thread_1"
+    .packages = c("dplyr", "pasta", "lubridate"), .options.snow = opts) %dopar% {
+    # for(i_run in 1:max(nrow(parameter), 1)) {
+    ## Identify worker of the parallel process and link it with respective thread
+    worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
+    thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
+    thread_path <- run_path%//%thread_id
+    # thread_path <- "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru/.model_run/thread_1"
 
 
-                          ## Modify model parameters if parameter set was provided
-                          if(!is.null(parameter)) {
-                            thread_parameter <- swat_parameter
-                            thread_parameter <- modify_parameter(parameter, thread_parameter,
-                                                                 file_meta, i_run)
-                            write_parameter(file_meta, thread_parameter, thread_path)
-                          }
+    ## Modify model parameters if parameter set was provided and write
+    ## calibration file
+    if(!is.null(parameter)) {
+      write_calibration(thread_path, parameter, run_files$calibration.cal, i_run)
+    }
 
-                          ## Execute the SWAT exe file located in the thread folder
-                          system(thread_path%//%"swat_run.bat")
+    ## Execute the SWAT exe file located in the thread folder
+    system(thread_path%//%"swat_run.bat")
 
-                          model_output <- read_output(output, thread_path) %>%
-                            extract_output(output, .)
+    model_output <- read_output(output, thread_path) %>%
+      extract_output(output, .)
 
-                          if(!is.null(save_path)) {
-                            save_run(save_path, model_output, parameter, i_run, thread_id)
-                          }
+    if(!is.null(save_path)) {
+      save_run(save_path, model_output, parameter, i_run, thread_id)
+    }
 
-                          return(model_output)
-                        }
+    return(model_output)
+  }
 
   ## Stop cluster after parallel run
   stopCluster(cl)
