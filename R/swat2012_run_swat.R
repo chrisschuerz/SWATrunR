@@ -244,7 +244,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     ## Execute the SWAT exe file located in the thread folder
     system(thread_path%//%"swat_run.bat")
 
-    model_output <- read_output(output, thread_path) %>%
+    model_output <- read_swat2012_output(output, thread_path) %>%
       extract_output(output, .)
 
     if(!is.null(save_path)) {
