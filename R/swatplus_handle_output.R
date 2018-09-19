@@ -98,6 +98,63 @@ find_first_space <- function(string) {
   space_pos[space_pos_diff != 1]
 }
 
-translate_outfile_names <- function(output) {
+#' Translate the output file settings defined according to print.prt to the
+#' actual output file names
+#'
+#' @param output List of output variables defined with \code{define_output}
+#' @param output_interval the time interval for writing the simulated outputs
+#'
+#' @importFrom dplyr %>% case_when
+#' @importFrom tibble tribble
+#' @importFrom purrr map
+#' @keywords internal
+#'
+translate_outfile_names <- function(output, output_interval) {
+  output_files <- tribble(
+    ~object,        ~file,       ~specifier,
+    "basin_wb",     "waterbal",  "_bsn",
+    "basin_nb",     "nutbal",    "_bsn",
+    "basin_ls",     "losses",    "_bsn",
+    "basin_pw",     "plantwx",   "_bsn",
+    "basin_aqu",    "aquifer",   "_bsn",
+    "basin_res",    "reservoir", "_bsn",
+    "basin_cha",    "channel",   "_bsn",
+    "basin_sd_cha", "channel",   "_sd_bsn",
+    #"basin_psc" not found in the outputs
+    #No region files were written
+    "lsunit_wb",    "waterbal",  "_lsu",
+    "lsunit_nb",    "nutbal",    "_lsu",
+    "lsunit_ls",    "losses",    "_lsu",
+    "lsunit_pw",    "plantwx",   "_lsu",
+    "hru_wb",       "waterbal",  "_hru",
+    "hru_nb",       "nutbal",    "_hru",
+    "hru_ls",       "losses",    "_hru",
+    "hru_pw",       "plantwx",   "_hru",
+    #"hru-lte_XX" not found in outputs
+    "channel",      "channel",   "",
+    #"channel_sd" not found in outputs
+    "aquifer",      "aquifer",   "",
+    "reservoir",    "reservoir", "",
+    # "recall" not found in outputs
+    # "hyd" is very inconsistent (hydin/out)!!!
+    "ru",           "routing_units", "")
+
+  output_interval <- substr(output_interval, 1,1) %>% tolower(.)
+  output_interval <-
+    case_when(output_interval == "d" ~ "_day",
+              output_interval == "m" ~ "_mon",
+              output_interval == "y" ~ "_yr",
+              output_interval == "a" ~ "_aa")
+
+  map(output, function(tbl, out_files, out_int) {
+    obj <- tbl$file[[1]]
+    file_name <- paste0(output_files$file[output_files$object == obj],
+                   output_interval,
+                   output_files$specifier[output_files$object == obj],
+                   ".txt")
+    tbl$file <- file_name
+    return(tbl)
+  }, output_files, output_interval)
 
 }
+

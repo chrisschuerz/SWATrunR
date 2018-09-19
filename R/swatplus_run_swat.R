@@ -118,7 +118,8 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   #                             hru_out_var, hru_out_nr)
 
   ## Convert output to named list in case single unnamed output was defined
-  output <- check_output(output)
+  output <- check_output(output) %>%
+    translate_outfile_names(., output_interval)
   #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
   ## Identify the required number of parallel threads to build.
