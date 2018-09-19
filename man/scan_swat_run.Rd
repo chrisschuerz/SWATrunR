@@ -15,3 +15,4 @@ Scan one or multiple save folders that belong to the same SWAT simulation and
 get information on the simulation period, simulated variables and used
 parameter sets.
 }
+

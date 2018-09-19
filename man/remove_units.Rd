@@ -13,3 +13,4 @@ remove_units(tbl)
 Remove the units from the column names
 }
 \keyword{internal}
+

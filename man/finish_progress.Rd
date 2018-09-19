@@ -15,3 +15,4 @@ finish_progress(nmax, t0, word)
 Print message for completed process
 }
 \keyword{internal}
+
