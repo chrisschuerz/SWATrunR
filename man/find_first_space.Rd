@@ -13,3 +13,4 @@ find_first_space(string)
 Helper function to find the fist position of white spaces in a text string
 }
 \keyword{internal}
+

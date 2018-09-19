@@ -104,6 +104,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   stopifnot(is.character(project_path))
   stopifnot(is.character(run_path)|is.null(run_path))
   stopifnot(is.numeric(n_thread)|is.null(n_thread))
+  stopifnot(is.numeric(years_skip)|is.null(years_skip))
   stopifnot(is.logical(add_parameter))
   stopifnot(is.logical(add_date))
   stopifnot(is.logical(return_output))
@@ -111,15 +112,18 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   stopifnot(is.logical(keep_folder))
   stopifnot(is.logical(quiet))
 
-  ## Read and modify the projects' file.cio, internal variable checks done.
-  # file_cio <- modify_file_cio(project_path, start_date, end_date,
-  #                             output_interval, years_skip,
-  #                             rch_out_var, sub_out_var,
-  #                             hru_out_var, hru_out_nr)
-
   ## Convert output to named list in case single unnamed output was defined
-  output <- check_output(output) %>%
-    translate_outfile_names(., output_interval)
+  output <- check_output(output)
+  ## Set output_interval to 'daily' as default if not provided by user.
+  if(is.null(output_interval)) output_interval <- "d"
+
+  ## Read and modify the projects' files defining simulation period years to
+  ## skip, interval, etc.
+  run_files <- setup_run_files(project_path, parameter, output,
+                               start_date, end_date,
+                               output_interval, years_skip)
+
+  output <- translate_outfile_names(output, output_interval)
   #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
   ## Identify the required number of parallel threads to build.
@@ -156,17 +160,17 @@ run_swatplus <- function(project_path, output, parameter = NULL,
         message("The number of existing threads is lower than the required number."%&%
                   "\nParallel folder structure will be created from scratch!\n\n")
       }
-      build_model_run(project_path, run_path, n_thread, abs_swat_val, quiet)
+      build_model_run(project_path, run_path, n_thread, quiet)
     }
     ## Build the parallel folder structure if it does not exist or if a
     ## forced refresh was set with refresh = TRUE
   } else {
     unlink(run_path, recursive = TRUE)
-    build_model_run(project_path, run_path, n_thread, abs_swat_val, quiet)
+    build_model_run(project_path, run_path, n_thread, quiet)
   }
   #-------------------------------------------------------------------------------
   # Write files
-  ## Write file.cio
+  ## Write run_files: Files that define the time range etc. of the SWAT simulation
   write_run_files(run_path, run_files)
 
   ## Initialize the save_file if defined

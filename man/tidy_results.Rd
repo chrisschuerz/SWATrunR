@@ -21,3 +21,4 @@ tidy_results(sim_result, parameter, date, add_parameter, add_date)
 Tidy up simulation results before returning them
 }
 \keyword{internal}
+

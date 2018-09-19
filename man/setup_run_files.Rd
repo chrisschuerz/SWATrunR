@@ -2,7 +2,8 @@
 % Please edit documentation in R/swatplus_setup_run_files.R
 \name{setup_run_files}
 \alias{setup_run_files}
-\title{Reads and modifies the SWAT projects' filo.cio according to provided inputs}
+\title{Reads and modifies the SWAT+ projects' files that define the basic settings
+of the simulation and set them according tu respective input parameters}
 \usage{
 setup_run_files(project_path, parameter, output, start_date, end_date,
   output_interval, years_skip)
@@ -19,33 +20,14 @@ in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are located}
 
 \item{output_interval}{Time interval in which the SWAT model outputs are
 written. Provided either as character string ("d" for daily, "m" for
-monthly, or "y" for yearly) or as SWAT input values (0 for monthly, 1 for
-daily, 2 for yearly).}
+monthly, "y" for yearly, or "a", for average annual).}
 
 \item{years_skip}{Integer value that provides the numbe of years to be
 skipped during writing the SWAT model outputs}
-
-\item{rch_out_var}{Numeric vector of maximum length = 20 for customized
-output of reach variables.For output codes see
-\href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
-Documentation} p.77ff.}
-
-\item{sub_out_var}{Numeric vector of maximum length = 15 for customized
-output of subbasin variables.For output codes see
-\href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
-Documentation} p.78ff.}
-
-\item{hru_out_var}{Numeric vector of maximum length = 20 for customized
-output of HRU variables.For output codes see
-\href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
-Documentation} p.79ff.}
-
-\item{hru_out_nr}{Numeric vector of maximum length = 20 for providing the HRU
-numbers for which the HRU variables are written. Optional if hru_out_nr =
-'all', HRU variables are written for all HRU (caution, very large output
-files possible!)}
 }
 \description{
-Reads and modifies the SWAT projects' filo.cio according to provided inputs
+Reads and modifies the SWAT+ projects' files that define the basic settings
+of the simulation and set them according tu respective input parameters
 }
 \keyword{internal}
+

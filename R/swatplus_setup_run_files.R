@@ -1,4 +1,5 @@
-#' Reads and modifies the SWAT projects' filo.cio according to provided inputs
+#' Reads and modifies the SWAT+ projects' files that define the basic settings
+#' of the simulation and set them according tu respective input parameters
 #'
 #' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
 #' @param start_date Start date of the SWAT simulation. Provided as character
@@ -8,35 +9,21 @@
 #'   in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are located
 #' @param output_interval Time interval in which the SWAT model outputs are
 #'   written. Provided either as character string ("d" for daily, "m" for
-#'   monthly, or "y" for yearly) or as SWAT input values (0 for monthly, 1 for
-#'   daily, 2 for yearly).
+#'   monthly, "y" for yearly, or "a", for average annual).
 #' @param years_skip Integer value that provides the numbe of years to be
 #'   skipped during writing the SWAT model outputs
-#' @param rch_out_var Numeric vector of maximum length = 20 for customized
-#'   output of reach variables.For output codes see
-#'   \href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
-#'   Documentation} p.77ff.
-#' @param sub_out_var Numeric vector of maximum length = 15 for customized
-#'   output of subbasin variables.For output codes see
-#'   \href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
-#'   Documentation} p.78ff.
-#' @param hru_out_var Numeric vector of maximum length = 20 for customized
-#'   output of HRU variables.For output codes see
-#'   \href{https://swat.tamu.edu/media/69308/ch03_input_cio.pdf}{SWAT I/O
-#'   Documentation} p.79ff.
-#' @param hru_out_nr Numeric vector of maximum length = 20 for providing the HRU
-#'   numbers for which the HRU variables are written. Optional if hru_out_nr =
-#'   'all', HRU variables are written for all HRU (caution, very large output
-#'   files possible!)
 #' @importFrom lubridate int_end int_start interval yday year years ymd
-#' @importFrom dplyr case_when %>%
+#' @importFrom dplyr case_when mutate select %>%
 #' @importFrom pasta %//% %&%
+#' @importFrom purrr map_chr set_names
+#' @importFrom readr read_lines read_table
 #' @keywords internal
 #'
 setup_run_files <- function(project_path, parameter, output,
                             start_date, end_date,
                             output_interval, years_skip) {
   ## Read unmodified time.sim, calibration.cal and print.prt
+  options(readr.num_columns = 0)
   run_files <- list()
   run_files$time.sim <- read_lines(project_path%//%"time.sim")
   run_files$print.prt <- read_lines(project_path%//%"print.prt")
@@ -59,7 +46,7 @@ setup_run_files <- function(project_path, parameter, output,
       paste(., collapse = "")
   }
   ## Overwrite output interval if value was provided. Default is 'daily'
-  if(is.null(output_interval)) output_interval <- "d"
+
   output_interval <- substr(output_interval, 1,1) %>% tolower(.)
   output_interval <-
     case_when(output_interval == "d" ~ "daily",

@@ -15,3 +15,4 @@ read_sol(file_meta, project_path)
 Read parameters from the '.sol' file (as it has an individual file structure)
 }
 \keyword{internal}
+

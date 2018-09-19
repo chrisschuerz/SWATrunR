@@ -13,3 +13,4 @@ is_par(chr)
 Check which row in a character vector file holds a model parameter
 }
 \keyword{internal}
+
