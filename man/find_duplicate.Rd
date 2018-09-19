@@ -14,4 +14,3 @@ all variables saved in the data bases}
 Find simulation runs that are duplicated in the provided sqlite data bases
 }
 \keyword{internal}
-

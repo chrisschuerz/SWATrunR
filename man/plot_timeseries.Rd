@@ -28,4 +28,3 @@ time step from the selected model runs.
 \description{
 Interactive timeseries plot of the simulation results filtered by a criterion
 }
-

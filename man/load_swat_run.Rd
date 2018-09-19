@@ -27,4 +27,3 @@ the simulation results of each variable}
 Load simuation results that were saved in sqlite data bases in one or
 multiple save folders when running SWAT.
 }
-

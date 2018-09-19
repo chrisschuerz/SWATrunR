@@ -13,4 +13,3 @@ read_swat2012_date(file_cio)
 Read file.cio parameters and convert the required ones to a date sequence
 }
 \keyword{internal}
-

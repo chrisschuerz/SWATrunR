@@ -13,4 +13,3 @@ concat_values(x)
 Helper function to wrap text string with "c(...)" to concatenate values
 }
 \keyword{internal}
-

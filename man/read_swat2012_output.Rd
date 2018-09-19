@@ -15,4 +15,3 @@ read_swat2012_output(output, thread_path)
 Read SWAT output files
 }
 \keyword{internal}
-

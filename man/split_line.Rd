@@ -17,4 +17,3 @@ split_line(chr, start, end)
 Split one line in a parameter file into the individual values of the table
 }
 \keyword{internal}
-

@@ -15,4 +15,3 @@ read_chm(file_meta, project_path)
 Read parameters from the '.chm' file (as it has an individual file structure)
 }
 \keyword{internal}
-

@@ -19,4 +19,3 @@ operation}
 Build filter expresions for one sequence of variable, operator and values
 }
 \keyword{internal}
-

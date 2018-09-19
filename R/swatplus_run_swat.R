@@ -214,8 +214,12 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     # thread_path <- "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru/.model_run/thread_1"
 
     ## Modify model parameters if parameter set was provided and write
-    ## calibration file
-    if(!is.null(parameter)) {
+    ## calibration file. If no parameters provided write empty calibration file
+    if(is.null(parameter)) {
+      if(file.exists(thread_path%//%"calibration.cal")) {
+        file.remove(thread_path%//%"calibration.cal")
+      }
+    } else {
       write_calibration(thread_path, parameter, run_files$calibration.cal, i_run)
     }
 

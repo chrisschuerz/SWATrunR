@@ -18,4 +18,3 @@ read}
 Read parameters that are arranged in a simple list (1 parameter per row)
 }
 \keyword{internal}
-
