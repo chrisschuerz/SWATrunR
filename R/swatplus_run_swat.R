@@ -212,7 +212,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     thread_path <- run_path%//%thread_id
     # thread_path <- "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru/.model_run/thread_1"
 
-
     ## Modify model parameters if parameter set was provided and write
     ## calibration file
     if(!is.null(parameter)) {
@@ -222,7 +221,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     ## Execute the SWAT exe file located in the thread folder
     system(thread_path%//%"swat_run.bat")
 
-    model_output <- read_output(output, thread_path) %>%
+    model_output <- read_swatplus_output(output, thread_path) %>%
       extract_output(output, .)
 
     if(!is.null(save_path)) {

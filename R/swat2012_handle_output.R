@@ -108,7 +108,7 @@ find_first_space <- function(string) {
 #' @importFrom tibble tibble
 #' @keywords internal
 #'
-read_date <- function(file_cio) {
+read_swat2012_date <- function(file_cio) {
   n_year     <- cio_to_numeric(file_cio[8])
   years_skip <- cio_to_numeric(file_cio[60])
   start_year <- cio_to_numeric(file_cio[9]) + years_skip

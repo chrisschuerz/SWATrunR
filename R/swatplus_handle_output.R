@@ -98,4 +98,6 @@ find_first_space <- function(string) {
   space_pos[space_pos_diff != 1]
 }
 
+translate_outfile_names <- function(output) {
 
+}

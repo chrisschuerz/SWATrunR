@@ -265,11 +265,11 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   }
 
   ## Delete the parallel threads if keep_folder is not TRUE
-  if(!keep_folder)unlink(run_path, recursive = TRUE)
+  if(!keep_folder) unlink(run_path, recursive = TRUE)
 
   ##Tidy up and return simulation results if return_output is TRUE
   if(return_output) {
-    date <- read_date(file_cio)
+    date <- read_swat2012_date(file_cio)
     sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
                                add_date)
     return(sim_result)
