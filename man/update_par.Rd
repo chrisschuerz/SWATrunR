@@ -22,4 +22,3 @@ Update parameter values according to the different options 'abs', 'rep', and
 'rel'
 }
 \keyword{internal}
-

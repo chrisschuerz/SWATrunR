@@ -15,4 +15,3 @@ get_value(file_i, par_pos)
 Extract the parameter values from a list parameter file
 }
 \keyword{internal}
-

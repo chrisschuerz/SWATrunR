@@ -15,4 +15,3 @@ evaluate_expression(table, expression)
 Evaluate the expression defined for a variable in 'output'
 }
 \keyword{internal}
-

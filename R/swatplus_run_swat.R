@@ -255,7 +255,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
   ##Tidy up and return simulation results if return_output is TRUE
   if(return_output) {
-    date <- read_date(file_cio)
+    date <- read_swatplus_date(output, run_path)
     sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
                                add_date)
     return(sim_result)

@@ -17,4 +17,3 @@ get_table(file_i, table_pos, col_pos)
 Extract the parameter values that are provided in tabular form in a file
 }
 \keyword{internal}
-

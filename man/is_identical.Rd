@@ -13,4 +13,3 @@ is_identical(tbl_list)
 Check if tabls in a list are identical
 }
 \keyword{internal}
-

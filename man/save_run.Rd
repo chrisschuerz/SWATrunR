@@ -19,4 +19,3 @@ save_run(save_path, model_output, parameter, i_run, i_thread)
 Save results of model run i in existing sql data base
 }
 \keyword{internal}
-

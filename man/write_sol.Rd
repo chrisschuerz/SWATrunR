@@ -18,4 +18,3 @@ thread folder}
 Write modified .sol SWAT parameter files due to their specific format
 }
 \keyword{internal}
-

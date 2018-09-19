@@ -85,4 +85,3 @@ expr <- paste0("dplyr::filter(., RCH == 5) \%>\% ",
 out_def <- list(p_conc = define_output(expression = expr))
 
 }
-

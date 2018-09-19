@@ -108,3 +108,23 @@ translate_outfile_names <- function(output, output_interval) {
 
 }
 
+#' Read date from first output file and return it for adding to the simulation
+#' outputs
+#'
+#' @param output List of output variables defined with \code{define_output}
+#' @param run_path Path to the simulation folder structure
+#'
+#' @importFrom dplyr %>% mutate select
+#' @importFrom readr read_table
+#' @importFrom purrr map
+#' @keywords internal
+#'
+read_swatplus_date <- function(output, run_path) {
+  out_file <- output[[1]]$file[[1]]
+  options(readr.num_columns = 0)
+  date_table <- read_table(run_path%//%"thread_1"%//%out_file, skip = 1) %>%
+    mutate(date = ymd(yr%_%mon%_%day)) %>%
+    select(., date)
+
+  return(date_table)
+}

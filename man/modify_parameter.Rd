@@ -23,4 +23,3 @@ respective thread}
 Modify the model parameters of the thread that runs the simulation rin_i
 }
 \keyword{internal}
-

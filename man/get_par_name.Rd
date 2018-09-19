@@ -15,4 +15,3 @@ get_par_name(chr, par_pos)
 Extract the parameter name from one line in a list parameter file
 }
 \keyword{internal}
-
