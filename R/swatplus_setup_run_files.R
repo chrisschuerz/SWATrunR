@@ -19,18 +19,19 @@
 #' @importFrom readr read_lines read_table
 #' @keywords internal
 #'
-setup_run_files <- function(project_path, parameter, output,
-                            start_date, end_date,
-                            output_interval, years_skip) {
+setup_swatplus <- function(project_path, parameter, output,
+                           start_date, end_date,
+                           output_interval, years_skip) {
   ## Read unmodified time.sim, calibration.cal and print.prt
   options(readr.num_columns = 0)
-  run_files <- list()
-  run_files$time.sim <- read_lines(project_path%//%"time.sim")
-  run_files$print.prt <- read_lines(project_path%//%"print.prt")
+  model_setup <- list()
+  model_setup$time.sim <- read_lines(project_path%//%"time.sim")
+  model_setup$print.prt <- read_lines(project_path%//%"print.prt")
 
   print_table <- read_table(project_path%//%"print.prt", skip = 9,
                             col_names = TRUE)
 
+  ## Define simulation period
   if(xor(is.null(start_date), is.null(end_date))) {
     stop("'start_date' and 'end_date' must be provided together!")
   } else if (!is.null(start_date)) {
@@ -41,11 +42,62 @@ setup_run_files <- function(project_path, parameter, output,
     end_year      <- year(int_end(time_interval))
     end_jdn       <- yday(int_end(time_interval))
 
-    run_files$time.sim[3] <- c(start_jdn, start_year, end_jdn, end_year, 0) %>%
+    model_setup$time.sim[3] <- c(start_jdn, start_year, end_jdn, end_year, 0) %>%
       sprintf("%10d",.) %>%
       paste(., collapse = "")
+  } else {
+    t_sim <- model_setup$time.sim[3] %>%
+      strsplit(., "\\s+") %>%
+      unlist(.) %>%
+      .[nchar(.) > 0] %>%
+      as.numeric(.)
+
+    start_year <- t_sim[2]
+    end_year   <- t_sim[4]
+
+    start_day <- ifelse(t_sim[1] > 0, t_sim[1], 1)
+    is_leap <- leap_year(end_year)
+    end_day <- ifelse(t_sim[3] > 0, t_sim[3], ifelse(is_leap, 366, 365))
+
+    start_date <- as_date(x = start_year%//%start_day,
+                          tz ="UTC", format = "%Y/%j")
+    end_date   <- as_date(x = end_year%//%end_day,
+                          tz ="UTC", format = "%Y/%j")
   }
-  ## Overwrite output interval if value was provided. Default is 'daily'
+  model_setup$start_date <- start_date
+  model_setup$end_date   <- end_date
+
+  ## Check the numbers of years to skip with the simulation interval Overwrite
+  ## number of years to skip if value was provided otherwise get value from
+  ## print file
+  if(is.null(years_skip)) {
+    years_skip <- model_setup$print.prt[3] %>%
+      strsplit(., "\\s+") %>%
+      unlist(.) %>%
+      .[1] %>%
+      as.numeric(.)
+  } else {
+    if(!is.numeric(years_skip)) stop("'years_skip' must be numeric!")
+    years_skip <- sprintf("%-12d", years_skip)
+    model_setup$print.prt[3] <- model_setup$print.prt[3] %>%
+      strsplit(., "\\s+") %>%
+      unlist(.) %>%
+      .[2:length(.)] %>%
+      sprintf("%-10s",. ) %>%
+      c(years_skip, .) %>%
+      paste(., collapse = "")
+  }
+
+  years_sim <- interval(start_date, end_date)/years(1)
+  if(years_skip >= years_sim) {
+    stop("Defined simulation period is not longer than the number of years to skip!")
+  }
+
+  model_setup$years_skip <- years_skip
+
+  ## Output interval settings
+  ## Set output_interval to 'daily' as default if not provided by user.
+  if(is.null(output_interval)) output_interval <- "d"
 
   output_interval <- substr(output_interval, 1,1) %>% tolower(.)
   output_interval <-
@@ -53,6 +105,8 @@ setup_run_files <- function(project_path, parameter, output,
               output_interval == "m" ~ "monthly",
               output_interval == "y" ~ "yearly",
               output_interval == "a" ~ "avann")
+
+  model_setup$output_interval <- output_interval
 
   # Set all outputs to no, except the output files defined in output and only
   # for the defined time interval
@@ -68,51 +122,39 @@ setup_run_files <- function(project_path, parameter, output,
            avann   = sprintf("%14s", avann)) %>%
     apply(., 1, paste, collapse = "")
 
-  run_files$print.prt <- c(run_files$print.prt[1:10], print_table)
+  model_setup$print.prt <- c(model_setup$print.prt[1:10], print_table)
 
-  ## Overwrite number of years to skip if value was provided
-  if(!is.null(years_skip)) {
-    if(!is.numeric(years_skip)) stop("'years_skip' must be numeric!")
-    years_skip <- sprintf("%-12d", years_skip)
-    run_files$print.prt[3] <- run_files$print.prt[3] %>%
-      strsplit(., "\\s+") %>%
-      unlist(.) %>%
-      .[2:length(.)] %>%
-      sprintf("%-10s",. ) %>%
-      c(years_skip, .) %>%
-      paste(., collapse = "")
-  }
 
   # So far avoid any other output files to be written
-  run_files$print.prt[7] <- "n             n             n             "
-  run_files$print.prt[7] <- "n             n             n             n             "
+  model_setup$print.prt[7] <- "n             n             n             "
+  model_setup$print.prt[7] <- "n             n             n             n             "
 
   # Current implementation of parameter calibration does not allow any constraints!
   if(!is.null(parameter)) {
-    run_files$calibration.cal <- parameter$parameter_constrain %>%
+    model_setup$calibration.cal <- parameter$parameter_constrain %>%
       select(., parameter, change) %>%
       set_names(c("NAME", "CHG_TYPE")) %>%
       mutate(VAL = NA, CONDS = 0, LYR1 = 0, LYR2 = 0, YEAR1 = 0, YEAR2 = 0,
              DAY1 = 0, DAY2 = 0, OBJ_TOT = 0)
   }
 
-  return(run_files)
+  return(model_setup)
 }
 
 #' Write the updated file.cio to all parallel folders
 #'
 #' @param run_path Path to the .model_run folder
-#' @param file_cio Updated file_cio to be written
+#' @param model_setup List of files that define the SWAT+ model setup
 #'
 #' @keywords internal
 #'
-write_run_files <- function(run_path, run_files) {
+write_swatplus_setup <- function(run_path, model_setup) {
   thread_i <- dir(run_path) %>%
     substr(.,(nchar(.) - 7), nchar(.)) %>%
     .[grepl("thread_",.)]
   ## Write modified file_cio into thread folder and respective Backup folder
   for(i in thread_i) {
-    writeLines(run_files$time.sim, run_path%//%i%//%"time.sim")
-    writeLines(run_files$print.prt, run_path%//%i%//%"print.prt")
+    writeLines(model_setup$time.sim, run_path%//%i%//%"time.sim")
+    writeLines(model_setup$print.prt, run_path%//%i%//%"print.prt")
   }
 }

@@ -68,7 +68,6 @@
 #' @importFrom pasta %//%
 #' @importFrom tibble tibble
 #' @export
-
 run_swatplus <- function(project_path, output, parameter = NULL,
                          start_date = NULL, end_date = NULL,
                          output_interval = NULL, years_skip = NULL,
@@ -114,16 +113,14 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
   ## Convert output to named list in case single unnamed output was defined
   output <- check_output(output)
-  ## Set output_interval to 'daily' as default if not provided by user.
-  if(is.null(output_interval)) output_interval <- "d"
 
   ## Read and modify the projects' files defining simulation period years to
   ## skip, interval, etc.
-  run_files <- setup_run_files(project_path, parameter, output,
-                               start_date, end_date,
-                               output_interval, years_skip)
+  model_setup <- setup_swatplus(project_path, parameter, output,
+                                start_date, end_date,
+                                output_interval, years_skip)
 
-  output <- translate_outfile_names(output, output_interval)
+  output <- translate_outfile_names(output, model_setup$output_interval)
   #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
   ## Identify the required number of parallel threads to build.
@@ -170,8 +167,8 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   }
   #-------------------------------------------------------------------------------
   # Write files
-  ## Write run_files: Files that define the time range etc. of the SWAT simulation
-  write_run_files(run_path, run_files)
+  ## Write model setup: Files that define the time range etc. of the SWAT simulation
+  write_swatplus_setup(run_path, model_setup)
 
   ## Initialize the save_file if defined
   if(!is.null(save_file)) {
@@ -224,7 +221,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
         file.remove(thread_path%//%"calibration.cal")
       }
     } else {
-      write_calibration(thread_path, parameter, run_files$calibration.cal, i_run)
+      write_calibration(thread_path, parameter, model_setup$calibration.cal, i_run)
     }
 
     ## Execute the SWAT exe file located in the thread folder
@@ -253,6 +250,8 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
   ##Tidy up results if return_output is TRUE
   if(return_output) {
+
+####### Here modify how dates are read and written according to new model_setup concept #######
     date <- read_swatplus_date(output, run_path)
     sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
                                add_date)
