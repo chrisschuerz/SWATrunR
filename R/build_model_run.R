@@ -43,8 +43,8 @@ build_model_run <- function(project_path, run_path, n_thread, quiet){
                      unix = NULL) #Required batch for running SWAT in Linux coming soon
 
   if(!quiet) {
-    plural <- ifelse(n_thread == 1, "", "s")
-    cat("Building", n_thread, "thread"%&%plural, "in","'"%&%run_path%&%"':", "\n")
+    cat("Building", n_thread, "thread"%&%plural(n_thread),
+        "in","'"%&%run_path%&%"':", "\n")
   }
 
   # Create folder structure to execute SWAT

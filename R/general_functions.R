@@ -34,13 +34,12 @@ display_progress <- function(n, nmax, t0, word){
 #' @keywords internal
 #'
 finish_progress <- function(nmax, t0, word) {
-    plural <- ifelse(nmax == 1, "", "s")
     cat("\r", paste0(rep(" ", 75), collapse = ""))
     interval(t0,now()) %>%
       round(.) %>%
       as.period(.) %>%
       as.character(.) %>%
-      cat("\r","Completed",nmax, word%&%plural, "in", ., "\n")
+      cat("\r","Completed",nmax, word%&%plural(nmax), "in", ., "\n")
 }
 
 #' Evaluate the expression defined for a variable in 'output'
@@ -64,3 +63,11 @@ evaluate_expression <- function(table, expression){
 #'
 as_num <- function(chr) {suppressWarnings(as.numeric(chr))}
 
+#' Add plural 's' to the written message if multiple operations done
+#'
+#' @param n INterger number of operations
+#' @keywords internal
+#'
+plural <- function(n) {
+  ifelse(n == 1, "", "s")
+}
