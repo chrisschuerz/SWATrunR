@@ -72,3 +72,80 @@ test$simulation$floout %>%
   gather(key = "run", value = "discharge", - date) %>%
   ggplot(data = .) +
   geom_line(aes(x = date, y = discharge, col = run))
+
+
+
+#-------------------------------------------------------------------------------
+# Analysis
+library(tidyverse)
+library(lubridate)
+ks_aq2 <- readRDS("/home/christoph/Documents/projects/SWATplus/Kielstau/ks_2aq_hyd.rds")
+q_obs <- read_csv("/home/christoph/Documents/projects/SWATplus/Kielstau/q_18.csv") %>%
+  mutate(date = mdy(date))
+
+q_obs_cal <- q_obs %>%
+  filter(date >= ymd("2013-10-01")) %>%
+  filter(date <= ymd("2016-12-31"))
+
+q_sim_cal <- ks_aq2$simulation$qout %>%
+  filter(date >= ymd("2013-10-01")) %>%
+  filter(date <= ymd("2016-12-31")) %>%
+  select(-date) %>%
+  map_df(., ~ .x*10000/86400)
+
+
+nse <- function(sim, obs) {
+  1 - sum((sim - obs)^2)/sum((obs - mean(obs))^2)
+}
+
+nse_cal <- map_dbl(q_sim_cal, ~ nse(.x, q_obs_cal$qobs))
+
+nse_crit <- which(nse_cal > 0.85)
+
+gg_dat <- bind_cols(q_obs_cal, q_sim_cal[, nse_crit]) %>%
+  gather(., key = "var", value = "discharge", -date)
+
+ggplot(data = gg_dat) +
+  geom_line(aes(x = date, y = discharge, col = var)) +
+  theme_bw()
+
+# Validation:
+q_obs_val <- q_obs %>%
+  filter(date >= ymd("2010-10-01")) %>%
+  filter(date <= ymd("2013-09-30"))
+
+q_sim_val <- ks_aq2$simulation$qout %>%
+  filter(date >= ymd("2010-10-01")) %>%
+  filter(date <= ymd("2013-09-30")) %>%
+  select(-date) %>%
+  map_df(., ~ .x*10000/86400)
+
+nse_val <- map_dbl(q_sim_val, ~ nse(.x, q_obs_val$qobs))
+
+gg_dat_val <- bind_cols(q_obs_val, q_sim_val[, nse_crit]) %>%
+  gather(., key = "var", value = "discharge", -date)
+
+ggplot(data = gg_dat_val) +
+  geom_line(aes(x = date, y = discharge, col = var)) +
+  theme_bw()
+
+#------------------------------------------------------------------------------
+# Sensitivity analysis using PAWN:
+
+binned_pawn <- function(par_tbl, obj, n_bin) {
+  par_bin <- par_tbl %>%
+    map(., ~cut(.x, breaks = n_bin, labels = FALSE))
+
+  par_name <- names(par_bin)
+
+  map(par_bin, ~tibble(eval = obj, par = .x)) %>%
+    map(., ~ group_by(.x, par)) %>%
+    map(., ~ summarise(.x, eval = ks.test(eval, obj)$statistic)) %>%
+    map_df(., ~ quantile(.x$eval, probs = c(0,.50,1))) %>%
+    t() %>%
+    as_tibble() %>%
+    add_column(factor = par_name, .before = 1) %>%
+    set_colnames(c("par", "T_min", "T_median", "T_max")) %>%
+    arrange(., desc(T_median))
+}
+
