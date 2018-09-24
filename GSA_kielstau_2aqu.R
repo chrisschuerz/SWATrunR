@@ -79,6 +79,7 @@ test$simulation$floout %>%
 # Analysis
 library(tidyverse)
 library(lubridate)
+library(forcats)
 ks_aq2 <- readRDS("/home/christoph/Documents/projects/SWATplus/Kielstau/ks_2aq_hyd.rds")
 q_obs <- read_csv("/home/christoph/Documents/projects/SWATplus/Kielstau/q_18.csv") %>%
   mutate(date = mdy(date))
@@ -145,7 +146,115 @@ binned_pawn <- function(par_tbl, obj, n_bin) {
     t() %>%
     as_tibble() %>%
     add_column(factor = par_name, .before = 1) %>%
-    set_colnames(c("par", "T_min", "T_median", "T_max")) %>%
+    set_names(c("par", "T_min", "T_median", "T_max")) %>%
     arrange(., desc(T_median))
 }
 
+derive_fdc <- function(q_day){
+  if(is.null(dim(q_day))){
+    fdc <- data.frame(p = (seq(1,length(q_day))/(length(q_day) + 1)),
+                      q = sort(q_day, decreasing = TRUE))
+  } else{
+    fdc <- data.frame(p = (seq(1,dim(q_day)[1])/(dim(q_day)[1] + 1)),
+                      apply(q_day, 2, sort, decreasing = TRUE))
+  }
+  return(fdc)
+}
+
+fdc_q_cal <- q_sim_cal %>%
+  map(., ~derive_fdc(.x))
+
+p_thres <- map_int(c(0, 5, 20, 70, 95, 100), ~ which.min(abs(fdc_q_cal[[1]]$p*100 - .x)))
+
+fdc_q_thres <- map(fdc_q_cal, ~.x$q[p_thres]) %>%
+  bind_rows() %>%
+  t(.) %>%
+  as_tibble(.) %>%
+  set_names(c("q_max","q_05", "q_20", "q_70", "q_95", "q_min"))
+
+pawn_q_fdc <- map(fdc_q_thres, ~binned_pawn(par_tbl = ks_aq2$parameter$values,
+                                          obj = .x, n_bin = 25))
+
+gg_q_fdc <- pawn_q_fdc %>%
+  map2(.,names(.),   ~ mutate(.x, fdc_prob = .y)) %>%
+  bind_rows(.) %>%
+  select(par, T_median, fdc_prob) %>%
+  mutate(par = fct_reorder(par, T_median, max),
+         fdc_prob = factor(fdc_prob, levels = c("q_max","q_05", "q_20", "q_70", "q_95", "q_min")))
+
+ggplot(data = gg_q_fdc) +
+  geom_point(aes(x = par, y = T_median, col = fdc_prob)) +
+  coord_flip() +
+  scale_color_brewer(palette = "Spectral") +
+  xlab("Parameter") +
+  ylab("Sensitivity surface flow") +
+  theme_bw()
+
+q_til_cal <- ks_aq2$simulation$qtil %>%
+  filter(date >= ymd("2013-10-01")) %>%
+  filter(date <= ymd("2016-12-31")) %>%
+  select(-date) %>%
+  map_df(., ~ .x*10000/86400)
+
+fdc_qtil_cal <- q_til_cal %>%
+  map(., ~derive_fdc(.x))
+
+fdc_qtil_thres <- map(fdc_qtil_cal, ~.x$q[p_thres]) %>%
+  bind_rows() %>%
+  t(.) %>%
+  as_tibble(.) %>%
+  set_names(c("q_max","q_05", "q_20", "q_70", "q_95", "q_min"))
+
+pawn_qtil_fdc <- map(fdc_qtil_thres, ~binned_pawn(par_tbl = ks_aq2$parameter$values,
+                                            obj = .x, n_bin = 25))
+
+
+gg_qtil_fdc <- pawn_qtil_fdc %>%
+  map2(.,names(.),   ~ mutate(.x, fdc_prob = .y)) %>%
+  bind_rows(.) %>%
+  select(par, T_median, fdc_prob) %>%
+  mutate(par = fct_reorder(par, T_median, max),
+         fdc_prob = factor(fdc_prob, levels = c("q_max","q_05", "q_20", "q_70", "q_95", "q_min")))
+
+ggplot(data = gg_qtil_fdc) +
+  geom_point(aes(x = par, y = T_median, col = fdc_prob)) +
+  coord_flip() +
+  scale_color_brewer(palette = "Spectral") +
+  xlab("Parameter") +
+  ylab("Sensitivity tile flow") +
+  theme_bw()
+
+
+eta_cal <- ks_aq2$simulation$eta %>%
+  filter(date >= ymd("2013-10-01")) %>%
+  filter(date <= ymd("2016-12-31")) %>%
+  select(-date) %>%
+  map_df(., ~ .x*10000/86400)
+
+fdc_eta_cal <- eta_cal %>%
+  map(., ~derive_fdc(.x))
+
+fdc_eta_thres <- map(fdc_eta_cal, ~.x$q[p_thres]) %>%
+  bind_rows() %>%
+  t(.) %>%
+  as_tibble(.) %>%
+  set_names(c("q_max","q_05", "q_20", "q_70", "q_95", "q_min"))
+
+pawn_eta_fdc <- map(fdc_eta_thres, ~binned_pawn(par_tbl = ks_aq2$parameter$values,
+                                                  obj = .x, n_bin = 25))
+
+
+gg_eta_fdc <- pawn_eta_fdc %>%
+  map2(.,names(.),   ~ mutate(.x, fdc_prob = .y)) %>%
+  bind_rows(.) %>%
+  select(par, T_median, fdc_prob) %>%
+  mutate(par = fct_reorder(par, T_median, max),
+         fdc_prob = factor(fdc_prob, levels = c("q_max","q_05", "q_20", "q_70", "q_95", "q_min")))
+
+ggplot(data = gg_eta_fdc) +
+  geom_point(aes(x = par, y = T_median, col = fdc_prob)) +
+  coord_flip() +
+  scale_color_brewer(palette = "Spectral") +
+  xlab("Parameter") +
+  ylab("Sensitivity ETA") +
+  theme_bw()
