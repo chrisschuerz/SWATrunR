@@ -12,7 +12,15 @@ screen <- function(project_path, parameter, calibration_var, tolerance = 0.05,
     return_output <- TRUE
   }
 
-  parameter_bound <- format_swatplus_parameter(parameter)
+  n_thread <- min(max(nrow(parameter$values),1),
+                  max(n_thread,1),
+                  detectCores())
+
+  parameter_bound <- parameter
+
+  lhs_samp <- optimumLHS(n_thread, ncol(parameter_bound))
+  par_samp <- map2_df(parameter_bound, as_tibble(lhs_samp),
+                      ~ ((max(.x) - min(.x))*.y))
 
   sim <- run_swatplus(project_path = project_path, output = output,
                       start_date = start_date, end_date = end_date,
