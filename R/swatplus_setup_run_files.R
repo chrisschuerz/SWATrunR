@@ -21,7 +21,8 @@
 #'
 setup_swatplus <- function(project_path, parameter, output,
                            start_date, end_date,
-                           output_interval, years_skip) {
+                           output_interval, years_skip,
+                           soft_cal) {
   ## Read unmodified time.sim, calibration.cal and print.prt
   options(readr.num_columns = 0)
   model_setup <- list()
@@ -113,6 +114,11 @@ setup_swatplus <- function(project_path, parameter, output,
   object_names <- map_chr(output, ~ .x[["file"]][1])
   print_table[,2:5] <- "n"
   print_table[print_table$objects %in% object_names, output_interval] <- "y"
+
+  if(soft_cal) {
+    print_table[print_table$objects %in% c("basin_wb", "basin_nb"),
+                "avann"] <- "y"
+  }
 
   print_table <- print_table %>%
     mutate(objects = sprintf("%-16s", objects),

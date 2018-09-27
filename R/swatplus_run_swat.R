@@ -1,9 +1,9 @@
 #' Run SWAT+
 #'
-#' This function allows to run a SWAT+ project in parallel from within R.
-#' Basic settings for the SWAT run such as the simulation period or the time
-#' interval for the outputs can be done directly. SWAT simulation outputs can be
-#' defined that are returned for defined parameter sets.
+#' This function allows to run a SWAT+ project in parallel from within R. Basic
+#' settings for the SWAT run such as the simulation period or the time interval
+#' for the outputs can be done directly. SWAT simulation outputs can be defined
+#' that are returned for defined parameter sets.
 #'
 #' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
 #' @param output Define the output variables to extract from the SWAT model
@@ -42,9 +42,9 @@
 #'   outputs should only be saved on hard drive.  \code{Default = TRUE}
 #' @param add_date (optional) Logical. If \code{add_date = TRUE} a date column
 #'   is added to every simulatiuon output table.  \code{Default = TRUE}
-#' @param add_parameter (optional) Logical. If \code{add_parameter = TRUE}
-#'   used parameter sets are saved and/or returned together with the model
-#'   outputs.  \code{Default = TRUE}
+#' @param add_parameter (optional) Logical. If \code{add_parameter = TRUE} used
+#'   parameter sets are saved and/or returned together with the model outputs.
+#'   \code{Default = TRUE}
 #' @param refresh (optional) Logical. \code{refresh = TRUE} always forces that
 #'   '.model_run' is newly written when SWAT run ins started. \code{Default =
 #'   TRUE}
@@ -54,6 +54,9 @@
 #'   \code{Default = FALSE}
 #' @param quiet (optional) Logical. If \code{quiet = TRUE} no messages are
 #'   written.  \code{Default = FALSE}
+#' @param ... (optional) Additional
+#'   optional inputs, that might be required for special model settings, such as
+#'   for the \code{screen()} soft calibration routine.
 #'
 #' @return Returns the simulation results for the defined output variables as a
 #'   tibble. If more than one parameter set was provided the list of tibbles is
@@ -75,9 +78,13 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                          n_thread = NULL, save_path = NULL,
                          save_file = NULL, return_output = TRUE,
                          add_parameter = TRUE, add_date = TRUE,
-                         refresh = TRUE, keep_folder = FALSE, quiet = FALSE) {
+                         refresh = TRUE, keep_folder = FALSE,
+                         quiet = FALSE, ...) {
 
   #-------------------------------------------------------------------------------
+  # Check input parameters for additional inputs
+  add_input <- as.list(match.call(expand.dots=FALSE))[["..."]]
+
   # Check settings before starting to set up '.model_run'
   ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
   if(!is.null(parameter)) {
@@ -114,11 +121,21 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## Convert output to named list in case single unnamed output was defined
   output <- check_output(output)
 
+  ## Check if soft_calibration was triggered by screen methods. If TRUE it
+  ## forces the model setup to also write the average annula balances.
+  if("soft_calibration" %in% names(add_input)){
+    soft_cal <- eval(add_input$soft_calibration)
+  } else {
+    soft_cal <- FALSE
+  }
+
   ## Read and modify the projects' files defining simulation period years to
   ## skip, interval, etc.
+
+
   model_setup <- setup_swatplus(project_path, parameter, output,
                                 start_date, end_date,
-                                output_interval, years_skip)
+                                output_interval, years_skip, soft_cal)
 
   output <- translate_outfile_names(output, model_setup$output_interval)
   #-------------------------------------------------------------------------------

@@ -6,7 +6,7 @@
 of the simulation and set them according tu respective input parameters}
 \usage{
 setup_swatplus(project_path, parameter, output, start_date, end_date,
-  output_interval, years_skip)
+  output_interval, years_skip, soft_cal)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}

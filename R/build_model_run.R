@@ -31,7 +31,7 @@ build_model_run <- function(project_path, run_path, n_thread, quiet){
 
   # Make shure that there is exactly one executable in the SWAT project folder
   if(length(swat_exe) == 0) stop("No SWAT executable found in the project folder!")
-  if(length(swat_exe) > 1) stop("Project folter contains more than one executable!")
+  if(length(swat_exe) > 1) stop("Project folder contains more than one executable!")
 
   # Batch file template
   batch_temp <- list(win = c("@echo off",

@@ -9,7 +9,7 @@ run_swatplus(project_path, output, parameter = NULL, start_date = NULL,
   run_index = NULL, run_path = NULL, n_thread = NULL,
   save_path = NULL, save_file = NULL, return_output = TRUE,
   add_parameter = TRUE, add_date = TRUE, refresh = TRUE,
-  keep_folder = FALSE, quiet = FALSE)
+  keep_folder = FALSE, quiet = FALSE, ...)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
@@ -60,9 +60,9 @@ where the simulations are saved.}
 or not. Set \code{return_out = FALSE} and provide \code{save_file} if
 outputs should only be saved on hard drive.  \code{Default = TRUE}}
 
-\item{add_parameter}{(optional) Logical. If \code{add_parameter = TRUE}
-used parameter sets are saved and/or returned together with the model
-outputs.  \code{Default = TRUE}}
+\item{add_parameter}{(optional) Logical. If \code{add_parameter = TRUE} used
+parameter sets are saved and/or returned together with the model outputs.
+\code{Default = TRUE}}
 
 \item{add_date}{(optional) Logical. If \code{add_date = TRUE} a date column
 is added to every simulatiuon output table.  \code{Default = TRUE}}
@@ -78,6 +78,10 @@ case '.model_run' is reused in a new model run if \code{refresh = FALSE}.
 
 \item{quiet}{(optional) Logical. If \code{quiet = TRUE} no messages are
 written.  \code{Default = FALSE}}
+
+\item{...}{(optional) Additional
+optional inputs, that might be required for special model settings, such as
+for the \code{screen()} soft calibration routine.}
 }
 \value{
 Returns the simulation results for the defined output variables as a
@@ -86,8 +90,8 @@ Returns the simulation results for the defined output variables as a
   variable.
 }
 \description{
-This function allows to run a SWAT+ project in parallel from within R.
-Basic settings for the SWAT run such as the simulation period or the time
-interval for the outputs can be done directly. SWAT simulation outputs can be
-defined that are returned for defined parameter sets.
+This function allows to run a SWAT+ project in parallel from within R. Basic
+settings for the SWAT run such as the simulation period or the time interval
+for the outputs can be done directly. SWAT simulation outputs can be defined
+that are returned for defined parameter sets.
 }

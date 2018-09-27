@@ -94,6 +94,11 @@ q_sim_cal <- ks_aq2$simulation$qout %>%
   select(-date) %>%
   map_df(., ~ .x*10000/86400)
 
+date <- ks_aq2$simulation$qout %>%
+  filter(date >= ymd("2013-10-01")) %>%
+  filter(date <= ymd("2016-12-31")) %>%
+  select(date)
+
 
 nse <- function(sim, obs) {
   1 - sum((sim - obs)^2)/sum((obs - mean(obs))^2)
@@ -103,12 +108,32 @@ nse_cal <- map_dbl(q_sim_cal, ~ nse(.x, q_obs_cal$qobs))
 
 nse_crit <- which(nse_cal > 0.85)
 
-gg_dat <- bind_cols(q_obs_cal, q_sim_cal[, nse_crit]) %>%
+gg_dat <- q_sim_cal[, c(216,351,523,899,1513,2064)] %>%
+  bind_cols(date, .) %>%
+#  bind_cols(q_obs_cal, q_sim_cal[, nse_crit]) %>%
   gather(., key = "var", value = "discharge", -date)
 
 ggplot(data = gg_dat) +
   geom_line(aes(x = date, y = discharge, col = var)) +
   theme_bw()
+
+q_lat_cal <- ks_aq2$simulation$latq %>%
+  filter(date >= ymd("2013-10-01")) %>%
+  filter(date <= ymd("2016-12-31")) %>%
+  select(-date) %>%
+  map_df(., ~ .x*10000/86400)
+
+gg_dat <- q_lat_cal[, c(216,351,523,899,1513,2064)] %>%
+  bind_cols(date, .) %>%
+  #  bind_cols(q_obs_cal, q_sim_cal[, nse_crit]) %>%
+  gather(., key = "var", value = "discharge", -date)
+
+q_lat_sum <- ks_aq2$simulation$latq[, c(1, 1 + c(216,351,523,899,1513,2064))] %>%
+  mutate(year = year(date)) %>%
+  select(-date) %>%
+  group_by(year) %>%
+  summarise_all(., funs(sum))
+
 
 # Validation:
 q_obs_val <- q_obs %>%
