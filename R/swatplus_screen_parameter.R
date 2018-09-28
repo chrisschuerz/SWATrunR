@@ -47,10 +47,10 @@ screen <- function(project_path, parameter, wb_fraction, tolerance = 0.05,
                                    soft_cal = TRUE)
 
   ## Write soft calibration files to project folder
-  write_lines(ls_cal, project_path%//%"ls_regions.cal")
-  write_lines(codes_cal, project_path%//%"codes.cal")
+  write_lines(ls_cal, cal_path%//%"thread_1"%//%"ls_regions.cal")
+  write_lines(codes_cal, cal_path%//%"thread_1"%//%"codes.cal")
 
-
+  system(cal_path%//%"thread_1"%//%"swat_run.bat")
 
 
   if(is.null(output)) {
