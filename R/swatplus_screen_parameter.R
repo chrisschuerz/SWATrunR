@@ -1,9 +1,57 @@
 # SCREEN
-screen <- function(project_path, parameter, calibration_var,
-                   tolerance = 0.05, sc_min = 1, eet_iter_max = 3,
+screen <- function(project_path, parameter, wb_fraction, tolerance = 0.05,
+                   ee_iter_max = 3,
                    output = NULL, start_date = NULL, end_date = NULL,
                    output_interval = NULL, years_skip = NULL,
                    run_path = NULL, n_thread = NULL) {
+
+  ## Run internal SWAT+ soft calibration
+  ## Initialize all soft calibration files
+  ### ls_regions.cal: file defining the targeted fractions for the water balance
+  ls_cal_val <- tibble(NAME = "all_lum",
+                       SRR = wb_fraction[["srr"]],
+                       LFR = wb_fraction[["lfr"]],
+                       PCR = wb_fraction[["pcr"]],
+                       ETR = wb_fraction[["etr"]],
+                       TFR = wb_fraction[["tfr"]],
+                       SED = 0, ORGN = 0, ORGP = 0, NO3 = 0, SOLP = 0)
+  ls_cal <- c("ls_cal.reg",
+              "1",
+              "NAME    NLUM",
+              "basin    1",
+              paste(names(ls_cal_val), collapse = " "),
+              paste(ls_cal_val, collapse = " "))
+
+  ### codes.cal: indication what to implement in soft calibration (fixed so far)
+  codes_cal <- c("codes.cal",
+                 "HYD_HRU HYD_HRUL PLT SED NUT CHSED CHNUT RES",
+                 paste(c("  y ", rep("  n ", 7)), collapse = ""))
+
+  ## Build .model_run for soft_calibration run
+  if(is.null(run_path)){
+    cal_path <- project_path%//%".model_run"
+  } else {
+    cal_path <- run_path%//%".model_run"
+  }
+
+  unlink(cal_path, recursive = TRUE)
+  build_model_run(project_path, cal_path, n_thread = 1, quiet = T)
+
+  soft_cal_setup <- setup_swatplus(project_path = project_path,
+                                   parameter = NULL,
+                                   output = list(p = define_output(file = "basin_wb",
+                                                          variable = "prec",
+                                                          unit = 1)),
+                                   start_date, end_date,
+                                   output_interval = "aa", years_skip,
+                                   soft_cal = TRUE)
+
+  ## Write soft calibration files to project folder
+  write_lines(ls_cal, project_path%//%"ls_regions.cal")
+  write_lines(codes_cal, project_path%//%"codes.cal")
+
+
+
 
   if(is.null(output)) {
     output <- define_output(file = "basin_wb", variable = "prec", unit = 1)
@@ -39,11 +87,7 @@ screen <- function(project_path, parameter, calibration_var,
                         n_thread = n_thread, keep_folder = TRUE, quiet = FALSE,
                         return_output = return_output, soft_calibration = TRUE)
 
-    if(is.null(run_path)){
-      cal_path <- project_path%//%".model_run"
-    } else {
-      cal_path <- run_path%//%".model_run"
-    }
+
     threads <- dir(cal_path) %>% .[grepl("thread_", .)]
 
     cal_sim <- map(threads, ~ read_swatplus_output(cal_output,
