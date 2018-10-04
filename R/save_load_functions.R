@@ -71,6 +71,10 @@ initialize_save_file <- function(save_path, parameter, file_cio) {
   table_names <- src_tbls(output_db)
 
   if("parameter"%in% table_names) {
+    if(is.null(parameter)) {
+      stop("No parameter set provided to current SWAT run."%&&%
+           "Parameter set however found in 'save_file'.")
+    }
     par_db <- tbl(output_db, "parameter") %>% collect(.)
     if(!identical(as.matrix(parameter$values), as.matrix(par_db))) {
       stop("Parameters of current SWAT simulations and the parameters"%&&%
@@ -317,9 +321,9 @@ scan_save_files <- function(save_dir) {
               table_overview = table_overview))
 }
 
-merge_swat_run <- function(save_dir) {
-
-}
+# merge_swat_run <- function(save_dir) {
+#
+# }
 
 #' Check if tabls in a list are identical
 #'

@@ -81,7 +81,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                          refresh = TRUE, keep_folder = FALSE,
                          quiet = FALSE, ...) {
 
-  #-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
   # Check input parameters for additional inputs
   add_input <- as.list(match.call(expand.dots=FALSE))[["..."]]
 
@@ -131,14 +131,12 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
   ## Read and modify the projects' files defining simulation period years to
   ## skip, interval, etc.
-
-
   model_setup <- setup_swatplus(project_path, parameter, output,
                                 start_date, end_date,
                                 output_interval, years_skip, soft_cal)
 
   output <- translate_outfile_names(output, model_setup$output_interval)
-  #-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
   ## Identify the required number of parallel threads to build.
   n_thread <- min(max(nrow(parameter$values),1),
@@ -182,9 +180,10 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     unlink(run_path, recursive = TRUE)
     build_model_run(project_path, run_path, n_thread, quiet)
   }
-  #-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
   # Write files
-  ## Write model setup: Files that define the time range etc. of the SWAT simulation
+  ## Write model setup: Files that define the time range etc. of the SWAT
+  ## simulation
   write_swatplus_setup(run_path, model_setup)
 
   ## Initialize the save_file if defined
