@@ -13,10 +13,10 @@
 #'
 modify_parameter <- function(parameter, thread_parameter, file_meta, i_run) {
   for (i_par in 1:ncol(parameter$values)) {
-    file_i <- parameter$parameter_constrain[i_par, ]$file_name
+    file_i <- parameter$definition[i_par, ]$file_name
 
     if(file_i == "mgt") {
-      swat_par_i <- parameter$parameter_constrain$parameter[i_par]
+      swat_par_i <- parameter$definition$parameter[i_par]
       gen_mgt_par <- c("IGRO", "PHU_PLT", "BIOMIX", "CN2", "USLE_P", "BIO_MIN",
                        "FILTERW", "IURBAN", "URBLU", "IRRSC", "IRRNO", "FLOWMIN",
                        "DIVMAX", "FLOWFR", "DDRAIN", "TDRAIN", "GDRAIN")
@@ -55,7 +55,7 @@ modify_parameter <- function(parameter, thread_parameter, file_meta, i_run) {
 #'
 modify_gen_par <- function(parameter, model_parameter, file_meta,
                             i_par, i_run) {
-  par_i <- parameter$parameter_constrain[i_par, ]
+  par_i <- parameter$definition[i_par, ]
   par_up_i <- parameter$values[[par_i$par_name]][i_run]
   file_code_i <- par_i$file_expression %>%
     evaluate_expression(file_meta, .) %>%
@@ -135,7 +135,7 @@ modify_mgt_par <- function(parameter, model_parameter, file_meta,
     "IFRT_FREQ",    14,          "MGT3",
     "CFRT_KG",      14,          "MGT4")
 
-  par_i <- parameter$parameter_constrain[i_par, ]
+  par_i <- parameter$definition[i_par, ]
   par_up_i <- parameter$values[[par_i$par_name]][i_run]
   file_code_i <- par_i$file_expression %>%
     evaluate_expression(file_meta, .) %>%

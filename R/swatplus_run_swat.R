@@ -101,8 +101,10 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     run_index <- 1:max(nrow(parameter$values), 1)
   }
 
-  ## Check if save file already exists
+  ## Check if planned simulations already exist in save file
   if(!is.null(save_file)) {
+
+
     if(file.exists(save_file)) stop("'save_file' allready exists in provided path!")
   }
 

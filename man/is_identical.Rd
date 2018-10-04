@@ -2,7 +2,7 @@
 % Please edit documentation in R/save_load_functions.R
 \name{is_identical}
 \alias{is_identical}
-\title{Check if tabls in a list are identical}
+\title{Check if tables in a list are identical}
 \usage{
 is_identical(tbl_list)
 }
@@ -10,6 +10,6 @@ is_identical(tbl_list)
 \item{tbl_list}{List of data.frames}
 }
 \description{
-Check if tabls in a list are identical
+Check if tables in a list are identical
 }
 \keyword{internal}

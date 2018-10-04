@@ -138,7 +138,7 @@ setup_swatplus <- function(project_path, parameter, output,
 
   # Current implementation of parameter calibration does not allow any constraints!
   if(!is.null(parameter)) {
-    model_setup$calibration.cal <- parameter$parameter_constrain %>%
+    model_setup$calibration.cal <- parameter$definition %>%
       select(., parameter, change) %>%
       set_names(c("NAME", "CHG_TYPE")) %>%
       mutate(VAL = NA, CONDS = 0, LYR1 = 0, LYR2 = 0, YEAR1 = 0, YEAR2 = 0,

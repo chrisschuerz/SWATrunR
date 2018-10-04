@@ -11,7 +11,7 @@ format_swatplus_parameter <- function(parameter) {
   par_constrain <- select(par_constrain, -file_expression, -spec_expression)
   names(parameter) <- par_constrain$par_name
   if(!is.data.frame(parameter)) parameter <- map_dfc(parameter, ~.x)
-  return(list(values = parameter, parameter_constrain = par_constrain))
+  return(list(values = parameter, definition = par_constrain))
 }
 
 

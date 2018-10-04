@@ -88,8 +88,8 @@ initialize_save_file <- function(save_path, parameter, file_cio) {
       copy_to(dest = output_db, df = parameter$values,
               name = "parameter", temporary = FALSE)
 
-      copy_to(dest = output_db, df = parameter$parameter_constrain,
-              name = "parameter_constrain", temporary = FALSE)
+      copy_to(dest = output_db, df = parameter$definition,
+              name = "parameter_definition", temporary = FALSE)
     }
   }
 
@@ -140,12 +140,17 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
     date <- convert_date(save_list$date_data[[1]])
   }
 
+  if(add_parameter) {
+    parameter <- list(values = save_list$par_val[[1]],
+                      definition = save_list$par_def[[1]])
+  }
+
   sim_results <- run %>%
     map(., ~ filter(save_list$table_overview, run_num == .x)) %>%
     map(., ~ filter(., var %in% variable)) %>%
     map(., ~ split(.x, 1:nrow(.x))) %>%
     map(., collect_sim_run) %>%
-    tidy_results(., save_list$par_data[[1]], date, add_parameter, add_date)
+    tidy_results(., parameter, date, add_parameter, add_date)
 
   walk(save_list$par_dat_con, ~ dbDisconnect(.x))
   walk(save_list$sim_con, ~ dbDisconnect(.x))
@@ -237,8 +242,9 @@ scan_swat_run <- function(save_dir) {
   }
   cat("\n")
   cat("Parameter set:\n")
-  if(!is.null(save_list$par_data[[1]])) {
-    print(save_list$par_data[[1]])
+  if(!is.null(save_list$par_val[[1]])) {
+    print(save_list$par_val[[1]])
+    print(save_list$par_def[[1]])
   } else {
     cat("No data set provided in the save files.")
   }
@@ -273,17 +279,23 @@ scan_save_files <- function(save_dir) {
 
   par_dat_con <- map(par_dat_file, ~ dbConnect(SQLite(), .x))
   par_dat_db <- map(par_dat_con, ~src_dbi(.x))
-  par_available <- map(par_dat_db, ~ "parameter" %in% src_tbls(.x)) %>%
+  par_available <- map(par_dat_db, ~ "parameter_values" %in% src_tbls(.x)) %>%
     unlist(.) %>%
     any(.)
 
   if(par_available) {
-    par_data <- map(par_dat_con, ~tbl(.x, "parameter") %>% collect(.))
-    if(!is_identical(par_data)) {
+    par_val <- map(par_dat_con, ~tbl(.x, "parameter_values") %>% collect(.))
+    if(!is_identical(par_val)) {
       stop("The parameter sets in the provided save folders differ!")
     }
+
+    par_def <- map(par_dat_con, ~tbl(.x, "parameter_definition") %>% collect(.))
+    if(!is_identical(par_def)) {
+      stop("The parameter definitions in the provided save folders differ!")
+    }
   }else {
-    par_data <- NULL
+    par_val <- NULL
+    par_def  <- NULL
   }
 
   date_data <- map(par_dat_con, ~tbl(.x, "date") %>% collect(.))
@@ -313,7 +325,8 @@ scan_save_files <- function(save_dir) {
   return(list(par_dat_file   = par_dat_file,
               par_dat_con    = par_dat_con,
               par_dat_db     = par_dat_db,
-              par_data       = par_data,
+              par_val        = par_val,
+              par_def        = par_def,
               date_data      = date_data,
               sim_file       = sim_file,
               sim_con        = sim_con,
@@ -325,7 +338,8 @@ scan_save_files <- function(save_dir) {
 #
 # }
 
-#' Check if tabls in a list are identical
+
+#' Check if tables in a list are identical
 #'
 #' @param tbl_list List of data.frames
 #'
