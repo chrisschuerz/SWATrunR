@@ -70,15 +70,20 @@ initialize_save_file <- function(save_path, parameter, file_cio) {
 
   table_names <- src_tbls(output_db)
 
-  if("parameter"%in% table_names) {
+  if("parameter_values"%in% table_names) {
     if(is.null(parameter)) {
       stop("No parameter set provided to current SWAT run."%&&%
            "Parameter set however found in 'save_file'.")
     }
-    par_db <- tbl(output_db, "parameter") %>% collect(.)
-    if(!identical(as.matrix(parameter$values), as.matrix(par_db))) {
+    par_val <- tbl(output_db, "parameter_values") %>% collect(.)
+    if(!identical(as.matrix(parameter$values), as.matrix(par_val))) {
       stop("Parameters of current SWAT simulations and the parameters"%&&%
            "saved in 'save_file' differ!")
+    }
+    par_def <- tbl(output_db, "parameter_definition") %>% collect(.)
+    if(!identical(as.matrix(parameter$values), as.matrix(par_def))) {
+      stop("Parameter definition of current SWAT simulation and the"%&&%
+           "parameter definition saved in 'save_file' differ!")
     }
   } else {
     if(!is.null(parameter)){
@@ -86,7 +91,7 @@ initialize_save_file <- function(save_path, parameter, file_cio) {
         parameter$values <-  map_dfc(parameter$values, ~.x)
 
       copy_to(dest = output_db, df = parameter$values,
-              name = "parameter", temporary = FALSE)
+              name = "parameter_values", temporary = FALSE)
 
       copy_to(dest = output_db, df = parameter$definition,
               name = "parameter_definition", temporary = FALSE)

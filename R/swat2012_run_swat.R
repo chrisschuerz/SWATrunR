@@ -175,13 +175,13 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
         message("The number of existing threads is lower than the required number."%&%
                 "\nParallel folder structure will be created from scratch!\n\n")
       }
-      build_model_run(project_path, run_path, n_thread, quiet)
+      build_model_run(project_path, run_path, n_thread, quiet, "2012")
     }
     ## Build the parallel folder structure if it does not exist or if a
     ## forced refresh was set with refresh = TRUE
     } else {
       unlink(run_path, recursive = TRUE)
-      build_model_run(project_path, run_path, n_thread, quiet)
+      build_model_run(project_path, run_path, n_thread, quiet, "2012")
     }
 #-------------------------------------------------------------------------------
   # Write files

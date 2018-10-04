@@ -35,7 +35,7 @@ screen <- function(project_path, parameter, wb_fraction, tolerance = 0.05,
   }
 
   unlink(cal_path, recursive = TRUE)
-  build_model_run(project_path, cal_path, n_thread = 1, quiet = T)
+  build_model_run(project_path, cal_path, n_thread = 1, quiet = T, "plus")
 
   soft_cal_setup <- setup_swatplus(project_path = project_path,
                                    parameter = NULL,

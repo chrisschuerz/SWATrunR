@@ -102,11 +102,19 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   }
 
   ## Check if planned simulations already exist in save file
-  if(!is.null(save_file)) {
-
-
-    if(file.exists(save_file)) stop("'save_file' allready exists in provided path!")
-  }
+  # if(!is.null(save_file)) {
+  #   save_path <- set_save_path(project_path, save_path, save_file)
+  #   saved_data <- scan_save_files(save_path)
+  #   if(!identical(as.matrix(parameter$values), as.matrix(saved_data$par_val))) {
+  #     stop("Parameters of current SWAT simulations and the parameters"%&&%
+  #            "saved in 'save_file' differ!")
+  #   }
+  #   if(!identical(as.matrix(parameter$values), as.matrix(saved_data$par_def))) {
+  #     stop("Parameter definition of current SWAT simulation and the"%&&%
+  #            "parameter definition saved in 'save_file' differ!")
+  #   }
+  #
+  # }
 
   ## General function input checks
   stopifnot(is.character(project_path))
@@ -174,13 +182,13 @@ run_swatplus <- function(project_path, output, parameter = NULL,
         message("The number of existing threads is lower than the required number."%&%
                   "\nParallel folder structure will be created from scratch!\n\n")
       }
-      build_model_run(project_path, run_path, n_thread, quiet)
+      build_model_run(project_path, run_path, n_thread, quiet, "plus")
     }
     ## Build the parallel folder structure if it does not exist or if a
     ## forced refresh was set with refresh = TRUE
   } else {
     unlink(run_path, recursive = TRUE)
-    build_model_run(project_path, run_path, n_thread, quiet)
+    build_model_run(project_path, run_path, n_thread, quiet, "plus")
   }
 #-------------------------------------------------------------------------------
   # Write files
@@ -190,7 +198,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
   ## Initialize the save_file if defined
   if(!is.null(save_file)) {
-    save_path <- set_save_path(project_path, save_path, save_file)
     initialize_save_file(save_path, parameter, file_cio)
   }
 

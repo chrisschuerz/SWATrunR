@@ -17,7 +17,7 @@
 #' @keywords internal
 #'
 
-build_model_run <- function(project_path, run_path, n_thread, quiet){
+build_model_run <- function(project_path, run_path, n_thread, quiet, swat_vers){
   # Identify operating system and find the SWAT executable in the project folder
   os <- get_os()
   if(os == "win") {
@@ -52,7 +52,13 @@ build_model_run <- function(project_path, run_path, n_thread, quiet){
     swat_files <- dir(project_path, full.names = TRUE)
     ## To save storage do not copy allready existing output files
     ## Extend for SWAT+ output files after discussion about names with Jeff
-    swat_files <- swat_files[!grepl("output.hru|output.pst|output.rch|output.rsv|output.sed|output.std|output.sub",swat_files)]
+    if(swat_vers == "2012") {
+      exclude <- "output.hru|output.pst|output.rch|output.rsv|output.sed|output.std|output.sub"
+    } else {
+      exclude <- ".txt$|.csv$|.db$"
+    }
+    swat_files <- swat_files[!grepl(exclude,swat_files)]
+
     dir.create(run_path, recursive = TRUE)
     t0 <- now()
     for (i in 1:n_thread){
