@@ -64,7 +64,7 @@ set_save_path <- function(project_path, save_path, save_dir) {
 #' @importFrom RSQLite dbConnect dbDisconnect SQLite
 #' @keywords internal
 #'
-initialize_save_file <- function(save_path, parameter, file_cio) {
+initialize_save_file <- function(save_path, parameter, model_setup) {
   output_con <- dbConnect(SQLite(), save_path%//%"par_dat.sqlite")
   output_db <- src_dbi(output_con)
 
@@ -98,7 +98,7 @@ initialize_save_file <- function(save_path, parameter, file_cio) {
     }
   }
 
-  date <- read_date(file_cio) %>%
+  date <- get_date_vector(model_setup) %>%
     convert_date(.)
 
   if("date"%in% table_names) {

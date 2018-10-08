@@ -4,7 +4,7 @@
 \alias{initialize_save_file}
 \title{Initialize the data base wher model outputs are saved}
 \usage{
-initialize_save_file(save_path, parameter, file_cio)
+initialize_save_file(save_path, parameter, model_setup)
 }
 \arguments{
 \item{save_path}{Character string. Path of the sql data base}
