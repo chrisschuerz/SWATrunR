@@ -9,7 +9,7 @@ run_swatplus(project_path, output, parameter = NULL, start_date = NULL,
   run_index = NULL, run_path = NULL, n_thread = NULL,
   save_path = NULL, save_file = NULL, return_output = TRUE,
   add_parameter = TRUE, add_date = TRUE, refresh = TRUE,
-  keep_folder = FALSE, quiet = FALSE, ...)
+  keep_folder = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}

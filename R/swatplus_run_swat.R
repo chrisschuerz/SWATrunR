@@ -79,11 +79,12 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                          save_file = NULL, return_output = TRUE,
                          add_parameter = TRUE, add_date = TRUE,
                          refresh = TRUE, keep_folder = FALSE,
-                         quiet = FALSE, ...) {
+                         quiet = FALSE) {
 
 #-------------------------------------------------------------------------------
   # Check input parameters for additional inputs
-  add_input <- as.list(match.call(expand.dots=FALSE))[["..."]]
+  # Not implemented currently
+  # add_input <- as.list(match.call(expand.dots=FALSE))[["..."]]
 
   # Check settings before starting to set up '.model_run'
   ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
@@ -133,11 +134,12 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
   ## Check if soft_calibration was triggered by screen methods. If TRUE it
   ## forces the model setup to also write the average annula balances.
-  if("soft_calibration" %in% names(add_input)){
-    soft_cal <- eval(add_input$soft_calibration)
-  } else {
-    soft_cal <- FALSE
-  }
+  ## Not yet implemented
+  # if("soft_calibration" %in% names(add_input)){
+  #   soft_cal <- eval(add_input$soft_calibration)
+  # } else {
+  #   soft_cal <- FALSE
+  # }
 
   ## Read and modify the projects' files defining simulation period years to
   ## skip, interval, etc.
@@ -198,7 +200,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
   ## Initialize the save_file if defined
   if(!is.null(save_file)) {
-    initialize_save_file(save_path, parameter, file_cio)
+    initialize_save_file(save_path, parameter, model_setup)
   }
 
   #-------------------------------------------------------------------------------
@@ -277,7 +279,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   if(return_output) {
 
 ####### Here modify how dates are read and written according to new model_setup concept #######
-    date <- read_swatplus_date(output, run_path)
+    date <- get_date_vector(model_setup)
     sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
                                add_date)
 

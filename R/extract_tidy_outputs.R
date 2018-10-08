@@ -66,3 +66,24 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
 
   return(sim_result)
 }
+
+#' Create date vector from the date info in the model setup
+#'
+#' @param model_setup Model setup defined by run_swat input parameters and/of
+#'   the SWAT model input files
+#'
+#' @importFrom dplyr %>%
+#' @importFrom lubridate floor_date year
+#' @keywords internal
+#'
+get_date_vector <- function(model_setup) {
+  int <- model_setup$output_interval %>% substr(., 1, 1)
+  sd  <- model_setup$start_date
+  ed  <- model_setup$end_date
+
+  if(int %in% c("d", "m", "y")) {
+    seq(sd, ed, by = int) %>% floor_date(., unit = int)
+  } else {
+    paste(year(sd), year(ed), sep = " - ")
+  }
+}
