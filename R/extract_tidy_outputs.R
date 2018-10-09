@@ -74,16 +74,22 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
 #'
 #' @importFrom dplyr %>%
 #' @importFrom lubridate floor_date year
+#' @importFrom tibble tibble
 #' @keywords internal
 #'
 get_date_vector <- function(model_setup) {
   int <- model_setup$output_interval %>% substr(., 1, 1)
-  sd  <- model_setup$start_date
+  y_skip <-  model_setup$years_skip %>% as.numeric(.)
+  sd  <- (model_setup$start_date + years(y_skip)) %>% floor_date(., unit = "y")
   ed  <- model_setup$end_date
 
   if(int %in% c("d", "m", "y")) {
-    seq(sd, ed, by = int) %>% floor_date(., unit = int)
+    date <- seq(as.Date(sd), as.Date(ed), by = int) %>%
+      floor_date(., unit = int)
   } else {
-    paste(year(sd), year(ed), sep = " - ")
+    date <- paste(year(sd), year(ed), sep = " - ")
   }
+
+  date <- tibble(date = date)
+  return(date)
 }

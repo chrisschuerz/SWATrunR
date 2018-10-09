@@ -103,19 +103,23 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   }
 
   ## Check if planned simulations already exist in save file
-  # if(!is.null(save_file)) {
-  #   save_path <- set_save_path(project_path, save_path, save_file)
-  #   saved_data <- scan_save_files(save_path)
-  #   if(!identical(as.matrix(parameter$values), as.matrix(saved_data$par_val))) {
-  #     stop("Parameters of current SWAT simulations and the parameters"%&&%
-  #            "saved in 'save_file' differ!")
-  #   }
-  #   if(!identical(as.matrix(parameter$values), as.matrix(saved_data$par_def))) {
-  #     stop("Parameter definition of current SWAT simulation and the"%&&%
-  #            "parameter definition saved in 'save_file' differ!")
-  #   }
-  #
-  # }
+  if(!is.null(save_file)) {
+    save_path <- set_save_path(project_path, save_path, save_file)
+    saved_data <- scan_save_files(save_path)
+
+    if(!is.null(saved_data$par_val)) {
+      if(!identical(as.matrix(parameter$values),
+                    as.matrix(saved_data$par_val))) {
+        stop("Parameters of current SWAT simulations and the parameters"%&&%
+               "saved in 'save_file' differ!")
+      }
+      if(!identical(as.matrix(parameter$definition),
+                    as.matrix(saved_data$par_def))) {
+        stop("Parameter definition of current SWAT simulation and the"%&&%
+               "parameter definition saved in 'save_file' differ!")
+      }
+    }
+  }
 
   ## General function input checks
   stopifnot(is.character(project_path))
@@ -140,6 +144,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   # } else {
   #   soft_cal <- FALSE
   # }
+  soft_cal <- FALSE
 
   ## Read and modify the projects' files defining simulation period years to
   ## skip, interval, etc.
@@ -239,7 +244,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
     thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
     thread_path <- run_path%//%thread_id
-    # thread_path <- "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru/.model_run/thread_1"
+    # thread_path <- project_path%//%".model_run/thread_1"
 
     ## Modify model parameters if parameter set was provided and write
     ## calibration file. If no parameters provided write empty calibration file
