@@ -79,13 +79,12 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
 #'
 get_date_vector <- function(model_setup) {
   int <- model_setup$output_interval %>% substr(., 1, 1)
-  y_skip <-  model_setup$years_skip %>% as.numeric(.)
+  y_skip <-  model_setup$years_skip
   sd  <- (model_setup$start_date + years(y_skip)) %>% floor_date(., unit = "y")
   ed  <- model_setup$end_date
 
   if(int %in% c("d", "m", "y")) {
-    date <- seq(as.Date(sd), as.Date(ed), by = int) %>%
-      floor_date(., unit = int)
+    date <- seq(sd, ed, by = int) %>% floor_date(., unit = int)
   } else {
     date <- paste(year(sd), year(ed), sep = " - ")
   }

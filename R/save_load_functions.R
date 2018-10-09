@@ -46,8 +46,11 @@ save_run <- function(save_path, model_output, parameter, i_run, i_thread) {
 #'
 set_save_path <- function(project_path, save_path, save_dir) {
   if(is.null(save_path)) save_path <- project_path
+
   save_path <- save_path%//%save_dir
-  dir.create(save_path, recursive = TRUE)
+
+  if(!dir.exists(save_path)) dir.create(save_path, recursive = TRUE)
+
   return(save_path)
 }
 

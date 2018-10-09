@@ -69,6 +69,7 @@
 #' @importFrom lubridate now
 #' @importFrom parallel detectCores makeCluster parSapply stopCluster
 #' @importFrom pasta %//%
+#' @importFrom purrr map
 #' @importFrom tibble tibble
 #' @export
 run_swatplus <- function(project_path, output, parameter = NULL,
@@ -109,14 +110,29 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
     if(!is.null(saved_data$par_val)) {
       if(!identical(as.matrix(parameter$values),
-                    as.matrix(saved_data$par_val))) {
+                    as.matrix(saved_data$par_val[[1]]))) {
         stop("Parameters of current SWAT simulations and the parameters"%&&%
                "saved in 'save_file' differ!")
       }
       if(!identical(as.matrix(parameter$definition),
-                    as.matrix(saved_data$par_def))) {
+                    as.matrix(saved_data$par_def[[1]]))) {
         stop("Parameter definition of current SWAT simulation and the"%&&%
                "parameter definition saved in 'save_file' differ!")
+      }
+    }
+    if(nrow(saved_data$table_overview) > 0) {
+      out_var_current <- names(output)
+      tbl_ovr   <- saved_data$table_overview
+      is_out_saved <- map(out_var_current,
+                        ~ any(tbl_ovr$run_num[tbl_ovr$var == .x] %in%
+                                run_index)) %>%
+        unlist(.)
+
+      if(any(is_out_saved)) {
+        stop("Completed simulations for defined variables"%&&%
+             "and respective run_indices were found in save_file!\n"%&&%
+             "Please check with scan_swat_run() or define new 'save_file'" %&&%
+             "for the new simulations!")
       }
     }
   }

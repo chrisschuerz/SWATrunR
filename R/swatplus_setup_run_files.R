@@ -38,7 +38,9 @@ setup_swatplus <- function(project_path, parameter, output,
     stop("'start_date' and 'end_date' must be provided together!")
   } else if (!is.null(start_date)) {
     ## Determine required date indices for writing to time.sim
-    time_interval <- interval(ymd(start_date),  ymd(end_date))
+    start_date <- ymd(start_date)
+    end_date   <- ymd(end_date)
+    time_interval <- interval(start_date, end_date)
     start_year    <- year(int_start(time_interval))
     start_jdn     <- yday(int_start(time_interval))
     end_year      <- year(int_end(time_interval))
@@ -80,13 +82,12 @@ setup_swatplus <- function(project_path, parameter, output,
       as.numeric(.)
   } else {
     if(!is.numeric(years_skip)) stop("'years_skip' must be numeric!")
-    years_skip <- sprintf("%-12d", years_skip)
     model_setup$print.prt[3] <- model_setup$print.prt[3] %>%
       strsplit(., "\\s+") %>%
       unlist(.) %>%
       .[2:length(.)] %>%
       sprintf("%-10s",. ) %>%
-      c(years_skip, .) %>%
+      c(sprintf("%-12d", years_skip), .) %>%
       paste(., collapse = "")
   }
 
@@ -95,7 +96,7 @@ setup_swatplus <- function(project_path, parameter, output,
     stop("Defined simulation period is not longer than the number of years to skip!")
   }
 
-  model_setup$years_skip <- years_skip
+  model_setup$years_skip <- as.numeric(years_skip)
 
   ## Output interval settings
   ## Set output_interval to 'daily' as default if not provided by user.
