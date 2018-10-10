@@ -79,9 +79,8 @@ case '.model_run' is reused in a new model run if \code{refresh = FALSE}.
 \item{quiet}{(optional) Logical. If \code{quiet = TRUE} no messages are
 written.  \code{Default = FALSE}}
 
-\item{...}{(optional) Additional
-optional inputs, that might be required for special model settings, such as
-for the \code{screen()} soft calibration routine.}
+\item{...}{(optional) Additional arguments for special model settings, such
+as for the \code{screen()} soft calibration routine. (NOT yet implemented)}
 }
 \value{
 Returns the simulation results for the defined output variables as a

@@ -101,10 +101,10 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   stopifnot(is.logical(keep_folder))
   stopifnot(is.logical(quiet))
 
-  ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
+  ## Check if all parameter names exist in cal_parms.cal
   if(!is.null(parameter)) {
     parameter <- format_swatplus_parameter(parameter)
-
+    check_swatplus_parameter(project_path, parameter)
 
     # here would also be clever to implement parameter boundary checkup keep
     # parameter boundary file in R package and write to project folder when it

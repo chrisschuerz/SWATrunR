@@ -1,8 +1,8 @@
 para <- tibble::tibble("cn2.hru|change = pctchg" = runif(8,-5,5),
                "alpha.gw|change = absval" = runif(8, 0, 1))
-pro_pth <- "D:/SWATplus/TxtInOut_2aqu"
+project_path <- "D:/SWATplus/TxtInOut_2aqu"
 
-aa <- run_swatplus(project_path = pro_pth,
+aa <- run_swatplus(project_path = project_path,
                    output = list(q =  define_output(file = "channel",
                                                     variable = "flo_out",
                                                     unit = 18),

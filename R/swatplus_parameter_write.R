@@ -48,3 +48,33 @@ write_calibration <- function(thread_path, parameter, calibration, i_run) {
 
   write_lines(calibration, thread_path%//%"calibration.cal")
 }
+
+
+#' Check if the names of the defined parameters are available in 'cal_parms.cal'.
+#'
+#' @param project_path Path to the SWAT+ project
+#' @param parameter Model parameter data set
+#'
+#' @importFrom dplyr %>%
+#' @importFrom pasta %//%
+#' @importFrom purrr map
+#' @importFrom readr read_lines
+#'
+#' @keywords internal
+#'
+check_swatplus_parameter <- function(project_path, parameter) {
+  if("cal_parms.cal" %in% list.files(project_path)) {
+    cal_parms <- read_lines(project_path%//%"cal_parms.cal", skip = 3) %>%
+      strsplit(., "\\s+") %>%
+      map(., ~ .x[1]) %>%
+      unlist(.)
+  }
+
+  in_cal_parms <- parameter$definition$par_name %in% cal_parms
+
+  if(any(!in_cal_parms)){
+    stop("Parameters"%&&%
+         paste(parameter$definition$par_name[!in_cal_parms], collapse = ", ")%&&%
+         "not defined in 'cal_parms.cal'")
+  }
+}
