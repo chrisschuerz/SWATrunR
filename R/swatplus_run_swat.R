@@ -54,9 +54,8 @@
 #'   \code{Default = FALSE}
 #' @param quiet (optional) Logical. If \code{quiet = TRUE} no messages are
 #'   written.  \code{Default = FALSE}
-#' @param ... (optional) Additional
-#'   optional inputs, that might be required for special model settings, such as
-#'   for the \code{screen()} soft calibration routine.
+#' @param ... (optional) Additional arguments for special model settings, such
+#'   as for the \code{screen()} soft calibration routine. (NOT yet implemented)
 #'
 #' @return Returns the simulation results for the defined output variables as a
 #'   tibble. If more than one parameter set was provided the list of tibbles is
@@ -83,18 +82,35 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                          quiet = FALSE) {
 
 #-------------------------------------------------------------------------------
+
   # Check input parameters for additional inputs
-  # Not implemented currently
+  # Not implemented currently, might be required if soft calibration is
+  # implemented
   # add_input <- as.list(match.call(expand.dots=FALSE))[["..."]]
 
   # Check settings before starting to set up '.model_run'
+  ## General function input checks
+  stopifnot(is.character(project_path))
+  stopifnot(is.character(run_path)|is.null(run_path))
+  stopifnot(is.numeric(n_thread)|is.null(n_thread))
+  stopifnot(is.numeric(years_skip)|is.null(years_skip))
+  stopifnot(is.logical(add_parameter))
+  stopifnot(is.logical(add_date))
+  stopifnot(is.logical(return_output))
+  stopifnot(is.logical(refresh))
+  stopifnot(is.logical(keep_folder))
+  stopifnot(is.logical(quiet))
+
   ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
   if(!is.null(parameter)) {
     parameter <- format_swatplus_parameter(parameter)
 
-    # here would be clever to implement parameter boundary checkup
-    # keep parameter boundary file in R package and write to project folder when
-    # it does not exist. Otherwise read boundary file from there and do check!
+
+    # here would also be clever to implement parameter boundary checkup keep
+    # parameter boundary file in R package and write to project folder when it
+    # does not exist. Otherwise read boundary file from there and do check! Jeff
+    # provides some workaround in SWAT+ internally (automatic setting to
+    # lower/upper boundary)
   }
   ## Check values provided with run_index and prepare run_index for simulation
   if(!is.null(run_index)){
@@ -103,7 +119,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     run_index <- 1:max(nrow(parameter$values), 1)
   }
 
-  ## Check if planned simulations already exist in save file
+  ## Define save_path and check if planned simulations already exist in save file
   if(!is.null(save_file)) {
     save_path <- set_save_path(project_path, save_path, save_file)
     saved_data <- scan_save_files(save_path)
@@ -137,17 +153,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     }
   }
 
-  ## General function input checks
-  stopifnot(is.character(project_path))
-  stopifnot(is.character(run_path)|is.null(run_path))
-  stopifnot(is.numeric(n_thread)|is.null(n_thread))
-  stopifnot(is.numeric(years_skip)|is.null(years_skip))
-  stopifnot(is.logical(add_parameter))
-  stopifnot(is.logical(add_date))
-  stopifnot(is.logical(return_output))
-  stopifnot(is.logical(refresh))
-  stopifnot(is.logical(keep_folder))
-  stopifnot(is.logical(quiet))
 
   ## Convert output to named list in case single unnamed output was defined
   output <- check_output(output)
