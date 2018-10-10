@@ -122,35 +122,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## Define save_path and check if planned simulations already exist in save file
   if(!is.null(save_file)) {
     save_path <- set_save_path(project_path, save_path, save_file)
-    saved_data <- scan_save_files(save_path)
-
-    if(!is.null(saved_data$par_val)) {
-      if(!identical(as.matrix(parameter$values),
-                    as.matrix(saved_data$par_val[[1]]))) {
-        stop("Parameters of current SWAT simulations and the parameters"%&&%
-               "saved in 'save_file' differ!")
-      }
-      if(!identical(as.matrix(parameter$definition),
-                    as.matrix(saved_data$par_def[[1]]))) {
-        stop("Parameter definition of current SWAT simulation and the"%&&%
-               "parameter definition saved in 'save_file' differ!")
-      }
-    }
-    if(nrow(saved_data$table_overview) > 0) {
-      out_var_current <- names(output)
-      tbl_ovr   <- saved_data$table_overview
-      is_out_saved <- map(out_var_current,
-                        ~ any(tbl_ovr$run_num[tbl_ovr$var == .x] %in%
-                                run_index)) %>%
-        unlist(.)
-
-      if(any(is_out_saved)) {
-        stop("Completed simulations for defined variables"%&&%
-             "and respective run_indices were found in save_file!\n"%&&%
-             "Please check with scan_swat_run() or define new 'save_file'" %&&%
-             "for the new simulations!")
-      }
-    }
+    check_saved_data(save_path, parameter)
   }
 
 
@@ -299,7 +271,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     ## Delete the time stamp t0 created for the progress estimation
     rm(t0)
   }
-
 
   ##Tidy up results if return_output is TRUE
   if(return_output) {

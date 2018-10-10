@@ -11,7 +11,8 @@ initialize_save_file(save_path, parameter, model_setup)
 
 \item{parameter}{Parameter set provided for simualtion}
 
-\item{file_cio}{The modified file.cio required to calculate the date}
+\item{model_setup}{List with files and variables that define the SWAT model
+setup}
 }
 \description{
 Initialize the data base wher model outputs are saved

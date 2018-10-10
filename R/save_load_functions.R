@@ -58,7 +58,8 @@ set_save_path <- function(project_path, save_path, save_dir) {
 #'
 #' @param save_path Character string. Path of the sql data base
 #' @param parameter Parameter set provided for simualtion
-#' @param file_cio The modified file.cio required to calculate the date
+#' @param model_setup List with files and variables that define the SWAT model
+#'   setup
 #'
 #' @importFrom dplyr collect copy_to mutate select src_sqlite tbl %>%
 #' @importFrom dbplyr src_dbi
@@ -445,5 +446,49 @@ convert_date <- function(date_tbl) {
   } else {
     date_tbl %>%
       transmute(date = ymd_hms(year%//%month%//%day%&&%hour%&&%min%&&%sec))
+  }
+}
+
+#' Do general checkups for a SQLite database that already holds saved data and
+#' compare with the current run_swat inputs
+#'
+#' @param save_path Path to the folder that holds the saved data
+#' @param parameter List that provides Parameter set for the simualtion and the
+#'   parameter definition table
+#'
+#' @importFrom dplyr %>%
+#' @importFrom pasta %&&%
+#' @importFrom purrr map
+#' @keywords internal
+#'
+check_saved_data <- function(save_path, parameter) {
+  saved_data <- scan_save_files(save_path)
+
+  if(!is.null(saved_data$par_val)) {
+    if(!identical(as.matrix(parameter$values),
+                  as.matrix(saved_data$par_val[[1]]))) {
+      stop("Parameters of current SWAT simulations and the parameters"%&&%
+             "saved in 'save_file' differ!")
+    }
+    if(!identical(as.matrix(parameter$definition),
+                  as.matrix(saved_data$par_def[[1]]))) {
+      stop("Parameter definition of current SWAT simulation and the"%&&%
+             "parameter definition saved in 'save_file' differ!")
+    }
+  }
+  if(nrow(saved_data$table_overview) > 0) {
+    out_var_current <- names(output)
+    tbl_ovr   <- saved_data$table_overview
+    is_out_saved <- map(out_var_current,
+                        ~ any(tbl_ovr$run_num[tbl_ovr$var == .x] %in%
+                                run_index)) %>%
+      unlist(.)
+
+    if(any(is_out_saved)) {
+      stop("Completed simulations for defined variables"%&&%
+             "and respective run_indices were found in save_file!\n"%&&%
+             "Please check with scan_swat_run() or define new 'save_file'" %&&%
+             "for the new simulations!")
+    }
   }
 }
