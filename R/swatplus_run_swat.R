@@ -274,9 +274,10 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
   ##Tidy up results if return_output is TRUE
   if(return_output) {
-
-####### Here modify how dates are read and written according to new model_setup concept #######
+    ## Create date vector from the information in model_setup
     date <- get_date_vector(model_setup)
+    ## Tidy up the simulation results and arrange them in clean tibbles before
+    ## returning them
     sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
                                add_date)
 
