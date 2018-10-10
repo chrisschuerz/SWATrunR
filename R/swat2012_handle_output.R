@@ -98,35 +98,6 @@ find_first_space <- function(string) {
   space_pos[space_pos_diff != 1]
 }
 
-#' Read file.cio parameters and convert the required ones to a date sequence
-#'
-#' @param file_cio Modified file.cio
-#'
-#' @importFrom dplyr case_when %>%
-#' @importFrom lubridate as_date
-#' @importFrom pasta %_%
-#' @importFrom tibble tibble
-#' @keywords internal
-#'
-read_swat2012_date <- function(file_cio) {
-  n_year     <- cio_to_numeric(file_cio[8])
-  years_skip <- cio_to_numeric(file_cio[60])
-  start_year <- cio_to_numeric(file_cio[9]) + years_skip
-  end_year   <- start_year + n_year - years_skip - 1
-  start_jdn  <- cio_to_numeric(file_cio[10])
-  end_jdn    <- cio_to_numeric(file_cio[11])
-  time_int   <- cio_to_numeric(file_cio[59])
-
-  start_date <- as_date(start_jdn%_%start_year, format = "%j_%Y", tz = "UTC")
-  end_date  <- as_date(end_jdn%_%end_year, format = "%j_%Y", tz = "UTC")
-
-  by_int <- case_when(time_int == 0 ~ "month",
-                      time_int == 1 ~ "day",
-                      time_int == 2 ~ "year")
-
-  tibble(date = seq(start_date, end_date, by = by_int))
-}
-
 #' Helper function to convert file.cio entries to numerics
 #'
 #' @param cio_entry Line from file.cio

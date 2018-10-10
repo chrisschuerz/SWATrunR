@@ -35,7 +35,7 @@
 #' @importFrom readr read_lines read_table
 #' @keywords internal
 #'
-setup_swat2012 <- function(project_path, output,
+setup_swat2012 <- function(project_path,
                            start_date, end_date,
                            output_interval, years_skip,
                            rch_out_var, sub_out_var,

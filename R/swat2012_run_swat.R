@@ -137,10 +137,10 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   }
 
   ## Read and modify the projects' file.cio, internal variable checks done.
-  file_cio <- modify_file_cio(project_path, start_date, end_date,
-                              output_interval, years_skip,
-                              rch_out_var, sub_out_var,
-                              hru_out_var, hru_out_nr)
+  model_setup <- setup_swat2012(project_path, start_date, end_date,
+                                output_interval, years_skip,
+                                rch_out_var, sub_out_var,
+                                hru_out_var, hru_out_nr)
 
   ## Convert output to named list in case single unnamed output was defined
   output <- check_output(output)
@@ -191,12 +191,12 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 #-------------------------------------------------------------------------------
   # Write files
   ## Write file.cio
-  write_file_cio(run_path, file_cio)
+  write_file_cio(run_path, model_setup$file.cio)
 
   ## Initialize the save_file if defined
   if(!is.null(save_file)) {
     save_path <- set_save_path(project_path, save_path, save_file)
-    initialize_save_file(save_path, parameter, file_cio)
+    initialize_save_file(save_path, parameter, model_setup)
   }
 
 #-------------------------------------------------------------------------------
@@ -274,7 +274,10 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
   ##Tidy up and return simulation results if return_output is TRUE
   if(return_output) {
-    date <- read_swat2012_date(file_cio)
+    ## Create date vector from the information in model_setup
+    date <- get_date_vector(model_setup)
+    ## Tidy up the simulation results and arrange them in clean tibbles before
+    ## returning them
     sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
                                add_date)
     return(sim_result)
