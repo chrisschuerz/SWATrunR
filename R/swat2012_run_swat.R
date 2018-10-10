@@ -98,28 +98,6 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
 #-------------------------------------------------------------------------------
   # Check settings before starting to set up '.model_run'
-  ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
-  if(!is.null(parameter)) {
-    parameter <- format_swat2012_parameter(parameter)
-    file_meta <- read_file_meta(project_path, parameter$definition)
-    swat_parameter <- read_swat2012_files(project_path,file_meta)
-
-    # here would be clever to implement parameter boundary checkup
-    # keep parameter boundary file in R package and write to project folder when
-    # it does not exist. Otherwise read boundary file from there and do check!
-  }
-  ## Check values provided with run_index and prepare run_index for simulation
-  if(!is.null(run_index)){
-    run_index <- check_run_index(run_index, parameter$values)
-  } else {
-    run_index <- 1:max(nrow(parameter$values), 1)
-  }
-
-  ## Check if save file already exists
-  if(!is.null(save_file)) {
-    if(file.exists(save_file)) stop("'save_file' allready exists in provided path!")
-  }
-
   ## General function input checks
   stopifnot(is.character(project_path))
   stopifnot(is.character(run_path)|is.null(run_path))
@@ -130,6 +108,33 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   stopifnot(is.logical(refresh))
   stopifnot(is.logical(keep_folder))
   stopifnot(is.logical(quiet))
+
+  ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
+  if(!is.null(parameter)) {
+    parameter <- format_swat2012_parameter(parameter)
+  }
+
+  ## Check values provided with run_index and prepare run_index for simulation
+  if(!is.null(run_index)){
+    run_index <- check_run_index(run_index, parameter$values)
+  } else {
+    run_index <- 1:max(nrow(parameter$values), 1)
+  }
+
+  ## Define save_path and check if planned simulations already exist in save file
+  if(!is.null(save_file)) {
+    save_path <- set_save_path(project_path, save_path, save_file)
+    check_saved_data(save_path, parameter)
+  }
+
+  ## Read the meta information on the parameters and the required parameter files
+  if(!is.null(parameter)) {
+    file_meta <- read_file_meta(project_path, parameter$definition)
+    swat_parameter <- read_swat2012_files(project_path,file_meta)
+  # here would be clever to implement parameter boundary checkup
+  # keep parameter boundary file in R package and write to project folder when
+  # it does not exist. Otherwise read boundary file from there and do check!
+  }
 
   ## Read and modify the projects' file.cio, internal variable checks done.
   file_cio <- modify_file_cio(project_path, start_date, end_date,

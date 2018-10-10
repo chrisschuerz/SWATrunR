@@ -12,8 +12,8 @@
 #'   monthly, "y" for yearly, or "a", for average annual).
 #' @param years_skip Integer value that provides the numbe of years to be
 #'   skipped during writing the SWAT model outputs
-#' @importFrom lubridate int_end int_start interval leap_year yday year years
-#'   ymd
+#' @importFrom lubridate as_date int_end int_start interval leap_year yday year
+#'   years ymd
 #' @importFrom dplyr case_when mutate select %>%
 #' @importFrom pasta %//% %&%
 #' @importFrom purrr map_chr set_names
