@@ -15,10 +15,23 @@ read_swatplus_output <- function(output, thread_path) {
   ## Get unique output files defined in output
   output_file <- map_chr(output,  ~ unique(.x$file)) %>% unique(.)
 
+  col_names <- map(output_file, ~ read_table(thread_path%//%.x, skip = 1,
+                                             n_max = 1, col_names = F)) %>%
+    map(., ~ unlist(.x) %>% unname(.))
+
+  is_col_duplicate <- map(col_names, function(x){
+                                       duplicates <- table(x) %>%
+                                         .[. > 1] %>%
+                                         names(.)
+
+                                       x %in% duplicates})
+
   ## Read all output files, assign column names and assign output file names
   out_tables <- map(output_file,~ read_table(file = thread_path%//%.x,
-                                             col_names = TRUE, skip = 1, )) %>%
-    map(., ~ remove_units(.x)) %>%
+                                             col_names = FALSE, skip = 3, )) %>%
+    map2(., col_names, ~ .x[, 1:length(.y)]) %>%
+    map2(., col_names, ~ set_names(.x, .y)) %>%
+    map2(., is_col_duplicate, ~ .x[!.y]) %>%
     set_names(., output_file)
 
   tables_nrow <- map(out_tables, ~nrow(.x)) %>% unlist(.)
@@ -30,22 +43,6 @@ read_swatplus_output <- function(output, thread_path) {
   }
 
   return(out_tables)
-}
-
-#' Remove the units from the column names
-#'
-#' @param tbl table for which the units are removed from the col_names
-#'
-#' @keywords internal
-#'
-remove_units <- function(tbl) {
-  col_names <- names(tbl) %>%
-    gsub("Mg/l$|mg\\/L$|mg\\/kg$|kg\\/ha$|kg\\/h$|t\\/ha$|mic\\/L$|\\(mm\\)$|kg$|cms$|tons$|ton$|mg$|mg\\/$|mm$|km2$|\\_tha$|\\_kgha$|\\_m$|\\_kgN$\\/ha$|\\_kgP\\/ha$|\\_m\\^3$|ha\\-m$|\\_k$|mgps$|kgN$| ", "", .) %>%
-    gsub("\\_$", "", .)
-
-  names(tbl) <- col_names
-
-  return(tbl)
 }
 
 #' Translate the output file settings defined according to print.prt to the
@@ -60,51 +57,15 @@ remove_units <- function(tbl) {
 #' @keywords internal
 #'
 translate_outfile_names <- function(output, output_interval) {
-  output_files <- tribble(
-    ~object,        ~file,       ~specifier,
-    "basin_wb",     "waterbal",  "_bsn",
-    "basin_nb",     "nutbal",    "_bsn",
-    "basin_ls",     "losses",    "_bsn",
-    "basin_pw",     "plantwx",   "_bsn",
-    "basin_aqu",    "aquifer",   "_bsn",
-    "basin_res",    "reservoir", "_bsn",
-    "basin_cha",    "channel",   "_bsn",
-    "basin_sd_cha", "channel",   "_sd_bsn",
-    #"basin_psc" not found in the outputs
-    #No region files were written
-    "lsunit_wb",    "waterbal",  "_lsu",
-    "lsunit_nb",    "nutbal",    "_lsu",
-    "lsunit_ls",    "losses",    "_lsu",
-    "lsunit_pw",    "plantwx",   "_lsu",
-    "hru_wb",       "waterbal",  "_hru",
-    "hru_nb",       "nutbal",    "_hru",
-    "hru_ls",       "losses",    "_hru",
-    "hru_pw",       "plantwx",   "_hru",
-    #"hru-lte_XX" not found in outputs
-    "channel",      "channel",   "",
-    #"channel_sd" not found in outputs
-    "aquifer",      "aquifer",   "",
-    "reservoir",    "reservoir", "",
-    # "recall" not found in outputs
-    # "hyd" is very inconsistent (hydin/out)!!!
-    "ru",           "routing_units", "")
-
   output_interval <- substr(output_interval, 1,1) %>% tolower(.)
   output_interval <-
     case_when(output_interval == "d" ~ "_day",
               output_interval == "m" ~ "_mon",
               output_interval == "y" ~ "_yr",
               output_interval == "a" ~ "_aa")
-
-  map(output, function(tbl, out_files, out_int) {
-    obj <- tbl$file[[1]]
-    file_name <- paste0(output_files$file[output_files$object == obj],
-                   output_interval,
-                   output_files$specifier[output_files$object == obj],
-                   ".txt")
-    tbl$file <- file_name
-    return(tbl)
-  }, output_files, output_interval)
-
+  out_files <- map(output, ~ paste0(.x$file[[1]], output_interval, ".txt"))
+  map2(output, out_files, function(out, out_file){
+                            out$file <- out_file
+                            return(out)})
 }
 
