@@ -33,10 +33,6 @@
 #' @importFrom pasta %//% %&%
 #' @importFrom purrr map_chr set_names
 #' @importFrom readr read_lines read_table
-#'
-#' #' @importFrom lubridate int_end int_start interval yday year years ymd
-#' @importFrom dplyr case_when %>%
-#' @importFrom pasta %//% %&%
 #' @keywords internal
 #'
 setup_swat2012 <- function(project_path, output,
