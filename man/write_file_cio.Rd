@@ -3,6 +3,7 @@
 %   R/swat2012_setup_run_files.R
 \name{write_file_cio}
 \alias{write_file_cio}
+\alias{write_file_cio}
 \title{Write the updated file.cio to all parallel folders}
 \usage{
 write_file_cio(run_path, file_cio)
