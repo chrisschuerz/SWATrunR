@@ -144,6 +144,7 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
   save_list <- scan_save_files(save_dir)
 
   if(is.null(variable)) {variable <- unique(save_list$table_overview$var)}
+  if(is.null(run)) {run <- unique(save_list$table_overview$run_num) %>% sort(.)}
 
   if(add_date){
     date <- convert_date(save_list$date_data[[1]])
@@ -155,7 +156,8 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
   }
 
   sim_results <- run %>%
-    map(., ~ filter(save_list$table_overview, run_num == .x)) %>%
+    map(., ~ filter(save_list$table_overview, run_num %in% .x)) %>%
+    filter_not_empty(.)
     map(., ~ filter(., var %in% variable)) %>%
     map(., ~ split(.x, 1:nrow(.x))) %>%
     map(., collect_sim_run) %>%
@@ -201,6 +203,18 @@ collect_sim_i <- function(sim_i){
 collect_sim_run <- function(sim_run) {
   map(sim_run, collect_sim_i) %>%
     bind_cols(.)
+}
+
+#' Filter the elements of a list with tibbles where the tibbles are not empty
+#'
+#' @param dat_list List of tibbles (data.frames)
+#'
+#' @importFrom purrr map_lgl
+#' @keywords internal
+#'
+filter_not_empty <- function(dat_list) {
+  is_not_empty <- map_lgl(dat_list, ~ nrow(.x) > 0)
+  return(dat_list[is_not_empty])
 }
 
 #' Retrieve information on saved SWAT runs
