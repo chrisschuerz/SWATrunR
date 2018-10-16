@@ -150,10 +150,8 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
     date <- convert_date(save_list$date_data[[1]])
   }
 
-  if(add_parameter) {
-    parameter <- list(values = save_list$par_val[[1]],
-                      definition = save_list$par_def[[1]])
-  }
+  parameter <- list(values = save_list$par_val[[1]],
+                    definition = save_list$par_def[[1]])
 
   run_list <- run %>%
     map(., ~ filter(save_list$table_overview, run_num %in% .x)) %>%
@@ -161,7 +159,7 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
 
   run_avail <- map_dbl(run_list, ~.x$run_num[1])
 
-  sim_results <- run_avail %>%
+  sim_results <- run_list %>%
     map(., ~ filter(., var %in% variable)) %>%
     map(., ~ split(.x, 1:nrow(.x))) %>%
     map(., ~ collect_sim_run(.x, save_list), save_list) %>%
@@ -178,7 +176,10 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
       map(., ~ gsub("run_", "", .x)) %>%
       map(., ~ as.numeric(.x))
 
-    map(run_load, ~ run %in% .x)
+    run_in_loaded <- map(run_load, ~ run %in% .x)
+    if(any(!map_lgl(run_in_loaded, all))) {
+      cat("Here comes more...")
+    }
   }
 
 
