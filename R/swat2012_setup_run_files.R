@@ -170,8 +170,7 @@ setup_swat2012 <- function(project_path,
 #'
 write_file_cio <- function(run_path, file_cio) {
   thread_i <- dir(run_path) %>%
-    substr(.,(nchar(.) - 7), nchar(.)) %>%
-    .[grepl("thread_",.)]
+    .[. %in% ("thread"%_%1:999)]
   ## Write modified file_cio into thread folder and respective Backup folder
   for(i in thread_i) {
     writeLines(file_cio, run_path%//%i%//%"file.cio")

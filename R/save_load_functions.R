@@ -157,10 +157,10 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
 
   sim_results <- run %>%
     map(., ~ filter(save_list$table_overview, run_num %in% .x)) %>%
-    filter_not_empty(.)
+    filter_not_empty(.) %>%
     map(., ~ filter(., var %in% variable)) %>%
     map(., ~ split(.x, 1:nrow(.x))) %>%
-    map(., collect_sim_run) %>%
+    map(., ~ collect_sim_run(.x, save_list), save_list) %>%
     tidy_results(., parameter, date, add_parameter, add_date)
 
   walk(save_list$par_dat_con, ~ dbDisconnect(.x))
@@ -182,7 +182,7 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
 #' @importFrom purrr set_names
 #' @keywords internal
 #'
-collect_sim_i <- function(sim_i){
+collect_sim_i <- function(sim_i, save_list){
   con <- save_list$sim_db[[sim_i$con_number]]
   tbl <- sim_i$tbl_name
   var_name <- sim_i$var
@@ -200,8 +200,9 @@ collect_sim_i <- function(sim_i){
 #' @importFrom purrr map
 #' @keywords internal
 #'
-collect_sim_run <- function(sim_run) {
-  map(sim_run, collect_sim_i) %>%
+collect_sim_run <- function(sim_run, save_list) {
+  map(sim_run, ~ collect_sim_i(.x, save_list), save_list) %>%
+    filter_not_empty(.) %>%
     bind_cols(.)
 }
 

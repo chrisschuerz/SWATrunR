@@ -4,7 +4,7 @@
 \alias{collect_sim_run}
 \title{Wrapper for sim_i that collects all variables for a simulation run}
 \usage{
-collect_sim_run(sim_run)
+collect_sim_run(sim_run, save_list)
 }
 \arguments{
 \item{sim_i}{same as sim_i above but multiple lines where each line is a

@@ -5,7 +5,7 @@
 \title{Helper function to collect a table from a sqlite date base according to the
 information given in one line of the table_overview}
 \usage{
-collect_sim_i(sim_i)
+collect_sim_i(sim_i, save_list)
 }
 \arguments{
 \item{sim_i}{One line of the overview_table providing with the columns
