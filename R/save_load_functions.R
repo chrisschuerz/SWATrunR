@@ -155,13 +155,32 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
                       definition = save_list$par_def[[1]])
   }
 
-  sim_results <- run %>%
+  run_list <- run %>%
     map(., ~ filter(save_list$table_overview, run_num %in% .x)) %>%
-    filter_not_empty(.) %>%
+    filter_not_empty(.)
+
+  run_avail <- map_dbl(run_list, ~.x$run_num[1])
+
+  sim_results <- run_avail %>%
     map(., ~ filter(., var %in% variable)) %>%
     map(., ~ split(.x, 1:nrow(.x))) %>%
     map(., ~ collect_sim_run(.x, save_list), save_list) %>%
-    tidy_results(., parameter, date, add_parameter, add_date)
+    tidy_results(., parameter, date, add_parameter, add_date, run_avail)
+
+  if(is.list(sim_results)) {
+    if(add_parameter) {
+      run_load <- map(sim_results$simulation, ~ names(.x))
+    } else {
+      run_load <- map(sim_results, ~ names(.x))
+    }
+    run_load <- run_load %>%
+      map(., ~.x[ .x != "date"]) %>%
+      map(., ~ gsub("run_", "", .x)) %>%
+      map(., ~ as.numeric(.x))
+
+    map(run_load, ~ run %in% .x)
+  }
+
 
   walk(save_list$par_dat_con, ~ dbDisconnect(.x))
   walk(save_list$sim_con, ~ dbDisconnect(.x))
