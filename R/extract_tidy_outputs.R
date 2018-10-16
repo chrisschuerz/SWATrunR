@@ -42,7 +42,7 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
   if(length(sim_result) == 1) {
     sim_result <- sim_result[[1]]
   } else {
-    n_digit <- length(sim_result) %>% as.character(.) %>% nchar(.)
+    n_digit <- nrow(parameter) %>% as.character(.) %>% nchar(.)
     sim_result <- sim_result %>%
       set_names(., "run"%_%sprintf("%0"%&%n_digit%&%"d", run)) %>%
       transpose(.) %>%
