@@ -6,6 +6,8 @@ folder_parallelisation_r
 LREW/lrew_wb
 LREW/lrew_wb_4k
 LREW/lrew_wb_150
+LREW/lrew_wb_donotknow
+LREW/lrew_wb_rest
 
 # Session Data files
 .RData
