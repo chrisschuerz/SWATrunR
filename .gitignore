@@ -3,6 +3,10 @@ folder_parallelisation_r
 .Rhistory
 .Rapp.history
 
+LREW/lrew_wb
+LREW/lrew_wb_4k
+LREW/lrew_wb_150
+
 # Session Data files
 .RData
 
