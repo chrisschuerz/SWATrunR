@@ -8,6 +8,7 @@ LREW/lrew_wb_4k
 LREW/lrew_wb_150
 LREW/lrew_wb_donotknow
 LREW/lrew_wb_rest
+LREW/lrew_wb.rds
 
 # Session Data files
 .RData
