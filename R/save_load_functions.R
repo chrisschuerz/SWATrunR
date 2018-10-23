@@ -144,22 +144,44 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
   save_list <- scan_save_files(save_dir)
 
   if(is.null(variable)) {variable <- unique(save_list$table_overview$var)}
+  if(is.null(run)) {run <- unique(save_list$table_overview$run_num) %>% sort(.)}
 
   if(add_date){
     date <- convert_date(save_list$date_data[[1]])
   }
 
-  if(add_parameter) {
-    parameter <- list(values = save_list$par_val[[1]],
-                      definition = save_list$par_def[[1]])
-  }
+  parameter <- list(values = save_list$par_val[[1]],
+                    definition = save_list$par_def[[1]])
 
-  sim_results <- run %>%
-    map(., ~ filter(save_list$table_overview, run_num == .x)) %>%
+  run_list <- run %>%
+    map(., ~ filter(save_list$table_overview, run_num %in% .x)) %>%
+    filter_not_empty(.)
+
+  run_avail <- map_dbl(run_list, ~.x$run_num[1])
+
+  sim_results <- run_list %>%
     map(., ~ filter(., var %in% variable)) %>%
     map(., ~ split(.x, 1:nrow(.x))) %>%
-    map(., collect_sim_run) %>%
-    tidy_results(., parameter, date, add_parameter, add_date)
+    map(., ~ collect_sim_run(.x, save_list), save_list) %>%
+    tidy_results(., parameter, date, add_parameter, add_date, run_avail)
+
+  if(is.list(sim_results)) {
+    if(add_parameter) {
+      run_load <- map(sim_results$simulation, ~ names(.x))
+    } else {
+      run_load <- map(sim_results, ~ names(.x))
+    }
+    run_load <- run_load %>%
+      map(., ~.x[ .x != "date"]) %>%
+      map(., ~ gsub("run_", "", .x)) %>%
+      map(., ~ as.numeric(.x))
+
+    run_in_loaded <- map(run_load, ~ run %in% .x)
+    if(any(!map_lgl(run_in_loaded, all))) {
+      cat("Here comes more...")
+    }
+  }
+
 
   walk(save_list$par_dat_con, ~ dbDisconnect(.x))
   walk(save_list$sim_con, ~ dbDisconnect(.x))
@@ -180,7 +202,7 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
 #' @importFrom purrr set_names
 #' @keywords internal
 #'
-collect_sim_i <- function(sim_i){
+collect_sim_i <- function(sim_i, save_list){
   con <- save_list$sim_db[[sim_i$con_number]]
   tbl <- sim_i$tbl_name
   var_name <- sim_i$var
@@ -198,9 +220,22 @@ collect_sim_i <- function(sim_i){
 #' @importFrom purrr map
 #' @keywords internal
 #'
-collect_sim_run <- function(sim_run) {
-  map(sim_run, collect_sim_i) %>%
+collect_sim_run <- function(sim_run, save_list) {
+  map(sim_run, ~ collect_sim_i(.x, save_list), save_list) %>%
+    filter_not_empty(.) %>%
     bind_cols(.)
+}
+
+#' Filter the elements of a list with tibbles where the tibbles are not empty
+#'
+#' @param dat_list List of tibbles (data.frames)
+#'
+#' @importFrom purrr map_lgl
+#' @keywords internal
+#'
+filter_not_empty <- function(dat_list) {
+  is_not_empty <- map_lgl(dat_list, ~ nrow(.x) > 0)
+  return(dat_list[is_not_empty])
 }
 
 #' Retrieve information on saved SWAT runs

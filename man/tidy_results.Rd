@@ -4,7 +4,7 @@
 \alias{tidy_results}
 \title{Tidy up simulation results before returning them}
 \usage{
-tidy_results(sim_result, parameter, date, add_parameter, add_date)
+tidy_results(sim_result, parameter, date, add_parameter, add_date, run)
 }
 \arguments{
 \item{parameter}{Provided parameter set}

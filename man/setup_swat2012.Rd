@@ -4,8 +4,8 @@
 \alias{setup_swat2012}
 \title{Reads and modifies the SWAT projects' filo.cio according to provided inputs}
 \usage{
-setup_swat2012(project_path, start_date, end_date, output_interval,
-  years_skip, rch_out_var, sub_out_var, hru_out_var, hru_out_nr)
+setup_swat2012(project_path, start_date, end_date, output_interval, years_skip,
+  rch_out_var, sub_out_var, hru_out_var, hru_out_nr)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
