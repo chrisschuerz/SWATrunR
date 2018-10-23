@@ -258,8 +258,9 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     if(!is.null(save_path)) {
       save_run(save_path, model_output, parameter, i_run, thread_id)
     }
-
-    return(model_output)
+    if(return_output) {
+      return(model_output)
+    }
   }
 
   ## Stop cluster after parallel run
