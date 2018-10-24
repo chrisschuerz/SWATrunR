@@ -14,6 +14,11 @@
 #' @keywords internal
 #'
 save_run <- function(save_path, model_output, parameter, i_run, i_thread) {
+  ## Wait until no other thread is currently saving simulation results
+  while(check_lock(save_path)) {
+    Sys.sleep(runif(1))
+  }
+
   if(is.data.frame(parameter$values)) {
     n_digit <- parameter$values %>%
       nrow(.) %>%
@@ -32,6 +37,7 @@ save_run <- function(save_path, model_output, parameter, i_run, i_thread) {
        ~copy_to(dest = output_db, df = .x, name = .y, temporary = F))
 
   dbDisconnect(output_con)
+  file.remove(save_path%//%"sqlite.lock")
 }
 
 #' Set the save path to the sqlite data base file
@@ -525,5 +531,23 @@ check_saved_data <- function(save_path, parameter) {
              "Please check with scan_swat_run() or define new 'save_file'" %&&%
              "for the new simulations!")
     }
+  }
+}
+
+#' Manages lock file for writing to the SQLite data bases to avoid simultanious
+#' writing. This is advantageous for large files and a large number of parallel
+#' threads.
+#'
+#' @param save_path Path to the folder that holds the saved data
+#'
+#' @importFrom pasta %//%
+#' @keywords internal
+#'
+check_lock <- function(save_path) {
+  if(!file.exists(save_path%//%"sqlite.lock")) {
+    file.create(save_path%//%"sqlite.lock")
+    return(FALSE)
+  } else {
+    return(TRUE)
   }
 }
