@@ -2,7 +2,7 @@
 % Please edit documentation in R/swat2012_parameter_modify.R
 \name{modify_parameter}
 \alias{modify_parameter}
-\title{Modify the model parameters of the thread that runs the simulation rin_i}
+\title{Modify the model parameters of the thread that runs the simulation run_i}
 \usage{
 modify_parameter(parameter, thread_parameter, file_meta, run_index, i_run)
 }
@@ -13,7 +13,7 @@ constraints}
 \item{thread_parameter}{The swat_parameter set that will be modified
 according to the parpameter set used in the respective thread}
 
-\item{file_meta}{Table with the meta informations on the swat model parameter
+\item{file_meta}{Table with the meta informations on the SWAT model parameter
 files}
 
 \item{run_index}{Vector of the indices of runs that are performed}
@@ -22,6 +22,6 @@ files}
 respective thread}
 }
 \description{
-Modify the model parameters of the thread that runs the simulation rin_i
+Modify the model parameters of the thread that runs the simulation run_i
 }
 \keyword{internal}

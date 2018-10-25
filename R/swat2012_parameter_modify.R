@@ -1,10 +1,10 @@
-#' Modify the model parameters of the thread that runs the simulation rin_i
+#' Modify the model parameters of the thread that runs the simulation run_i
 #'
 #' @param parameter List providing the parameter table and the parameter
 #'   constraints
 #' @param thread_parameter The swat_parameter set that will be modified
 #'   according to the parpameter set used in the respective thread
-#' @param file_meta Table with the meta informations on the swat model parameter
+#' @param file_meta Table with the meta informations on the SWAT model parameter
 #'   files
 #' @param run_index Vector of the indices of runs that are performed
 #' @param i_run Index that gives the number of the current run simulated in the
@@ -12,7 +12,8 @@
 #'
 #' @keywords internal
 #'
-modify_parameter <- function(parameter, thread_parameter, file_meta, run_index, i_run) {
+modify_parameter <- function(parameter, thread_parameter, file_meta, run_index,
+                             i_run) {
   for (i_par in 1:ncol(parameter$values)) {
     file_i <- parameter$definition[i_par, ]$file_name
 
