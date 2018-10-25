@@ -6,12 +6,13 @@
 #'   according to the parpameter set used in the respective thread
 #' @param file_meta Table with the meta informations on the swat model parameter
 #'   files
+#' @param run_index Vector of the indices of runs that are performed
 #' @param i_run Index that gives the number of the current run simulated in the
 #'   respective thread
 #'
 #' @keywords internal
 #'
-modify_parameter <- function(parameter, thread_parameter, file_meta, i_run) {
+modify_parameter <- function(parameter, thread_parameter, file_meta, run_index, i_run) {
   for (i_par in 1:ncol(parameter$values)) {
     file_i <- parameter$definition[i_par, ]$file_name
 
@@ -22,14 +23,14 @@ modify_parameter <- function(parameter, thread_parameter, file_meta, i_run) {
                        "DIVMAX", "FLOWFR", "DDRAIN", "TDRAIN", "GDRAIN")
       if(swat_par_i %in% gen_mgt_par){
         thread_parameter <-
-          modify_gen_par(parameter, thread_parameter, file_meta, i_par, i_run)
+          modify_gen_par(parameter, thread_parameter, file_meta, i_par, run_index, i_run)
       } else {
         thread_parameter <-
-          modify_mgt_par(parameter, thread_parameter, file_meta, i_par, i_run)
+          modify_mgt_par(parameter, thread_parameter, file_meta, i_par, run_index, i_run)
       }
     } else {
       thread_parameter <-
-        modify_gen_par(parameter, thread_parameter, file_meta, i_par, i_run)
+        modify_gen_par(parameter, thread_parameter, file_meta, i_par, run_index, i_run)
     }
   }
   return(thread_parameter)
@@ -46,6 +47,7 @@ modify_parameter <- function(parameter, thread_parameter, file_meta, i_run) {
 #'   files
 #' @param i_par Index that gives the number of the curent parameter that is
 #'   modified in this step
+#' @param run_index Vector of the indices of runs that are performed
 #' @param i_run Index that gives the number of the current run simulated in the
 #'   respective thread
 #'
@@ -54,9 +56,9 @@ modify_parameter <- function(parameter, thread_parameter, file_meta, i_run) {
 #' @keywords internal
 #'
 modify_gen_par <- function(parameter, model_parameter, file_meta,
-                            i_par, i_run) {
+                            i_par, run_index, i_run) {
   par_i <- parameter$definition[i_par, ]
-  par_up_i <- parameter$values[[par_i$par_name]][i_run]
+  par_up_i <- parameter$values[[par_i$par_name]][run_index[i_run]]
   file_code_i <- par_i$file_expression %>%
     evaluate_expression(file_meta, .) %>%
     .[["file_code"]]
@@ -83,6 +85,7 @@ modify_gen_par <- function(parameter, model_parameter, file_meta,
 #'   files
 #' @param i_par Index that gives the number of the curent parameter that is
 #'   modified in this step
+#' @param run_index Vector of the indices of runs that are performed
 #' @param i_run Index that gives the number of the current run simulated in the
 #'   respective thread
 #'
@@ -92,7 +95,7 @@ modify_gen_par <- function(parameter, model_parameter, file_meta,
 #' @keywords internal
 #'
 modify_mgt_par <- function(parameter, model_parameter, file_meta,
-                           i_par, i_run) {
+                           i_par, run_index, i_run) {
   mgt_lookup <- tribble(
     ~par,           ~mgt_op,     ~mgt_i,
     "PLANT_ID",     1,           "MGT1",
@@ -136,7 +139,7 @@ modify_mgt_par <- function(parameter, model_parameter, file_meta,
     "CFRT_KG",      14,          "MGT4")
 
   par_i <- parameter$definition[i_par, ]
-  par_up_i <- parameter$values[[par_i$par_name]][i_run]
+  par_up_i <- parameter$values[[par_i$par_name]][run_index[i_run]]
   file_code_i <- par_i$file_expression %>%
     evaluate_expression(file_meta, .) %>%
     .[["file_code"]]

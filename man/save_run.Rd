@@ -4,7 +4,7 @@
 \alias{save_run}
 \title{Save results of model run i in existing sql data base}
 \usage{
-save_run(save_path, model_output, parameter, i_run, i_thread)
+save_run(save_path, model_output, parameter, run_index, i_run, i_thread)
 }
 \arguments{
 \item{save_path}{Path of the sql data base}
@@ -12,6 +12,8 @@ save_run(save_path, model_output, parameter, i_run, i_thread)
 \item{model_output}{output of the i_run'th simulation as a tibble}
 
 \item{parameter}{Vector or tibble with parameter sets}
+
+\item{run_index}{Vector of the indices of runs that are performed}
 
 \item{i_run}{The i'th run of the SWAT simulation}
 }

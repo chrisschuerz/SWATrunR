@@ -30,8 +30,9 @@ format_swatplus_parameter <- function(parameter) {
 #'
 #' @keywords internal
 #'
-write_calibration <- function(thread_path, parameter, calibration, i_run) {
-  calibration$VAL <- parameter$values[i_run,] %>%
+write_calibration <- function(thread_path, parameter, calibration, run_index,
+                              i_run) {
+  calibration$VAL <- parameter$values[run_index[i_run],] %>%
     map_dbl(., ~.x) %>%
     .[calibration$NAME] %>%
     sprintf("%.15s", .)

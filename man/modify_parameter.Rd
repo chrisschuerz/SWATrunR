@@ -4,7 +4,7 @@
 \alias{modify_parameter}
 \title{Modify the model parameters of the thread that runs the simulation rin_i}
 \usage{
-modify_parameter(parameter, thread_parameter, file_meta, i_run)
+modify_parameter(parameter, thread_parameter, file_meta, run_index, i_run)
 }
 \arguments{
 \item{parameter}{List providing the parameter table and the parameter
@@ -15,6 +15,8 @@ according to the parpameter set used in the respective thread}
 
 \item{file_meta}{Table with the meta informations on the swat model parameter
 files}
+
+\item{run_index}{Vector of the indices of runs that are performed}
 
 \item{i_run}{Index that gives the number of the current run simulated in the
 respective thread}

@@ -39,6 +39,7 @@ par_wb <- par_wb[1:4,]
 
 
 run_swatplus(project_path = "D:/SWATplus/TxtInOut_100cha0lsu",
+             run_index = 500:1000,
              output = list(q_b =  define_output(file = "channel",
                                                 variable = "flo_out",
                                                 unit = 79),

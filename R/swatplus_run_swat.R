@@ -122,9 +122,8 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## Define save_path and check if planned simulations already exist in save file
   if(!is.null(save_file)) {
     save_path <- set_save_path(project_path, save_path, save_file)
-    check_saved_data(save_path, parameter)
+    check_saved_data(save_path, parameter, output, run_index)
   }
-
 
   ## Convert output to named list in case single unnamed output was defined
   output <- check_output(output)
@@ -159,6 +158,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   } else {
     run_path <- run_path%//%".model_run"
   }
+
 
   ## Case .model_run exists already and no forced refresh considered
   if(dir.exists(run_path) & !refresh) {
@@ -200,7 +200,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   if(!is.null(save_file)) {
     initialize_save_file(save_path, parameter, model_setup)
   }
-
   #-------------------------------------------------------------------------------
   # Initiate foreach loop to run SWAT models
   ## make and register cluster, create table that links the parallel worker
@@ -217,7 +216,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
   ## If not quiet a function for displaying the simulation progress is generated
   ## and provided to foreach via the SNOW options
-  n_run <- max(nrow(parameter$values), 1)
+  n_run <- length(run_index)
   if(!quiet) {
     cat("Performing", n_run, "simulation"%&%plural(n_run),"on", n_thread,
         "core"%&%plural(n_thread)%&%":", "\n")
@@ -246,7 +245,8 @@ run_swatplus <- function(project_path, output, parameter = NULL,
         file.remove(thread_path%//%"calibration.cal")
       }
     } else {
-      write_calibration(thread_path, parameter, model_setup$calibration.cal, i_run)
+      write_calibration(thread_path, parameter, model_setup$calibration.cal,
+                        run_index, i_run)
     }
 
     ## Execute the SWAT exe file located in the thread folder
@@ -256,7 +256,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
       extract_output(output, .)
 
     if(!is.null(save_path)) {
-      save_run(save_path, model_output, parameter, i_run, thread_id)
+      save_run(save_path, model_output, parameter, run_index, i_run, thread_id)
     }
     if(return_output) {
       return(model_output)

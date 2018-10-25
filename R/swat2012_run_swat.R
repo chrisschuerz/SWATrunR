@@ -215,7 +215,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
   ## If not quiet a function for displaying the simulation progress is generated
   ## and provided to foreach via the SNOW options
-  n_run <- max(nrow(parameter$values), 1)
+  n_run <- length(run_index)
   if(!quiet) {
     cat("Performing", n_run, ifelse(n_run == 1, "simulation", "simulations"),
         "on", n_thread, "cores:", "\n")
@@ -237,12 +237,11 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     thread_path <- run_path%//%thread_id
     # thread_path <- "D:/UnLoadC3/00_SW_SWAT/model_struct/sb03_thru/.model_run/thread_1"
 
-
     ## Modify model parameters if parameter set was provided
     if(!is.null(parameter)) {
       thread_parameter <- swat_parameter
       thread_parameter <- modify_parameter(parameter, thread_parameter,
-                                           file_meta, i_run)
+                                           file_meta, run_index, i_run)
       write_parameter(file_meta, thread_parameter, thread_path)
     }
 
@@ -253,7 +252,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
       extract_output(output, .)
 
     if(!is.null(save_path)) {
-      save_run(save_path, model_output, parameter, i_run, thread_id)
+      save_run(save_path, model_output, parameter, run_index, i_run, thread_id)
     }
 
     return(model_output)

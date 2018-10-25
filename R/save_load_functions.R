@@ -3,6 +3,7 @@
 #' @param save_path Path of the sql data base
 #' @param model_output output of the i_run'th simulation as a tibble
 #' @param parameter Vector or tibble with parameter sets
+#' @param run_index Vector of the indices of runs that are performed
 #' @param i_run The i'th run of the SWAT simulation
 #'
 #' @importFrom dplyr copy_to src_sqlite %>%
@@ -13,7 +14,7 @@
 #' @importFrom tibble tibble
 #' @keywords internal
 #'
-save_run <- function(save_path, model_output, parameter, i_run, i_thread) {
+save_run <- function(save_path, model_output, parameter, run_index, i_run, i_thread) {
 
   if(is.data.frame(parameter$values)) {
     n_digit <- parameter$values %>%
@@ -21,7 +22,7 @@ save_run <- function(save_path, model_output, parameter, i_run, i_thread) {
       as.character(.) %>%
       nchar(.)
   }
-  run_name <- "run"%_%sprintf("%0"%&%n_digit%&%"d", i_run)
+  run_name <- "run"%_%sprintf("%0"%&%n_digit%&%"d", run_index[i_run])
   save_list <- map(model_output, ~.x) %>%
     map(.,  ~tibble(.x) %>% set_names(.,run_name)) %>%
     set_names(names(.)%&%"$$from$$"%&%run_name)
@@ -30,7 +31,7 @@ save_run <- function(save_path, model_output, parameter, i_run, i_thread) {
   output_db <- src_dbi(output_con)
 
   map2(save_list, names(save_list),
-       ~copy_to(dest = output_db, df = .x, name = .y, temporary = F))
+       ~copy_to(dest = output_db, df = .x, name = .y, temporary = FALSE))
 
   dbDisconnect(output_con)
 }
@@ -86,7 +87,7 @@ initialize_save_file <- function(save_path, parameter, model_setup) {
            "saved in 'save_file' differ!")
     }
     par_def <- tbl(output_db, "parameter_definition") %>% collect(.)
-    if(!identical(as.matrix(parameter$values), as.matrix(par_def))) {
+    if(!identical(as.matrix(parameter$definition), as.matrix(par_def))) {
       stop("Parameter definition of current SWAT simulation and the"%&&%
            "parameter definition saved in 'save_file' differ!")
     }
@@ -494,10 +495,10 @@ convert_date <- function(date_tbl) {
 #'
 #' @importFrom dplyr %>%
 #' @importFrom pasta %&&%
-#' @importFrom purrr map
+#' @importFrom purrr map map2
 #' @keywords internal
 #'
-check_saved_data <- function(save_path, parameter) {
+check_saved_data <- function(save_path, parameter, output, run_index) {
   saved_data <- scan_save_files(save_path)
 
   if(!is.null(saved_data$par_val)) {
@@ -513,7 +514,8 @@ check_saved_data <- function(save_path, parameter) {
     }
   }
   if(nrow(saved_data$table_overview) > 0) {
-    out_var_current <- names(output)
+    out_var_current <- output %>%
+      map2(., names(.), ~ paste0(.y, .x$label_ind))
     tbl_ovr   <- saved_data$table_overview
     is_out_saved <- map(out_var_current,
                         ~ any(tbl_ovr$run_num[tbl_ovr$var == .x] %in%

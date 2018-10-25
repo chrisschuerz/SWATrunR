@@ -5,7 +5,8 @@
 \title{General function to modify parameters that are provided in linear table
 format}
 \usage{
-modify_gen_par(parameter, model_parameter, file_meta, i_par, i_run)
+modify_gen_par(parameter, model_parameter, file_meta, i_par, run_index,
+  i_run)
 }
 \arguments{
 \item{parameter}{List providing the parameter table and the parameter
@@ -19,6 +20,8 @@ files}
 
 \item{i_par}{Index that gives the number of the curent parameter that is
 modified in this step}
+
+\item{run_index}{Vector of the indices of runs that are performed}
 
 \item{i_run}{Index that gives the number of the current run simulated in the
 respective thread}

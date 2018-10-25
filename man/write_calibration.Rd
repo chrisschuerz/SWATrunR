@@ -5,7 +5,7 @@
 \title{Update the calibration file structure with the parameter set of the current
 simulation run_i}
 \usage{
-write_calibration(thread_path, parameter, calibration, i_run)
+write_calibration(thread_path, parameter, calibration, run_index, i_run)
 }
 \arguments{
 \item{thread_path}{Path to the current parallel thread 'thread_i'}

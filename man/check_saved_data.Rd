@@ -5,7 +5,7 @@
 \title{Do general checkups for a SQLite database that already holds saved data and
 compare with the current run_swat inputs}
 \usage{
-check_saved_data(save_path, parameter)
+check_saved_data(save_path, parameter, output, run_index)
 }
 \arguments{
 \item{save_path}{Path to the folder that holds the saved data}
