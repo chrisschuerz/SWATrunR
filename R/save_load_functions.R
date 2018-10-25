@@ -516,7 +516,7 @@ check_saved_data <- function(save_path, parameter, output, run_index) {
   if(nrow(saved_data$table_overview) > 0) {
     out_var_current <- output %>%
       map2(., names(.), ~ paste0(.y, .x$label_ind))
-    tbl_ovr   <- saved_data$table_overview
+    tbl_ovr <- saved_data$table_overview
     is_out_saved <- map(out_var_current,
                         ~ any(tbl_ovr$run_num[tbl_ovr$var == .x] %in%
                                 run_index)) %>%
