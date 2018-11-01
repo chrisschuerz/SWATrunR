@@ -1,12 +1,28 @@
 Package: SWATplusR
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: Running SWAT2012 and SWAT+ projects in R
+Version: 0.1.1
+Authors@R: person("Christoph", "Schuerz",
+                email = "c.schuerz@posteo.org",
+                role = c("aut", "cre"))
+Maintainer: Christoph Schuerz <c.schuerz@posteo.org>
+Description: SWATplusR provides a link to existing SWAT2012 and SWAT+ projects. 
+        It provides modification of model paramaters, parallel computing of SWAT 
+        simulations, incremental saving of defined simulation outputs and further 
+        functionality.
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
+Imports:
+    dbplyr,
+    dplyr,
+    doSNOW,
+    foreach,
+    lubridate,
+    RSQLite,
+    parallel,
+    pasta,
+    purrr,
+    readr,
+    tibble
 RoxygenNote: 6.1.0
