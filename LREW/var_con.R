@@ -1,5 +1,6 @@
 library(tidyverse)
 library(pasta)
+library(SWATplusR)
 
 proj_path <- "D:/SWATplus/LREW_varratio"
 
@@ -55,5 +56,8 @@ modify_rtu_con <- function(proj_path, rtu_val, res_val) {
               row.names = FALSE,
               col.names = FALSE)
 }
+
+
+run_swatplus(project_path = lrew_path, output = define_output("basin_wb", "flo_out", 1), run_path = "D:/SWATplus", keep_folder = TRUE, refresh = FALSE, n_thread = 1, years_skip = 1, start_date = "1999-01-01", end_date = "2000-12-31")
 
 

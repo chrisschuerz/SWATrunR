@@ -172,7 +172,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     if(n_thread_avail >= n_thread) {
       if(!quiet) {
         message("Model will be executed in existing '.model_run' folder structure"%&%
-                  "\nMake shure '.model_run' is up to date with the project folder!")
+                  "\nMake sure '.model_run' is up to date with the project folder!")
       }
       ## If the number of available parallel folders is not sufficient
       ## a new setup of the folder structures is forced
@@ -237,6 +237,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
     thread_path <- run_path%//%thread_id
     # thread_path <- project_path%//%".model_run/thread_1"
+    # thread_path <- run_path%//%"thread_1"
 
     ## Modify model parameters if parameter set was provided and write
     ## calibration file. If no parameters provided write empty calibration file
