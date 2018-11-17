@@ -41,13 +41,13 @@ manage_model_run <- function(project_path, run_path, n_thread,
         message("The number of existing threads is lower than the required number."%&%
                   "\nParallel folder structure will be created from scratch!\n\n")
       }
-      build_model_run(project_path, run_path, n_thread, quiet, swat_vers)
+      build_model_run(project_path, run_path, n_thread, swat_vers, quiet)
     }
     ## Build the parallel folder structure if it does not exist or if a
     ## forced refresh was set with refresh = TRUE
   } else {
     unlink(run_path, recursive = TRUE)
-    build_model_run(project_path, run_path, n_thread, quiet, swat_vers)
+    build_model_run(project_path, run_path, n_thread, swat_vers, quiet)
   }
 }
 
@@ -58,10 +58,10 @@ manage_model_run <- function(project_path, run_path, n_thread,
 #'   executable model is built in the 'project_path'
 #' @param n_thread Number of parallel threads that will be created. This number
 #'   must be in accordance to the number of cores of the PC
-#' @param file_cio The file_cio from the 'project_folder' modified according to
-#'   'start_date', 'end_date', 'output_interval', and 'years_skip'
-#' @param abs_swat_val Replace internal Absolute_SWAT_Values.txt' file with
-#'   custom one found in this path if provided
+#' @param swat_vers Character string that defines the SWAT version. Either
+#'   "2012" or "plus".
+#' @param quiet Logical. Defines if messages should be written or function
+#'   should be executed quietly.
 #'
 #' @importFrom parallel detectCores
 #' @importFrom dplyr %>%
@@ -70,7 +70,7 @@ manage_model_run <- function(project_path, run_path, n_thread,
 #' @keywords internal
 #'
 
-build_model_run <- function(project_path, run_path, n_thread, quiet, swat_vers){
+build_model_run <- function(project_path, run_path, n_thread, swat_vers, quiet){
   # Identify operating system and find the SWAT executable in the project folder
   os <- get_os()
   if(os == "win") {

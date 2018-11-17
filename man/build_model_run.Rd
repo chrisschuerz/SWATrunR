@@ -4,7 +4,7 @@
 \alias{build_model_run}
 \title{Generate folder structure for parallel SWAT execution}
 \usage{
-build_model_run(project_path, run_path, n_thread, quiet, swat_vers)
+build_model_run(project_path, run_path, n_thread, swat_vers, quiet)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
@@ -15,11 +15,11 @@ executable model is built in the 'project_path'}
 \item{n_thread}{Number of parallel threads that will be created. This number
 must be in accordance to the number of cores of the PC}
 
-\item{file_cio}{The file_cio from the 'project_folder' modified according to
-'start_date', 'end_date', 'output_interval', and 'years_skip'}
+\item{swat_vers}{Character string that defines the SWAT version. Either
+"2012" or "plus".}
 
-\item{abs_swat_val}{Replace internal Absolute_SWAT_Values.txt' file with
-custom one found in this path if provided}
+\item{quiet}{Logical. Defines if messages should be written or function
+should be executed quietly.}
 }
 \description{
 Generate folder structure for parallel SWAT execution
