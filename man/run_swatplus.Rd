@@ -6,10 +6,9 @@
 \usage{
 run_swatplus(project_path, output, parameter = NULL, start_date = NULL,
   end_date = NULL, output_interval = NULL, years_skip = NULL,
-  run_index = NULL, run_path = NULL, n_thread = NULL,
-  save_path = NULL, save_file = NULL, return_output = TRUE,
-  add_parameter = TRUE, add_date = TRUE, refresh = TRUE,
-  keep_folder = FALSE, quiet = FALSE)
+  run_index = NULL, run_path = NULL, n_thread = NULL, save_path = NULL,
+  save_file = NULL, return_output = TRUE, add_parameter = TRUE,
+  add_date = TRUE, refresh = TRUE, keep_folder = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
@@ -78,9 +77,6 @@ case '.model_run' is reused in a new model run if \code{refresh = FALSE}.
 
 \item{quiet}{(optional) Logical. If \code{quiet = TRUE} no messages are
 written.  \code{Default = FALSE}}
-
-\item{...}{(optional) Additional arguments for special model settings, such
-as for the \code{screen()} soft calibration routine. (NOT yet implemented)}
 }
 \value{
 Returns the simulation results for the defined output variables as a

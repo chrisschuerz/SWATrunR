@@ -54,8 +54,6 @@
 #'   \code{Default = FALSE}
 #' @param quiet (optional) Logical. If \code{quiet = TRUE} no messages are
 #'   written.  \code{Default = FALSE}
-#' @param ... (optional) Additional arguments for special model settings, such
-#'   as for the \code{screen()} soft calibration routine. (NOT yet implemented)
 #'
 #' @return Returns the simulation results for the defined output variables as a
 #'   tibble. If more than one parameter set was provided the list of tibbles is
@@ -130,7 +128,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
   ## Check if soft_calibration was triggered by screen methods. If TRUE it
   ## forces the model setup to also write the average annula balances.
-  ## Not yet implemented
+  ## Not yet implemented thus set FALSE by default
   # if("soft_calibration" %in% names(add_input)){
   #   soft_cal <- eval(add_input$soft_calibration)
   # } else {
@@ -153,43 +151,10 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                   detectCores())
 
   ## Set the .model_run folder as the run_path
-  if(is.null(run_path)){
-    run_path <- project_path%//%".model_run"
-  } else {
-    run_path <- run_path%//%".model_run"
-  }
+  run_path <- ifelse(is.null(run_path), project_path, run_path)%//%".model_run"
 
-
-  ## Case .model_run exists already and no forced refresh considered
-  if(dir.exists(run_path) & !refresh) {
-    ## Check how many parallel threads are available
-    n_thread_avail <- dir(run_path) %>%
-      substr(.,(nchar(.) - 7), nchar(.)) %>%
-      grepl("thread_",.) %>%
-      sum()
-    ## The existing folder strucuture is used when more parallel folders are
-    ## available than parallel threads are needed
-    if(n_thread_avail >= n_thread) {
-      if(!quiet) {
-        message("Model will be executed in existing '.model_run' folder structure"%&%
-                  "\nMake sure '.model_run' is up to date with the project folder!")
-      }
-      ## If the number of available parallel folders is not sufficient
-      ## a new setup of the folder structures is forced
-    } else {
-      unlink(run_path, recursive = TRUE)
-      if(!quiet) {
-        message("The number of existing threads is lower than the required number."%&%
-                  "\nParallel folder structure will be created from scratch!\n\n")
-      }
-      build_model_run(project_path, run_path, n_thread, quiet, "plus")
-    }
-    ## Build the parallel folder structure if it does not exist or if a
-    ## forced refresh was set with refresh = TRUE
-  } else {
-    unlink(run_path, recursive = TRUE)
-    build_model_run(project_path, run_path, n_thread, quiet, "plus")
-  }
+  ## Manage the handling of the '.model_run' folder structure.
+  manage_model_run(project_path, run_path, n_thread, "plus", refresh, quiet)
 #-------------------------------------------------------------------------------
   # Write files
   ## Write model setup: Files that define the time range etc. of the SWAT

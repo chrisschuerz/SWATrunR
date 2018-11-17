@@ -5,6 +5,59 @@
 #'   executable model is built in the 'project_path'
 #' @param n_thread Number of parallel threads that will be created. This number
 #'   must be in accordance to the number of cores of the PC
+#' @param swat_vers Character string that defines the SWAT version. Either
+#'   "2012" or "plus".
+#' @param refresh Logical. Defines if refreshing exisiting .model_run folder
+#'   structure should be forced.
+#' @param quiet Logical. Defines if messages should be written or function
+#'   should be executed quietly.
+#'
+#' @importFrom dplyr %>%
+#' @importFrom pasta %&%
+#' @keywords internal
+#'
+
+manage_model_run <- function(project_path, run_path, n_thread,
+                             swat_vers, refresh, quiet) {
+  ## Case .model_run exists already and no forced refresh considered
+  if(dir.exists(run_path) & !refresh) {
+    ## Check how many parallel threads are available
+    n_thread_avail <- dir(run_path) %>%
+      gsub('[0-9]+', '', .) %>%
+      grepl("thread_",.) %>%
+      sum()
+    ## The existing folder strucuture is used when more parallel folders are
+    ## available than parallel threads are needed
+    if(n_thread_avail >= n_thread) {
+      if(!quiet) {
+        message("Model will be executed in existing '.model_run' folder structure"%&%
+                  "\nMake sure '.model_run' is up to date with the project folder!")
+      }
+      ## If the number of available parallel folders is not sufficient
+      ## a new setup of the folder structures is forced
+    } else {
+      unlink(run_path, recursive = TRUE)
+      if(!quiet) {
+        message("The number of existing threads is lower than the required number."%&%
+                  "\nParallel folder structure will be created from scratch!\n\n")
+      }
+      build_model_run(project_path, run_path, n_thread, quiet, swat_vers)
+    }
+    ## Build the parallel folder structure if it does not exist or if a
+    ## forced refresh was set with refresh = TRUE
+  } else {
+    unlink(run_path, recursive = TRUE)
+    build_model_run(project_path, run_path, n_thread, quiet, swat_vers)
+  }
+}
+
+#' Generate folder structure for parallel SWAT execution
+#'
+#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param run_path Path where the '.model_run' folder is built. If NULL the
+#'   executable model is built in the 'project_path'
+#' @param n_thread Number of parallel threads that will be created. This number
+#'   must be in accordance to the number of cores of the PC
 #' @param file_cio The file_cio from the 'project_folder' modified according to
 #'   'start_date', 'end_date', 'output_interval', and 'years_skip'
 #' @param abs_swat_val Replace internal Absolute_SWAT_Values.txt' file with
