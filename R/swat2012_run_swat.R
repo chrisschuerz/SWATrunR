@@ -223,7 +223,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     } else if (os == "unix") {
       run_batch <- paste("cd", "cd"%&&%thread_path, "./"%&%swat_exe, sep = "; ")
     }
-    system(run_batch)
+    run_msg <- system(run_batch, intern = TRUE)
 
     ## Read defined model outputs
     model_output <- read_swat2012_output(output, thread_path) %>%
@@ -256,7 +256,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     ## Tidy up the simulation results and arrange them in clean tibbles before
     ## returning them
     sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
-                               add_date)
+                               add_date, run_index)
     return(sim_result)
   }
 }
