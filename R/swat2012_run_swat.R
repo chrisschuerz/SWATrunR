@@ -81,7 +81,7 @@
 #' @importFrom foreach foreach %dopar%
 #' @importFrom lubridate now
 #' @importFrom parallel detectCores makeCluster parSapply stopCluster
-#' @importFrom pasta %//%
+#' @importFrom pasta %//% %&% %&&%
 #' @importFrom tibble tibble
 #' @export
 
@@ -154,8 +154,12 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## Set the .model_run folder as the run_path
   run_path <- ifelse(is.null(run_path), project_path, run_path)%//%".model_run"
 
+  ## Identify operating system and find the SWAT executable in the project folder
+  os <- get_os()
+
   ## Manage the handling of the '.model_run' folder structure.
-  manage_model_run(project_path, run_path, n_thread, "2012", refresh, quiet)
+  swat_exe <- manage_model_run(project_path, run_path, n_thread, os,
+                               "2012", refresh, quiet)
 #-------------------------------------------------------------------------------
   # Write files
   ## Write file.cio
@@ -214,8 +218,14 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     }
 
     ## Execute the SWAT exe file located in the thread folder
-    system(thread_path%//%"swat_run.bat")
+    if(os == "win") {
+      run_batch <- thread_path%//%"swat_run.bat"
+    } else if (os == "unix") {
+      run_batch <- paste("cd", "cd"%&&%thread_path, "./"%&%swat_exe, sep = "; ")
+    }
+    system(run_batch)
 
+    ## Read defined model outputs
     model_output <- read_swat2012_output(output, thread_path) %>%
       extract_output(output, .)
 

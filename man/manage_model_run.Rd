@@ -4,7 +4,8 @@
 \alias{manage_model_run}
 \title{Generate folder structure for parallel SWAT execution}
 \usage{
-manage_model_run(project_path, run_path, n_thread, swat_vers, refresh, quiet)
+manage_model_run(project_path, run_path, n_thread, os, swat_vers, refresh,
+  quiet)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
@@ -14,6 +15,8 @@ executable model is built in the 'project_path'}
 
 \item{n_thread}{Number of parallel threads that will be created. This number
 must be in accordance to the number of cores of the PC}
+
+\item{os}{String that indicates the operating system on the current machine}
 
 \item{swat_vers}{Character string that defines the SWAT version. Either
 "2012" or "plus".}
