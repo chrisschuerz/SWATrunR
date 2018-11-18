@@ -14,17 +14,23 @@
 read_swat2012_output <- function(output, thread_path) {
   ## Get unique output files defined in output
   output_file <- map_chr(output,  ~ unique(.x$file)) %>% unique(.)
+
+  ## Find the first position of table i neach file
+  frst_pos <- find_first_line(output_file, thread_path)
   ## Get the variable positions in all output files
-  fwf_pos     <- map(output_file, ~ get_fwf_positions(.x, thread_path))
+  fwf_pos     <- map2(output_file, frst_pos, ~ get_fwf_positions(.x, thread_path, .y))
   ## Get the column header for all output files
-  file_header <- map2(output_file, fwf_pos,
-                      ~ get_file_header(.x, .y, thread_path))
+  file_header <- pmap(list(output_file, fwf_pos, frst_pos),
+                      function(out, fwf, frst, thread_path) {
+                        get_file_header(out, fwf, frst, thread_path)},
+                      thread_path)
 
   ## Read all output files, assign column names and assign output file names
-  out_tables <- map2(output_file, fwf_pos,
-                     ~ read_fwf(file = thread_path%//%.x,
-                                col_positions = fwf_positions(.y[[1]], .y[[2]]),
-                                skip = 9, guess_max = 3)) %>%
+  out_tables <- pmap(list(output_file, fwf_pos, frst_pos),
+                     function(out, fwf, frst, thread_path) {
+                       read_fwf(file = thread_path%//%out,
+                                col_positions = fwf_positions(fwf[[1]], fwf[[2]]),
+                                skip = frst, guess_max = 3)}, thread_path) %>%
     map2(., file_header, ~set_names(.x, .y)) %>%
     set_names(., output_file)
 
@@ -50,8 +56,8 @@ read_swat2012_output <- function(output, thread_path) {
 #' @importFrom readr fwf_positions read_fwf
 #' @keywords internal
 #'
-get_file_header <- function(output_i, fwf_pos, thread_path) {
-  header <- read_fwf(file = thread_path%//%output_i, skip = 8, n_max = 1,
+get_file_header <- function(output_i, fwf_pos, tbl_pos, thread_path) {
+  header <- read_fwf(file = thread_path%//%output_i, skip = tbl_pos - 1, n_max = 1,
                      col_positions = fwf_positions(fwf_pos[[1]], fwf_pos[[2]])) %>%
     gsub("Mg/l|mg/L|mg/kg|kg/ha|kg/h|t/ha|mic/L|\\(mm\\)|kg|cms|tons|mg|mm|km2|", "", .) %>%
     gsub(" ", "_",.)
@@ -69,11 +75,11 @@ get_file_header <- function(output_i, fwf_pos, thread_path) {
 #' @importFrom readr read_lines
 #' @keywords internal
 #'
-get_fwf_positions <- function(output_i, thread_path) {
+get_fwf_positions <- function(output_i, thread_path, tbl_pos) {
   header_line <- read_lines(file = thread_path%//%output_i,
-                            skip = 8, n_max = 1)
+                            skip = tbl_pos - 1, n_max = 1)
   first_line <- read_lines(file = thread_path%//%output_i,
-                           skip = 9, n_max = 1) %>%
+                           skip = tbl_pos, n_max = 1) %>%
     substr(., 1, nchar(header_line))
   # Start pos must be tweaked due to untidy spacing in output tables -> ugly tweak with 39 :()
   start_pos <- c(1,find_first_space(header_line)[find_first_space(header_line) < 39],
@@ -82,6 +88,21 @@ get_fwf_positions <- function(output_i, thread_path) {
     sort(.)
   end_pos <- c((start_pos[2:length(start_pos)] - 1), nchar(header_line))
   return(list(start_pos, end_pos))
+}
+
+#' Helper function to find the position of the fist line of the table in a file
+#'
+#' @param out_file The output files to be read
+#' @param thread_path Path to respective thread where SWAT was executed
+#'
+#' @importFrom purrr map map_int
+#' @importFrom readr read_lines
+#' @keywords internal
+#'
+find_first_line <- function(out_file, thread_path) {
+  file_head <- map(out_file, ~ read_lines(thread_path%//%.x, n_max = 50))
+  head_line <- map_int(file_head, ~ which(grepl("GIS", .x) & grepl("MON", .x)))
+  return(head_line)
 }
 
 #' Helper function to find the fist position of white spaces in a text string
