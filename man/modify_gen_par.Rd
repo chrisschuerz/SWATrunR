@@ -5,7 +5,8 @@
 \title{General function to modify parameters that are provided in linear table
 format}
 \usage{
-modify_gen_par(parameter, model_parameter, file_meta, i_par, run_index, i_run)
+modify_gen_par(parameter, model_parameter, file_meta, i_par, run_index,
+  i_run)
 }
 \arguments{
 \item{parameter}{List providing the parameter table and the parameter

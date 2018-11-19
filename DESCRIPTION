@@ -24,4 +24,4 @@ Imports:
     purrr,
     readr,
     tibble
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
