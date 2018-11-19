@@ -8,7 +8,6 @@
 #'
 #' @importFrom dplyr copy_to src_sqlite %>%
 #' @importFrom dbplyr src_dbi
-#' @importFrom pasta %&% %_% %.%
 #' @importFrom purrr map map2 set_names
 #' @importFrom RSQLite dbConnect dbDisconnect SQLite
 #' @importFrom tibble tibble
@@ -43,7 +42,6 @@ save_run <- function(save_path, model_output, parameter, run_index, i_run, i_thr
 #'   project path
 #' @param save_dir character string. Name of the sqlite data base directory
 #'
-#' @importFrom pasta %//%
 #' @keywords internal
 #'
 set_save_path <- function(project_path, save_path, save_dir) {
@@ -66,7 +64,6 @@ set_save_path <- function(project_path, save_path, save_dir) {
 #' @importFrom dplyr collect copy_to mutate select src_sqlite tbl %>%
 #' @importFrom dbplyr src_dbi
 #' @importFrom lubridate year month day hour minute second
-#' @importFrom pasta %.% %//%
 #' @importFrom RSQLite dbConnect dbDisconnect SQLite
 #' @keywords internal
 #'
@@ -250,7 +247,6 @@ filter_not_empty <- function(dat_list) {
 #'   the path/s to the save folder/s.
 #'
 #' @importFrom dplyr bind_cols %>%
-#' @importFrom pasta %&%
 #' @importFrom purrr map walk walk2
 #' @importFrom RSQLite dbDisconnect
 #' @importFrom tibble tibble
@@ -468,7 +464,6 @@ display_date <- function(date_data) {
 #'
 #' @importFrom dplyr transmute %>%
 #' @importFrom lubridate year month day hour minute second ymd_hms
-#' @importFrom pasta %//% %&&%
 #' @keywords internal
 #'
 convert_date <- function(date_tbl) {
@@ -494,7 +489,6 @@ convert_date <- function(date_tbl) {
 #'   parameter definition table
 #'
 #' @importFrom dplyr %>%
-#' @importFrom pasta %&&%
 #' @importFrom purrr map map2
 #' @keywords internal
 #'
@@ -530,23 +524,3 @@ check_saved_data <- function(save_path, parameter, output, run_index) {
     }
   }
 }
-#-------------------------------------------------------------------------------
-### DEPRECATED. NOT USED NOW
-#' Manages lock file for writing to the SQLite data bases to avoid simultanious
-#' writing. This is advantageous for large files and a large number of parallel
-#' threads.
-#'
-# @param save_path Path to the folder that holds the saved data
-#'
-# @importFrom pasta %//%
-# @keywords internal
-#'
-# check_lock <- function(save_path) {
-#   if(!file.exists(save_path%//%"sqlite.lock")) {
-#     file.create(save_path%//%"sqlite.lock")
-#     return(FALSE)
-#   } else {
-#     return(TRUE)
-#   }
-# }
-#-------------------------------------------------------------------------------

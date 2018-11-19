@@ -30,7 +30,6 @@
 #'   files possible!)
 #' @importFrom lubridate as_date int_end int_start interval yday year years ymd
 #' @importFrom dplyr case_when mutate select %>%
-#' @importFrom pasta %//% %&%
 #' @importFrom purrr map_chr set_names
 #' @importFrom readr read_lines read_table
 #' @keywords internal

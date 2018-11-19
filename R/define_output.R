@@ -29,7 +29,6 @@
 #'   expression can be defined to extract outputs directly as a text string. See
 #'   the examples to learn how to use \code{expr}.
 #' @importFrom tibble tibble
-#' @importFrom pasta %.% %&&%
 #' @export
 #' @examples
 #' # A single variable can be defined as follows (e.g. "FLOW_OUT" for

@@ -3,7 +3,6 @@
 #' @param par Character string vector providing parameters and constraints
 #'
 #' @importFrom dplyr %>% bind_cols bind_rows everything mutate one_of select
-#' @importFrom pasta %//%
 #' @importFrom purrr map map2 map_lgl pmap set_names
 #' @importFrom tibble as_tibble tibble
 #' @keywords internal

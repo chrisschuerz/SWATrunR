@@ -14,7 +14,6 @@
 #'   should be executed quietly.
 #'
 #' @importFrom dplyr %>%
-#' @importFrom pasta %&%
 #' @keywords internal
 #'
 
@@ -67,7 +66,6 @@ manage_model_run <- function(project_path, run_path, n_thread, os,
 #' @importFrom parallel detectCores
 #' @importFrom dplyr %>%
 #' @importFrom lubridate now
-#' @importFrom pasta %//% %_% %&&%
 #' @keywords internal
 #'
 

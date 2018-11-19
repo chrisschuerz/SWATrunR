@@ -32,7 +32,6 @@ extract_output <- function(output, model_output) {
 #' @param add_date Logical. If TRUE Dates are added to the simulation results
 #'
 #' @importFrom dplyr bind_cols %>%
-#' @importFrom pasta %&%
 #' @importFrom purrr map set_names transpose
 #' @importFrom tibble as_tibble
 #' @keywords internal

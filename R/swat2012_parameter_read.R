@@ -118,7 +118,6 @@ get_hru_meta <- function(hru_file_i) {
 #' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
 #'
 #' @importFrom dplyr %>% filter
-#' @importFrom pasta %//%
 #' @importFrom purrr map map_dfc set_names
 #' @importFrom readr read_lines
 #' @importFrom tibble as_tibble
@@ -149,7 +148,6 @@ read_par_list <- function(file_meta, file_suffix, project_path){
 #' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
 #'
 #' @importFrom dplyr %>% filter mutate bind_rows
-#' @importFrom pasta %//%
 #' @importFrom purrr map map2 map_dfc set_names
 #' @importFrom readr read_lines
 #' @keywords internal
@@ -179,7 +177,6 @@ read_chm <- function(file_meta, project_path) {
 #' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
 #'
 #' @importFrom dplyr %>% filter mutate bind_rows left_join
-#' @importFrom pasta %//%
 #' @importFrom purrr map map2 map_dfc set_names
 #' @importFrom readr read_lines
 #' @importFrom tibble as_tibble
@@ -220,7 +217,6 @@ read_sol <- function(file_meta, project_path) {
 #' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
 #'
 #' @importFrom dplyr %>% filter mutate bind_rows
-#' @importFrom pasta %//%
 #' @importFrom purrr map map2 set_names
 #' @keywords internal
 #'

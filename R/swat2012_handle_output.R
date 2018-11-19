@@ -6,7 +6,6 @@
 #' @param thread_path Path to respective thread where SWAT was executed
 #'
 #' @importFrom dplyr %>%
-#' @importFrom pasta %//%
 #' @importFrom purrr map map2 map_chr set_names
 #' @importFrom readr fwf_positions read_fwf
 #' @keywords internal
@@ -52,7 +51,6 @@ read_swat2012_output <- function(output, thread_path) {
 #' @param thread_path Path to respective thread where SWAT was executed
 #'
 #' @importFrom dplyr %>%
-#' @importFrom pasta %//%
 #' @importFrom readr fwf_positions read_fwf
 #' @keywords internal
 #'
@@ -71,7 +69,6 @@ get_file_header <- function(output_i, fwf_pos, tbl_pos, thread_path) {
 #' @param thread_path Path to respective thread where SWAT was executed
 #'
 #' @importFrom dplyr %>%
-#' @importFrom pasta %//%
 #' @importFrom readr read_lines
 #' @keywords internal
 #'

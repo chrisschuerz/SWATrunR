@@ -81,7 +81,6 @@
 #' @importFrom foreach foreach %dopar%
 #' @importFrom lubridate now
 #' @importFrom parallel detectCores makeCluster parSapply stopCluster
-#' @importFrom pasta %//% %&% %&&%
 #' @importFrom tibble tibble
 #' @export
 

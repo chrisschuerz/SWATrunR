@@ -24,7 +24,6 @@ format_swatplus_parameter <- function(parameter) {
 #' @param i_run Index of the i_th simulation run
 #'
 #' @importFrom dplyr %>%
-#' @importFrom pasta %//%
 #' @importFrom purrr map2_df map_dbl
 #' @importFrom readr write_lines
 #'
@@ -57,7 +56,6 @@ write_calibration <- function(thread_path, parameter, calibration, run_index,
 #' @param parameter Model parameter data set
 #'
 #' @importFrom dplyr %>%
-#' @importFrom pasta %//%
 #' @importFrom purrr map
 #' @importFrom readr read_lines
 #'
