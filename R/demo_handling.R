@@ -26,10 +26,11 @@ load_demo <- function(type, path = NULL) {
   if(type %in% c("swat2012", "swatplus") & is.null(path)) {
     stop("To retrieve a SWAT demo project a 'path' must be provided.")
   } else if (type %in% c("swat2012", "swatplus")) {
+    unzip(zipfile = pkg_path%//%"extdata"%//%type%_%"demo"%.%"zip",
+          exdir = path)
     unzip(zipfile = pkg_path%//%"extdata"%//%type%_%os%.%"zip",
           exdir = path%//%type%_%"demo")
-    unzip(zipfile = pkg_path%//%"extdata"%//%type%.%"zip",
-          exdir = path%//%type%_%"demo")
+    return(path%//%type%_%"demo")
   }
 
   if(type == "obs_data") {
