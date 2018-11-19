@@ -21,7 +21,6 @@ Imports:
     lubridate,
     RSQLite,
     parallel,
-    pasta,
     purrr,
     readr,
     tibble
