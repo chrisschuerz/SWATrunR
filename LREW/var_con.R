@@ -2,7 +2,6 @@ library(tidyverse)
 library(pasta)
 library(SWATplusR)
 
-proj_path <- "D:/SWATplus/LREW_varratio"
 
 setup_swatvari <- function(proj_path, n_prl, prl_path) {
   pro_files <- list.files(proj_path, full.names = T)
@@ -79,54 +78,60 @@ modify_rtu_con <- function(proj_path, rtu_val, res_val) {
 }
 
 
+pro_path <- "D:/SWATplus/LREW_varratio"
 par_con <- readRDS("D:/Projects_R/SWATplusR_testing/LREW/par_wb.rds")
 par_con$abschg_rtu <- runif(1000, -0.5, 0.25)
 par_con$abschg_res <- runif(1000, -0.5, 0.5)
+par <- par_con
 
-par_con_test <- par_con
-
-run_dir <- "D:/SWATplus"
+run_path <- "D:/SWATplus"
 i <- 1
 run_thread <- "lrew_vari"%_%i
-
-
+n_thread <- 4
+years_skip <- 1
+start_date <- "1999-01-01"
+end_date <- "2000-12-31"
 
 library(parallel)
 library(doSNOW)
-
+library(lubridate)
 
 run_lrew_vari <- function(pro_path, run_path, par, n_thread,
                           start_date, end_date, years_skip) {
   btc_start <- seq(1, nrow(par), n_thread)
-
+  t0 <- now()
   for(i_btc in btc_start) {
-    par_btc <- par[i_btc:(i_btch + n_thread - 1), ]
-    foreach(i = 1:n_thread) %dopar% {
+    clst <- makeCluster(n_thread)
+    registerDoSNOW(clst)
+    par_btc <- par[i_btc:(i_btc + n_thread - 1), ]
+    foreach(i = 1:n_thread,
+            .packages = c("SWATplusR", "pasta", "tidyverse"),
+            .export = "modify_rtu_con") %dopar% {
       thread_path <- run_path%//%"lrew_vari"%_%i
       thread_run  <- thread_path%//%".model_run/thread_1"
       modify_rtu_con(proj_path = thread_run,
-                     rtu_val = par_con_test$abschg_rtu[i],
-                     res_val = par_con_test$abschg_res[i])
-      run_swatplus(project_path = thread_path,
+                     rtu_val = par_btc$abschg_rtu[i],
+                     res_val = par_btc$abschg_res[i])
+      run_swatplus(project_path = pro_path,
                    output = define_output("basin_wb", "latq", 1),
-                   parameter = par_con[i,1:38],
-                   # run_path = run_dir%//%run_thread,
+                   parameter = par_btc[i, 1:38],
+                   run_path = thread_path,
                    keep_folder = TRUE,
                    refresh = FALSE,
                    n_thread = 1,
+                   save_path = thread_path,
                    save_file = "save_vari",
                    return = FALSE,
                    years_skip = years_skip,
                    start_date = start_date,
-                   end_date   = end_date)
-      file.copy(pro_path%//%"rout_unit.con",
-                run_dir%//%run_thread%//%".model_run/thread_1",
-                overwrite = TRUE)
-
-
+                   end_date   = end_date,
+                   quiet = TRUE)
+      file.copy(pro_path%//%"rout_unit.con", thread_run, overwrite = TRUE)
+      file.copy(thread_path%//%"save_vari"%//%"sim_thread_1.sqlite",
+                run_path%//%"save_vari"%//%"run"%_%(i_btc + i - 1)%.%"sqlite")
+      unlink(thread_path%//%"save_vari",recursive = T, force = T)
     }
+    stopCluster(clst)
+    SWATplusR:::display_progress(i_btc, nrow(par), t0, "Run")
   }
-
-
-
 }
