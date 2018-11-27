@@ -4,7 +4,7 @@
 \alias{get_file_header}
 \title{Read the column names for the SWAT output files}
 \usage{
-get_file_header(output_i, fwf_pos, thread_path)
+get_file_header(output_i, fwf_pos, tbl_pos, thread_path)
 }
 \arguments{
 \item{fwf_pos}{Fixed width positions for the variables in the output files}

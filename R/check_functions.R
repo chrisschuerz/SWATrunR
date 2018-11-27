@@ -4,7 +4,6 @@
 #' @param abs_swat_val (optional) path to custom 'Absolute_SWAT_Value' file
 #'
 #' @importFrom dplyr %>%
-#' @importFrom pasta %&% %&&%
 #' @importFrom purrr map map2 map_chr
 #' @keywords internal
 #'

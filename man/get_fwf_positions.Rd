@@ -4,7 +4,7 @@
 \alias{get_fwf_positions}
 \title{Derive the fixed with positions of the columns in the SWAT output files}
 \usage{
-get_fwf_positions(output_i, thread_path)
+get_fwf_positions(output_i, thread_path, tbl_pos)
 }
 \arguments{
 \item{thread_path}{Path to respective thread where SWAT was executed}

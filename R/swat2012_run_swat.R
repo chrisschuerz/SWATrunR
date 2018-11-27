@@ -81,7 +81,6 @@
 #' @importFrom foreach foreach %dopar%
 #' @importFrom lubridate now
 #' @importFrom parallel detectCores makeCluster parSapply stopCluster
-#' @importFrom pasta %//%
 #' @importFrom tibble tibble
 #' @export
 
@@ -152,42 +151,14 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                   detectCores())
 
   ## Set the .model_run folder as the run_path
-  if(is.null(run_path)){
-    run_path <- project_path%//%".model_run"
-  } else {
-    run_path <- run_path%//%".model_run"
-  }
+  run_path <- ifelse(is.null(run_path), project_path, run_path)%//%".model_run"
 
-  ## Case .model_run exists already and no forced refresh considered
-  if(dir.exists(run_path) & !refresh) {
-    ## Check how many parallel threads are available
-    n_thread_avail <- dir(run_path) %>%
-      substr(.,(nchar(.) - 7), nchar(.)) %>%
-      grepl("thread_",.) %>%
-      sum()
-    ## The existing folder strucuture is used when more parallel folders are
-    ## available than parallel threads are needed
-    if(n_thread_avail >= n_thread) {
-      if(!quiet) {
-        message("Model will be executed in existing '.model_run' folder structure"%&%
-                "\nMake shure '.model_run' is up to date with the project folder!")
-      }
-    ## If the number of available parallel folders is not sufficient
-    ## a new setup of the folder structures is forced
-    } else {
-      unlink(run_path, recursive = TRUE)
-      if(!quiet) {
-        message("The number of existing threads is lower than the required number."%&%
-                "\nParallel folder structure will be created from scratch!\n\n")
-      }
-      build_model_run(project_path, run_path, n_thread, quiet, "2012")
-    }
-    ## Build the parallel folder structure if it does not exist or if a
-    ## forced refresh was set with refresh = TRUE
-    } else {
-      unlink(run_path, recursive = TRUE)
-      build_model_run(project_path, run_path, n_thread, quiet, "2012")
-    }
+  ## Identify operating system and find the SWAT executable in the project folder
+  os <- get_os()
+
+  ## Manage the handling of the '.model_run' folder structure.
+  swat_exe <- manage_model_run(project_path, run_path, n_thread, os,
+                               "2012", refresh, quiet)
 #-------------------------------------------------------------------------------
   # Write files
   ## Write file.cio
@@ -246,8 +217,14 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     }
 
     ## Execute the SWAT exe file located in the thread folder
-    system(thread_path%//%"swat_run.bat")
+    if(os == "win") {
+      run_batch <- thread_path%//%"swat_run.bat"
+    } else if (os == "unix") {
+      run_batch <- paste("cd", "cd"%&&%thread_path, "./"%&%swat_exe, sep = "; ")
+    }
+    run_msg <- system(run_batch, intern = TRUE)
 
+    ## Read defined model outputs
     model_output <- read_swat2012_output(output, thread_path) %>%
       extract_output(output, .)
 
@@ -278,7 +255,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     ## Tidy up the simulation results and arrange them in clean tibbles before
     ## returning them
     sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
-                               add_date)
+                               add_date, run_index)
     return(sim_result)
   }
 }

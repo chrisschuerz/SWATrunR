@@ -30,7 +30,6 @@
 #'   files possible!)
 #' @importFrom lubridate as_date int_end int_start interval yday year years ymd
 #' @importFrom dplyr case_when mutate select %>%
-#' @importFrom pasta %//% %&%
 #' @importFrom purrr map_chr set_names
 #' @importFrom readr read_lines read_table
 #' @keywords internal
@@ -68,9 +67,9 @@ setup_swat2012 <- function(project_path,
     start_jdn  <- cio_to_numeric(file_cio[10])
     end_jdn    <- cio_to_numeric(file_cio[11])
 
-    start_date <- as_date(x = start_year%//%start_day,
+    start_date <- as_date(x = start_year%//%start_jdn,
                           tz ="UTC", format = "%Y/%j")
-    end_date   <- as_date(x = end_year%//%end_day,
+    end_date   <- as_date(x = end_year%//%end_jdn,
                           tz ="UTC", format = "%Y/%j")
   }
 
