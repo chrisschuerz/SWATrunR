@@ -4,16 +4,16 @@
 \alias{load_demo}
 \title{Load SWAT demo data}
 \usage{
-load_demo(type, path = NULL)
+load_demo(dataset, swat_version = NULL, path = NULL)
 }
 \arguments{
+\item{path}{Character string that defines the path where copy the SWAT demo
+project.}
+
 \item{type}{Character string that defines the type of demo data set to be
 loaded. \code{type = 'SWAT2012'} loads a SWAT2012 project folder.
 \code{type = 'SWATplus'} loads a SWAT+ project folder. \code{type =
 'obs_data'} returns the observation data for the SWAT demo porject.}
-
-\item{path}{Character string that defines the path where copy the SWAT demo
-project.}
 }
 \description{
 Load SWAT demo data

@@ -7,34 +7,49 @@
 #' @param path Character string that defines the path where copy the SWAT demo
 #'   project.
 #'
+#' @importFrom dplyr case_when
+#'
 #' @export
 #'
 #'
 
-load_demo <- function(type, path = NULL) {
+load_demo <- function(dataset, swat_version = NULL, path = NULL) {
   pkg_path <- system.file(package = "SWATplusR")
-  type <- tolower(type)
+  dataset <- tolower(dataset)
+  if(!(dataset %in% c("project", "observation", "subbasin", "reach", "outlet", "hru"))) {
+    stop("Invalid selection for dataset!")
+  }
+  swat_version <- swat_version %>% tolower(.)
+  if(swat_version == "+") swat_version <- "plus"
+
+  if(!(swat_version %in% c("2012", "plus"))) {
+    stop("Invalid value for 'swat_version'. Must be one of: '2012', 'plus', '+'.")
+  }
   os <- get_os()
-  if(type == "swatplus" & os == "unix") {
+  if(swat_version != "2" & os == "unix") {
     stop("The package does not yet provide a unix SWAT+ demo.")
   }
 
-  if(!(type %in%c("swat2012", "swatplus", "obs_data"))) {
-    stop("'type' must be either 'swat2012', 'swatplus', or 'obs_data'.")
-  }
-
-  if(type %in% c("swat2012", "swatplus") & is.null(path)) {
-    stop("To retrieve a SWAT demo project a 'path' must be provided.")
-  } else if (type %in% c("swat2012", "swatplus")) {
-    unzip(zipfile = pkg_path%//%"extdata"%//%type%_%"demo"%.%"zip",
-          exdir = path)
-    unzip(zipfile = pkg_path%//%"extdata"%//%type%_%os%.%"zip",
-          exdir = path%//%type%_%"demo")
-    return(path%//%type%_%"demo")
-  }
-
-  if(type == "obs_data") {
-    readRDS(pkg_path%//%"extdata"%//%"obs_data.rds")
-    return(obs_data)
-  }
+  case_when(
+    dataset == "project" ~ {
+      if(is.null(path)) {
+        stop("To retrieve a SWAT demo project a 'path' must be provided.")
+      }
+      unzip(zipfile = pkg_path%//%"extdata"%//%swat_version%_%"project"%.%"zip",
+            exdir = path)
+      unzip(zipfile = pkg_path%//%"extdata"%//%swat_version%_%os%.%"zip",
+            exdir = path%//%"swat"%&%swat_version%_%"demo")
+      return(path%//%type%_%"demo")
+    },
+    dataset == "observation" ~ {
+      obs <- readRDS(pkg_path%//%"extdata"%//%dataset%.%"rds")
+      return(obs)
+    },
+    dataset %in% c("subbasin", "reach", "outlet", "hru") ~ {
+      if(is.null(swat_version)) {
+        stop("To retrive the shapefile path a 'swat_version' must be provided.")
+      }
+      return(pkg_path%//%"extdata"%//%swat_version%_%"shapes"%//%dataset%.%"shp")
+    }
+  )
 }
