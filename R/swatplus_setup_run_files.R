@@ -77,6 +77,7 @@ setup_swatplus <- function(project_path, parameter, output,
     years_skip <- model_setup$print.prt[3] %>%
       strsplit(., "\\s+") %>%
       unlist(.) %>%
+      .[nchar(.) > 0] %>%
       .[1] %>%
       as.numeric(.)
   } else {
@@ -84,6 +85,7 @@ setup_swatplus <- function(project_path, parameter, output,
     model_setup$print.prt[3] <- model_setup$print.prt[3] %>%
       strsplit(., "\\s+") %>%
       unlist(.) %>%
+      .[nchar(.) > 0] %>%
       .[2:length(.)] %>%
       sprintf("%-10s",. ) %>%
       c(sprintf("%-12d", years_skip), .) %>%

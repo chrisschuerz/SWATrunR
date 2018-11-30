@@ -38,7 +38,7 @@ load_demo <- function(dataset, swat_version = NULL, path = NULL) {
             exdir = path)
       unzip(zipfile = pkg_path%//%"extdata"%//%swat_version%_%os%.%"zip",
             exdir = path%//%"swat"%&%swat_version%_%"demo")
-      return(path%//%type%_%"demo")
+      return(path%//%"swat"%&%swat_version%_%"demo")
   }
   if(dataset == "observation") {
       obs <- readRDS(pkg_path%//%"extdata"%//%dataset%.%"rds")
