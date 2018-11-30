@@ -269,6 +269,7 @@ get_par_name <- function(chr, par_pos) {
 #' @keywords internal
 #'
 get_value <- function(file_i, par_pos) {
+  par_pos <- par_pos[1:min(length(file_i), length(par_pos))]
   file_i[c(par_pos, rep(FALSE, (length(file_i) - length(par_pos))))] %>%
     substr(., 1, 16) %>%
     as_num(.)
