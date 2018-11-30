@@ -16,7 +16,7 @@
 load_demo <- function(dataset, swat_version = NULL, path = NULL) {
   pkg_path <- system.file(package = "SWATplusR")
   dataset <- tolower(dataset)
-  if(!(dataset %in% c("project", "observation", "subbasin", "reach", "outlet", "hru"))) {
+  if(!(dataset %in% c("project", "observation", "subbasin", "reach", "hru"))) {
     stop("Invalid selection for dataset!")
   }
   swat_version <- swat_version %>% tolower(.)
@@ -26,12 +26,11 @@ load_demo <- function(dataset, swat_version = NULL, path = NULL) {
     stop("Invalid value for 'swat_version'. Must be one of: '2012', 'plus', '+'.")
   }
   os <- get_os()
-  if(swat_version != "2" & os == "unix") {
+  if(swat_version != "2012" & os == "unix") {
     stop("The package does not yet provide a unix SWAT+ demo.")
   }
 
-  case_when(
-    dataset == "project" ~ {
+  if(dataset == "project") {
       if(is.null(path)) {
         stop("To retrieve a SWAT demo project a 'path' must be provided.")
       }
@@ -40,16 +39,15 @@ load_demo <- function(dataset, swat_version = NULL, path = NULL) {
       unzip(zipfile = pkg_path%//%"extdata"%//%swat_version%_%os%.%"zip",
             exdir = path%//%"swat"%&%swat_version%_%"demo")
       return(path%//%type%_%"demo")
-    },
-    dataset == "observation" ~ {
+  }
+  if(dataset == "observation") {
       obs <- readRDS(pkg_path%//%"extdata"%//%dataset%.%"rds")
       return(obs)
-    },
-    dataset %in% c("subbasin", "reach", "outlet", "hru") ~ {
+  }
+  if(dataset %in% c("subbasin", "reach", "outlet", "hru")) {
       if(is.null(swat_version)) {
         stop("To retrive the shapefile path a 'swat_version' must be provided.")
       }
       return(pkg_path%//%"extdata"%//%swat_version%_%"shapes"%//%dataset%.%"shp")
-    }
-  )
+  }
 }

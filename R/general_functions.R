@@ -107,9 +107,3 @@ plural <- function(n) {
 #' \%&&\% pastes two strings by " ".
 #' @keywords internal
 '%&&%' <- function(a, b) paste(a, b, sep = " ")
-
-#' Concatenate with or
-#'
-#' \%|\% pastes two strings with a "|".
-#' @keywords internal
-'%|%' <- function(a, b) paste(a, b, sep = "|")
