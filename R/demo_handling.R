@@ -34,8 +34,10 @@ load_demo <- function(dataset, swat_version = NULL, path = NULL) {
       if(is.null(path)) {
         stop("To retrieve a SWAT demo project a 'path' must be provided.")
       }
+      path <- gsub("\\/$", "", path)
+      add_slash <- ifelse(grepl("\\:$", path), "/", "")
       unzip(zipfile = pkg_path%//%"extdata"%//%swat_version%_%"project"%.%"zip",
-            exdir = path)
+            exdir = path%&%add_slash)
       unzip(zipfile = pkg_path%//%"extdata"%//%swat_version%_%os%.%"zip",
             exdir = path%//%"swat"%&%swat_version%_%"demo")
       return(path%//%"swat"%&%swat_version%_%"demo")
