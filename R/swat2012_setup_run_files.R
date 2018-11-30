@@ -102,10 +102,10 @@ setup_swat2012 <- function(project_path,
                                  output_interval == 2 ~ "y")
   } else {
     output_interval <- substr(output_interval, 1,1) %>% tolower(.)
-    output_interval <- case_when(output_interval %in% c("m", "0") ~ 0,
-                                 output_interval %in% c("d", "1") ~ 1,
-                                 output_interval %in% c("y", "2") ~ 2)
-    file_cio[59] <- sprintf("%16d", output_interval)%&%"    | IPRINT: print code (month, day, year)"
+    out_int <- case_when(output_interval %in% c("m", "0") ~ 0,
+                         output_interval %in% c("d", "1") ~ 1,
+                         output_interval %in% c("y", "2") ~ 2)
+    file_cio[59] <- sprintf("%16d", out_int)%&%"    | IPRINT: print code (month, day, year)"
   }
 
   model_setup$output_interval <- output_interval
