@@ -19,15 +19,17 @@ load_demo <- function(dataset, swat_version = NULL, path = NULL) {
   if(!(dataset %in% c("project", "observation", "subbasin", "reach", "hru"))) {
     stop("Invalid selection for dataset!")
   }
-  swat_version <- swat_version %>% tolower(.)
-  if(swat_version == "+") swat_version <- "plus"
+  if(dataset != "observation") {
+    swat_version <- swat_version %>% tolower(.)
+    if(swat_version == "+") swat_version <- "plus"
 
-  if(!(swat_version %in% c("2012", "plus"))) {
-    stop("Invalid value for 'swat_version'. Must be one of: '2012', 'plus', '+'.")
-  }
-  os <- get_os()
-  if(swat_version != "2012" & os == "unix") {
-    stop("The package does not yet provide a unix SWAT+ demo.")
+    if(!(swat_version %in% c("2012", "plus"))) {
+      stop("Invalid value for 'swat_version'. Must be one of: '2012', 'plus', '+'.")
+    }
+    os <- get_os()
+    if(swat_version != "2012" & os == "unix") {
+      stop("The package does not yet provide a unix SWAT+ demo.")
+    }
   }
 
   if(dataset == "project") {
