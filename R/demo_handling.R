@@ -59,7 +59,7 @@ load_demo <- function(dataset, path = NULL, swat_version = NULL) {
       obs <- readRDS(pkg_path%//%"extdata"%//%dataset%.%"rds")
       return(obs)
   }
-  if(dataset %in% c("subbasin", "reach", "outlet", "hru")) {
+  if(dataset %in% c("sub", "riv", "hru")) {
       if(is.null(swat_version)) {
         stop("To retrive the shapefile path a 'swat_version' must be provided.")
       }
