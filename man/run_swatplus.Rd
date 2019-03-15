@@ -94,7 +94,7 @@ that are returned for defined parameter sets.
 \section{Examples}{
 
 To learn the basics on how to use \code{SWATplusR} see the
-section \href{https://r-spatial.github.io/mapview/}{1 Exploring SWATplusR} on
+\href{https://r-spatial.github.io/mapview/}{Get started} page on
 the package's github page.
 }
 
