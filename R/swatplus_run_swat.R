@@ -57,8 +57,8 @@
 #'
 #' @section Examples:
 #'   To learn the basics on how to use \code{SWATplusR} see the
-#'   \href{https://r-spatial.github.io/mapview/}{Get started} page on
-#'   the package's github page.
+#'   \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html}{Get started}
+#'   page on the package's github page.
 #' @return Returns the simulation results for the defined output variables as a
 #'   tibble. If more than one parameter set was provided the list of tibbles is
 #'   returned where each column is a model run and each list entry is an output

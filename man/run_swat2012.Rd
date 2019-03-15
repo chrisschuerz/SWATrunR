@@ -112,3 +112,10 @@ Basic settings for the SWAT run such as the simulation period or the time
 interval for the outputs can be done directly. SWAT simulation outputs can be
 defined that are returned for defined parameter sets.
 }
+\section{Examples}{
+
+To learn the basics on how to use \code{SWATplusR} see the
+\href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html}{Get started}
+page on the package's github page.
+}
+
