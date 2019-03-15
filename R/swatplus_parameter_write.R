@@ -67,12 +67,14 @@ check_swatplus_parameter <- function(project_path, parameter) {
       strsplit(., "\\s+") %>%
       map(., ~ .x[1]) %>%
       unlist(.)
-    in_cal_parms <- parameter$definition$par_name %in% cal_parms
+    in_cal_parms <- parameter$definition$parameter %in% cal_parms
 
     if(any(!in_cal_parms)){
       stop("Parameters"%&&%
            paste(parameter$definition$par_name[!in_cal_parms], collapse = ", ")%&&%
            "not defined in 'cal_parms.cal'")
     }
+  } else {
+    stop("The file 'cal_parms.cal is missing in SWAT+ project!")
   }
 }

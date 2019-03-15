@@ -1,7 +1,7 @@
 Package: SWATplusR
 Type: Package
 Title: Running SWAT2012 and SWAT+ Projects in R
-Version: 0.2.1
+Version: 0.2.3.9000
 Authors@R: person("Christoph", "Schuerz",
                 email = "c.schuerz@posteo.org",
                 role = c("aut", "cre"))
@@ -25,3 +25,7 @@ Imports:
     readr,
     tibble
 RoxygenNote: 6.1.1
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

@@ -63,7 +63,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SWATplusR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.3.9000</span>
       </span>
     </div>
 
@@ -77,6 +77,21 @@
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/swatplusr.html">Vignette Title</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       
@@ -105,22 +120,35 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>load_demo</span>(<span class='no'>dataset</span>, <span class='kw'>swat_version</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>path</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>load_demo</span>(<span class='no'>dataset</span>, <span class='kw'>path</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>swat_version</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>dataset</th>
+      <td><p>Character string to define data set to load. Valid inputs are
+<code>dataset = c('project', 'observation', 'subbasin', 'river', 'hru')</code>.
+<code>dataset = 'project'</code> loads a SWAT demo project in the defined
+<code>path</code> location and returns the final project path as a text string in
+R. The definition of the <code>swat_version</code> is required.
+<code>dataset = 'observation'</code> returns a tibble with discharge observation
+data at the main outlet of the demo watershed.
+The options <code>dataset = c('subbasin', 'river', 'hru')</code> return the paths
+of the respective subbasin, river network and HRU shape files. See examples
+how to load shapes unsing e.g. the <code>sf</code> package. These options require
+a definition of the <code>swat_version</code>.</p></td>
+    </tr>
     <tr>
       <th>path</th>
       <td><p>Character string that defines the path where copy the SWAT demo
 project.</p></td>
     </tr>
     <tr>
-      <th>type</th>
-      <td><p>Character string that defines the type of demo data set to be
-loaded. <code>type = 'SWAT2012'</code> loads a SWAT2012 project folder.
-<code>type = 'SWATplus'</code> loads a SWAT+ project folder. <code>type =
-'obs_data'</code> returns the observation data for the SWAT demo porject.</p></td>
+      <th>swat_version</th>
+      <td><p>Character string that defines the SWAT version. Options
+are <code>swat_version = c('2012', 'plus')</code>. This argument is required to
+load SWAT projects and shape files.</p></td>
     </tr>
     </table>
     

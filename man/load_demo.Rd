@@ -4,16 +4,27 @@
 \alias{load_demo}
 \title{Load SWAT demo data}
 \usage{
-load_demo(dataset, swat_version = NULL, path = NULL)
+load_demo(dataset, path = NULL, swat_version = NULL)
 }
 \arguments{
+\item{dataset}{Character string to define data set to load. Valid inputs are
+\code{dataset = c('project', 'observation', 'subbasin', 'river', 'hru')}.
+\code{dataset = 'project'} loads a SWAT demo project in the defined
+\code{path} location and returns the final project path as a text string in
+R. The definition of the \code{swat_version} is required.
+\code{dataset = 'observation'} returns a tibble with discharge observation
+data at the main outlet of the demo watershed.
+The options \code{dataset = c('subbasin', 'river', 'hru')} return the paths
+of the respective subbasin, river network and HRU shape files. See examples
+how to load shapes unsing e.g. the \code{sf} package. These options require
+a definition of the \code{swat_version}.}
+
 \item{path}{Character string that defines the path where copy the SWAT demo
 project.}
 
-\item{type}{Character string that defines the type of demo data set to be
-loaded. \code{type = 'SWAT2012'} loads a SWAT2012 project folder.
-\code{type = 'SWATplus'} loads a SWAT+ project folder. \code{type =
-'obs_data'} returns the observation data for the SWAT demo porject.}
+\item{swat_version}{Character string that defines the SWAT version. Options
+are \code{swat_version = c('2012', 'plus')}. This argument is required to
+load SWAT projects and shape files.}
 }
 \description{
 Load SWAT demo data
