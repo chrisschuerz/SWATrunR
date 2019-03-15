@@ -1,3 +1,3 @@
-# SWATplusR 0.2.3.9000
+# SWATplusR 0.2.3.9000 
 
-* Added a `NEWS.md` file to track changes to the package.
+* The package is still under development. An official release version of the package will be available soon.

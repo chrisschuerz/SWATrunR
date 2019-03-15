@@ -72,7 +72,7 @@
 #'                "dplyr::mutate(., P_CONC = P_TOT/FLOW_OUT/86.4) %>% ",
 #'                "dplyr::select(., P_CONC)")
 #'
-#' out_def <- list(p_conc = define_output(expression = expr))
+#' out_def <- list(p_conc = define_output(file ="rch", expression = expr))
 #'
 define_output <- function(file, variable = NULL, unit = NULL,
                           expression = NULL){

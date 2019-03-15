@@ -4,7 +4,7 @@ url: http://chrisschuerz.github.io/SWATplusR
 
 template:
   params:
-  bootswatch: cosmo
+    bootswatch: sandstone
 
 authors:
   Christoph Schürz:

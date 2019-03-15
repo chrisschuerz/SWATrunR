@@ -60,7 +60,7 @@ if \code{hru_out_nr = 'all'}, HRU variables are written for all HRU
 (caution, very large output files possible!)}
 
 \item{run_index}{(optional) Numeric vector (e.g.\code{run_index = c(1:100,
-110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL
+  110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL
 all provided parameter sets are used.}
 
 \item{run_path}{(optional) Character string that provides the path where the
@@ -90,7 +90,7 @@ is added to every simulatiuon output table.  \code{Default = TRUE}}
 
 \item{refresh}{(optional) Logical. \code{refresh = TRUE} always forces that
 '.model_run' is newly written when SWAT run ins started. \code{Default =
-TRUE}}
+  TRUE}}
 
 \item{keep_folder}{(optional) Logical. If \code{keep_folder = TRUE}
 '.model_run' is kept and not deleted after finishing model runs. In this
@@ -102,9 +102,9 @@ written.  \code{Default = FALSE}}
 }
 \value{
 Returns the simulation results for the defined output variables as a
-  tibble. If more than one parameter set was provided the list of tibbles is
-  returned where each column is a model run and each list entry is an output
-  variable.
+tibble. If more than one parameter set was provided the list of tibbles is
+returned where each column is a model run and each list entry is an output
+variable.
 }
 \description{
 This function allows to run a SWAT2012 project in parallel from within R.

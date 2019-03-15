@@ -7,6 +7,6 @@
 a \%_\% b
 }
 \description{
-\%_\% pastes two strings by "_".
+\%\emph{\% pastes two strings by "}".
 }
 \keyword{internal}

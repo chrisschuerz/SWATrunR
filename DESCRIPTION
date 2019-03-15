@@ -4,7 +4,8 @@ Title: Running SWAT2012 and SWAT+ Projects in R
 Version: 0.2.3.9000
 Authors@R: person("Christoph", "Schuerz",
                 email = "c.schuerz@posteo.org",
-                role = c("aut", "cre"))
+                role = c("aut", "cre"),
+                comment = c(ORCID = '0000-0002-7204-5828'))
 Maintainer: Christoph Schuerz <c.schuerz@posteo.org>
 Description: SWATplusR provides a link to existing SWAT2012 and SWAT+ projects. 
         It provides modification of model paramaters, parallel computing of SWAT 
@@ -25,7 +26,10 @@ Imports:
     readr,
     tibble
 RoxygenNote: 6.1.1
+URL: https://github.com/chrisschuerz/SWATplusR
+BugReports: https://github.com/chrisschuerz/SWATplusR/issues
 Suggests: 
     knitr,
     rmarkdown
+Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr

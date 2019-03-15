@@ -39,7 +39,7 @@ outputs are written. Provided either as character string ("d" for daily,
 to be skipped during writing the SWAT model outputs}
 
 \item{run_index}{(optional) Numeric vector (e.g.\code{run_index = c(1:100,
-110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL
+  110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL
 all provided parameter sets are used.}
 
 \item{run_path}{(optional) Character string that provides the path where the
@@ -69,7 +69,7 @@ is added to every simulatiuon output table.  \code{Default = TRUE}}
 
 \item{refresh}{(optional) Logical. \code{refresh = TRUE} always forces that
 '.model_run' is newly written when SWAT run ins started. \code{Default =
-TRUE}}
+  TRUE}}
 
 \item{keep_folder}{(optional) Logical. If \code{keep_folder = TRUE}
 '.model_run' is kept and not deleted after finishing model runs. In this
@@ -81,9 +81,9 @@ written.  \code{Default = FALSE}}
 }
 \value{
 Returns the simulation results for the defined output variables as a
-  tibble. If more than one parameter set was provided the list of tibbles is
-  returned where each column is a model run and each list entry is an output
-  variable.
+tibble. If more than one parameter set was provided the list of tibbles is
+returned where each column is a model run and each list entry is an output
+variable.
 }
 \description{
 This function allows to run a SWAT+ project in parallel from within R. Basic
@@ -91,3 +91,10 @@ settings for the SWAT run such as the simulation period or the time interval
 for the outputs can be done directly. SWAT simulation outputs can be defined
 that are returned for defined parameter sets.
 }
+\section{Examples}{
+
+To learn the basics on how to use \code{SWATplusR} see the
+section \href{https://r-spatial.github.io/mapview/}{1 Exploring SWATplusR} on
+the package's github page.
+}
+
