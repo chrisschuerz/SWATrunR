@@ -2,44 +2,32 @@
 SWATplusR <img src="man/figures/swatr_hex.svg" align="right" />
 ===============================================================
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-The `SWATplusR` package provides tools to link existing SWAT2012 and SWAT+ models with your modeling workflows in R.
+The `SWATplusR` package provides tools to link existing SWAT2012 and SWAT+ models with your modeling workflows in R. `SWATplusR` enables you to execute SWAT simulations and to control all relevant parameters of a SWAT simulation, such as changes in model parameters, the simulation periods and time steps, or the simulated variables that should be returned to R. The central goal of `SWATplusR` is to return simulation results in a *tidy* format to facilitate an easy implementation of SWAT simulations, together with other R packages into clean and efficient R programming workflows. To efficiently handle large SWAT projects with large numbers of model evaluations and/or large simulation outputs, `SWATplusR` provides parallel computation and incremental saving and selective loading of simulation results into and from SQLite data bases.
 
 Installation
 ------------
 
-You can install the released version of SWATplusR from [CRAN](https://CRAN.R-project.org) with:
+`SWATplusR` is currently under development. You can install an unreleased version of `SWATplusR` from the package's GitHub repository.
+
+``` r
+# If you do not have the package devtools installed
+install.packages("devtools")
+
+# If access is denied, then the repository might be still set to private
+# In that case, please contact me (c.schuerz@posteo.org).
+devtools::install_github("chrisschuerz/SWATplusR")
+```
+
+<!---You can install the released version of SWATplusR from [CRAN](https://CRAN.R-project.org) with:
 
 ``` r
 install.packages("SWATplusR")
 ```
+--->
+Workflow
+--------
 
-Example
--------
+<img src="man/figures/package_workflow.svg" width="60%" style="display: block; margin: auto;" />
 
-This is a basic example which shows you how to solve a common problem:
-
-``` r
-## basic example code
-```
-
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
-
-``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
-```
-
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date.
-
-You can also embed plots, for example:
-
-<img src="man/figures/README-pressure-1.png" width="100%" />
-
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub!
+Getting started with `SWATplusR`
+--------------------------------

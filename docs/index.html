@@ -93,32 +93,28 @@
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#swatplusr" class="anchor"></a>SWATplusR <img src="reference/figures/swatr_hex.svg" align="right">
 </h1></div>
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-<p>The <code>SWATplusR</code> package provides tools to link existing SWAT2012 and SWAT+ models with your modeling workflows in R.</p>
+<p>The <code>SWATplusR</code> package provides tools to link existing SWAT2012 and SWAT+ models with your modeling workflows in R. <code>SWATplusR</code> enables you to execute SWAT simulations and to control all relevant parameters of a SWAT simulation, such as changes in model parameters, the simulation periods and time steps, or the simulated variables that should be returned to R. The central goal of <code>SWATplusR</code> is to return simulation results in a <em>tidy</em> format to facilitate an easy implementation of SWAT simulations, together with other R packages into clean and efficient R programming workflows. To efficiently handle large SWAT projects with large numbers of model evaluations and/or large simulation outputs, <code>SWATplusR</code> provides parallel computation and incremental saving and selective loading of simulation results into and from SQLite data bases.</p>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
-<p>You can install the released version of SWATplusR from <a href="https://CRAN.R-project.org">CRAN</a> with:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"SWATplusR"</span>)</code></pre></div>
+<p><code>SWATplusR</code> is currently under development. You can install an unreleased version of <code>SWATplusR</code> from the package’s GitHub repository.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># If you do not have the package devtools installed</span>
+<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"devtools"</span>)
+
+<span class="co"># If access is denied, then the repository might be still set to private</span>
+<span class="co"># In that case, please contact me (c.schuerz@posteo.org).</span>
+devtools<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/devtools/topics/reexports">install_github</a></span>(<span class="st">"chrisschuerz/SWATplusR"</span>)</code></pre></div>
+<!---You can install the released version of SWATplusR from [CRAN](https://CRAN.R-project.org) with:
+
+``` r
+install.packages("SWATplusR")
+```
+--->
 </div>
-<div id="example" class="section level2">
+<div id="swatplusr-workflow" class="section level2">
 <h2 class="hasAnchor">
-<a href="#example" class="anchor"></a>Example</h2>
-<p>This is a basic example which shows you how to solve a common problem:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## basic example code</code></pre></div>
-<p>What is special about using <code>README.Rmd</code> instead of just <code>README.md</code>? You can include R chunks like so:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(cars)
-<span class="co">#&gt;      speed           dist       </span>
-<span class="co">#&gt;  Min.   : 4.0   Min.   :  2.00  </span>
-<span class="co">#&gt;  1st Qu.:12.0   1st Qu.: 26.00  </span>
-<span class="co">#&gt;  Median :15.0   Median : 36.00  </span>
-<span class="co">#&gt;  Mean   :15.4   Mean   : 42.98  </span>
-<span class="co">#&gt;  3rd Qu.:19.0   3rd Qu.: 56.00  </span>
-<span class="co">#&gt;  Max.   :25.0   Max.   :120.00</span></code></pre></div>
-<p>You’ll still need to render <code>README.Rmd</code> regularly, to keep <code>README.md</code> up-to-date.</p>
-<p>You can also embed plots, for example:</p>
-<p><img src="reference/figures/README-pressure-1.png" width="100%"></p>
-<p>In that case, don’t forget to commit and push the resulting figure files, so they display on GitHub!</p>
+<a href="#swatplusr-workflow" class="anchor"></a>SWATplusR workflow</h2>
+<p><img src="reference/figures/package_workflow.svg" width="60%" style="display: block; margin: auto;"></p>
 </div>
 </div>
   </div>
