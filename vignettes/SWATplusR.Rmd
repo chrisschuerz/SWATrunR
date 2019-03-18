@@ -109,10 +109,10 @@ path_2012 <- "C:/swat2012_demo"
 
 
 ```{r, eval=FALSE}
-q_out <- run_swatplus(project_path = plus_path,
-                      output = define_output(file = "channel",
-                                             variable = "flo_out",
-                                             unit = 1))
+q_out_plus <- run_swatplus(project_path = plus_path,
+                           output = define_output(file = "channel",
+                                                  variable = "flo_out",
+                                                  unit = 1))
 
 #> Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run':
 #>  Thread 1 of 1   Time elapsed: 0S   Time remaining: 0S    
@@ -125,10 +125,10 @@ q_out <- run_swatplus(project_path = plus_path,
 The syntax definition of simulations outputs applies to SWAT+ and SWAT2012. The only difference between the two models in the output definition is how to correctly address the output variables. The output files are organized in different ways in SWAT+ and SWAT2012. Below you find an example to extract the simulation outputs of discharge at all three subbasin outlets in the SWAT2012 demo setup:
 
 ```{r, eval=FALSE}
-q_out <- run_swat2012(project_path = path_2012,
-                      output = define_output(file = "rch",
-                                             variable = "FLOW_OUT",
-                                             unit = 1:3))
+q_out_2012 <- run_swat2012(project_path = path_2012,
+                           output = define_output(file = "rch",
+                                                  variable = "FLOW_OUT",
+                                                  unit = 1:3))
 
 #> Building 1 thread in 'Define:/your/path/swat2012_demo/.model_run':
 #>  Thread 1 of 1   Time elapsed: 3S   Time remaining: 0S    
@@ -139,7 +139,7 @@ q_out <- run_swat2012(project_path = path_2012,
 ```
 
 ```{r}
-q_out <- readRDS("D:/Projects_R/SWATplusR/vignettes/datasets/q_out.rds")
+q_out_2012 <- readRDS(here::here("vignettes/datasets/q_out.rds"))
 ```
 
 
@@ -175,7 +175,7 @@ wb_out <- run_swatplus(project_path = path_plus,
 ```
 
 ```{r, echo=FALSE}
-wb_out <- readRDS("D:/Projects_R/SWATplusR/vignettes/datasets/wb_out.rds")
+wb_out <- readRDS(here::here("vignettes/datasets/wb_out.rds"))
 ```
 
 
@@ -185,41 +185,106 @@ The output definition in a list has the additional advantage to optionally assig
 
 The goal of `SWATplusR` is to return the SWAT simulations in a *tidy* format. The simulation results look slightly different if only one simulation was performed, parameters were modified in a run, or multiple parameter sets were used to perform a large number of model evaluations. In general the outputs follow a general structure.
 
-If only one simulation was performed, where no model parameters were modified, `run_swat*()` returns a `tibble` with a `date` column and additional columns with the simulated values of the extracted variables on these dates. For the simulated water balance components the returned table looks as follows:
+If only one simulation was performed, where no model parameters were modified, `run_swat*()` returns a `tibble` with a `date` column and the columns with the simulated values of the extracted variables. The output table of the simulated water balance components has a date column and columns with the four extracted water balance components. The variable names are the individual names that we defined in the output definition:
 
 ```{r}
 wb_out
 ```
 
-The *tidy* writing of the simulation results allows an easy processing of the data in the analysis workflow in R. Here is a quick example how to 'wrangle' the data with `dplyr` [@Wickham2019], `lubridate` [@Grolemund2011] and `tidyr` [@Wickham2018a] and then plotting the water balance components with `ggplot2`:
+In case no variable name is assigned in the output definition (as in the simulations of the discharge above), the variable name of the extracted variable is used as the variable name. When several units are defined in `define_output()` (e.g. in the example above `unit = 1:3`) a column in the output table is created for each unit and the unit number is added to the variable name. This is the case for the the simulation of *'FLOW_OUT'* in the example above:
+
+```{r}
+q_out_2012
+```
+
+The *tidy* writing of the simulation results allows an easy processing of the data in the analysis workflow in R. Here is a quick example how to 'wrangle' the simulated discharge data with `dplyr` [@Wickham2019] and `tidyr` [@Wickham2018a] and plotting it with `ggplot2`:
 
 ```{r, message=FALSE}
 library(tidyr)
 library(dplyr)
-library(lubridate)
 library(ggplot2)
 
+q_plot <- q_out_2012 %>%
+  select(date, FLOW_OUT_3) %>%
+  rename(q_sim = FLOW_OUT_3) %>%
+  left_join(., q_obs, by = "date") %>%
+  rename(q_obs = q_out) %>%
+  gather(., key = "variable", value = "discharge", -date)
 
-wb_plot <- wb_out %>%
-  mutate(year   = year(date),
-         month  = month(date)) %>%
-  select(- date) %>%
-  group_by(year, month) %>%
-  summarise_all(funs(sum(.))) %>%
-  ungroup() %>%
-  select(-year) %>%
-  group_by(month) %>%
-  summarise_all(funs(mean(.))) %>%
-  gather(., key = "variable", value = "value", - month)
+ggplot(data = q_plot) +
+  geom_line(aes(x = date, y = discharge, col = variable, lty = variable)) +
+  scale_color_manual(values = c("black", "tomato3")) +
+  theme_bw()
+```
 
-ggplot() +
-  # geom_col(data = filter(wb_plot, variable == "precip"),
-  #          aes(x = month, y = value, fill = variable)) +
-  geom_col(data = filter(wb_plot, variable != "precip"),
-           aes(x = month, y = value, fill = variable),
-           alpha = 0.9, position = "stack")
+## Model parameter alteration
 
+The capability to alter model parameters in a SWAT simulation is an essential option in `SWATplusR`. Model parameters can be modified in a SWAT simulation by passing the respective parameters with the argument `parameter` in `run_swat*()`. A single parameter set can be provided as a vector. Many parameter sets that should be used in simulations have to be provided in a `tibble`.
 
+To modify a model parameter information on the type of change (relative, absolute change etc.), the extent of the change (e.g. all or selected subbasins/land uses/ soil types etc.) and the magnitude of change are required. In `SWATplusR` most of that information is passed with the variable name. Thus, the variable names use a very specific syntax. A parameter name can consist of several parts, where some are required and others are optional. The minimum requirements for the elements of a parameter name are the actual name of the parameter in the model an the type of change. Options for the type of change are *'relchg'* and *'pctchg'* to alter a parameter by a fraction or a percentage of the initial parameter value, *"abschg"* to add an absolute value to the initial parameter value, or *"absval"* to replace a parameter by an absolute value. In the example below the parameter curve number ('cn2') that is defined on HRU level will be increased by the absolute value 5 in all HRUs.
+
+```{r, eval=FALSE}
+par_mod <- c("cn2.hru|change = abschg" = 5)
+```
+
+Many options to constrain a parameter change are available in `SWATplusR` (*in the current version of `SWATplusR` only for SWAT2012*). Constraints for the alteration of a parameter is added with a '|' and a logical expression. Below you find an example for the change of the curve number 'CN2' in a SWAT2012 setup, that is only effective for the subbasins 1 to 5 and only for the land uses "WWHT" and "CORN". Also take care that 'CN2' is a parameter of the '.mgt' input file:
+
+```{r, eval=FALSE}
+par_mod <- c("CN2.mgt|change = abschg | sub == 1:5 | luse %in% c("WWHT", "CORN") " = 5)
+```
+
+Individual parameter names can be assigned with the `::` operator. At the beginning of a parameter definition the individual parameter name is provided followed by '::' and the actual parameter definition:
+
+```{r, eval=FALSE}
+par_mod <- c("my_name::cn2.hru|change = abschg" = 5)
+```
+
+### Simulation with a single parameter set
+
+To define single parameter set a named vector is generated. The names define the parameters the type of change. Below a single parameter set is generated where all 'cn2' values in a SWAT+ model setup are reduced by 5 percent and the 'alpha.gw' value was set to 0.5 globally.
+
+```{r, eval=FALSE}
+par_single <- c("cn2.hru|change = pctchg" = - 5,
+                "alpha.gw|change = absval" = 0.5)
+```
+
+To include the parameter changes in the SWAT+ model execution the defined vector is simply passed with the argument `parameter` in the `run_swatplus()` function call:
+
+```{r, eval=F}
+q_out <- run_swatplus(project_path = proj_path,
+                      output = define_output(file = "channel",
+                                             variable = "flo_out",
+                                             unit = 1),
+                      parameter = par_single)
+
+#> Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run':
+#>  Thread 1 of 1   Time elapsed: 1S   Time remaining: 0S    
+#>  Completed 1 thread in 1S
+#> Performing 1 simulation on 1 core:
+#>  Simulation 1 of 1   Time elapsed: 2S   Time remaining: 0S
+#>  Completed 1 simulation in 2S
+```
+
+### Simulations with many parameter setups
+The same workflow works with several parameter sets when they are defined in a `tibble`. The example below uses the same parameters as above, but in this case a `tibble` was defined with 8 random realizations for each parameter within the defined boundaries.
+
+```{r, eval=FALSE}
+par_set <- tibble("cn2.hru|change = abschg" = runif(8,-15,10),
+                  "alpha.gw|change = absval" = runif(8, 0, 1))
+par_set
+```
+The implementation in the `run_swat*()` function works the same way. To execute multiple SWAT simulations with many parameter sets the `SWATplusR` package provides an option parallel computing. To perform a parallel model execution the number of parallel threads is defined with the input argument `n_thread`.
+
+```{r, eval=F}
+q_out <- run_swatplus(project_path = proj_path,
+  output = list(q_sur  = define_output(file = "basin_wb",
+                                       variable = "surq_gen",
+                                       unit = 1),
+                q_lat  = define_output(file = "basin_wb",
+                                       variable = "latq",
+                                       unit = 1)),
+                      parameter = par_set,
+                      n_thread = 4)
 ```
 
 
