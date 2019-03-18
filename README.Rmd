@@ -53,29 +53,29 @@ knitr::include_graphics("man/figures/package_workflow.svg")
 
 You can explore the basic functionality of `SWATplusR` in the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#loading-demos) section. There you can learn the following basics:
 
-- Loading demo data [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#figures)
-    * SWAT projects [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.htmll#swat-projects)
-    * Observation data [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#observation-data)
-    * Spatial catchment data [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#spatial-data)
+- Loading demo data [>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#figures)
+    * SWAT projects [>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.htmll#swat-projects)
+    * Observation data [>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#observation-data)
+    * Spatial catchment data [>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#spatial-data)
 
 
-- Performing first SWAT model runs from R [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#first-swat-model-runs)
-    * Output definition [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#output-definition)
-    * Exploring the first simulation results [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#exploring-a-simulation)
+- Performing first SWAT model runs from R [>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#first-swat-model-runs)
+    * Output definition [>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#output-definition)
+    * Exploring the first simulation results [>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#exploring-a-simulation)
 
-- Defining parameter modifications for a SWAT run >>>
-
-
-- Running SWAT with a single parameter set >>>
+- Defining parameter modifications for a SWAT run >>
 
 
-- Running SWAT with a table of parameter combinations >>>
+- Running SWAT with a single parameter set >>
+
+
+- Running SWAT with a table of parameter combinations >>
 
 The [Articles](https://chrisschuerz.github.io/SWATplusR/articles/) section is a collection of tutorials for typical topics on SWAT modeling. Here you can learn how to use `SWATplusR` in combination with other R packages to perform tasks such as:
 
-- Parameter sensitivity analysis >>>
-- Model parameter optimization >>>
-- Parameter sampling and model calibration >>>
-- Visualization >>>
+- Parameter sensitivity analysis >>
+- Model parameter optimization >>
+- Parameter sampling and model calibration >>
+- Visualization >>
 
 The Articles section will be updated in the future with further topics that can be relevant for any modeling workflow with `SWATplusR`.
