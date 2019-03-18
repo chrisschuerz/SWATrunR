@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
-   sodipodi:docname="package_workflow.svg">
+   sodipodi:docname="package_workflow1.svg">
   <defs
      id="defs4">
     <marker
@@ -229,7 +229,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.98994949"
-     inkscape:cx="363.07934"
+     inkscape:cx="186.80772"
      inkscape:cy="196.13473"
      inkscape:document-units="px"
      inkscape:current-layer="g18040"
@@ -830,7 +830,7 @@
                id="tspan10375"
                style="font-size:29.04301855px;line-height:92.00000167%;text-align:center;text-anchor:middle;-inkscape-font-specification:Roboto;font-family:Roboto;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal">R environment</tspan></text>
           <flowRoot
-             transform="rotate(-90,623.13053,680.80425)"
+             transform="rotate(-90,634.85945,682.47981)"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
              id="flowRoot10377"
              xml:space="preserve"><flowRegion
@@ -841,9 +841,7 @@
                  width="311.42853"
                  id="rect10381" /></flowRegion><flowPara
                style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15px;line-height:1.25;font-family:'Lucida Console Thin';-inkscape-font-specification:'Lucida Console Thin, '"
-               id="flowPara10383">save_path = </flowPara><flowPara
-               style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15px;line-height:1.25;font-family:'Lucida Console Thin';-inkscape-font-specification:'Lucida Console Thin, '"
-               id="flowPara10385">'path:/to/data_base.sqlite'</flowPara></flowRoot>          <path
+               id="flowPara10385">save_file = 'data_base_name'</flowPara></flowRoot>          <path
              sodipodi:nodetypes="cc"
              inkscape:connector-curvature="0"
              id="path10402"

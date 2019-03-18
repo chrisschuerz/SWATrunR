@@ -115,7 +115,7 @@ install.packages("SWATplusR")
 <h2 class="hasAnchor">
 <a href="#functionality-and-workflow" class="anchor"></a>Functionality and workflow</h2>
 <p>The functionality of <code>SWATplusR</code> is reduced to a few essential functions that maintain the link between the SWAT project on the local hard drive and the R environment. With <code><a href="reference/load_demo.html">load_demo()</a></code> you can retrieve demo data sets of SWAT projects, calibration data, and shape files of the demo catchment. With <code><a href="reference/run_swat2012.html">run_swat2012()</a></code> and <code><a href="reference/run_swat2012.html">run_swat2012()</a></code> you can run a SWAT model located in a local project folder and return simulation outputs to R that were defined with <code><a href="reference/define_output.html">define_output()</a></code>. Simulation results can be saved incrementally to an SQLite data base when a <code>save_file</code> is defined in <code>run_swat*()</code>. With <code><a href="reference/load_swat_run.html">load_swat_run()</a></code> all or selected parts of the simulation results stored in the data base can be loaded back to R. <code><a href="reference/scan_swat_run.html">scan_swat_run()</a></code> scans the content of saved simulations and returns meta data on the saved content.</p>
-<p><img src="reference/figures/package_workflow.svg" width="60%" style="display: block; margin: auto;"></p>
+<embed src="man/figures/package_workflow.pdf" width="60%" style="display: block; margin: auto;" type="application/pdf"></embed>
 </div>
 <div id="getting-started-with-swatplusr" class="section level2">
 <h2 class="hasAnchor">

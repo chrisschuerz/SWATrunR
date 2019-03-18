@@ -1,7 +1,5 @@
 ---
 title: "Exploring SWATplusR"
-author: "Christoh Schürz"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Exploring SWATplusR}
