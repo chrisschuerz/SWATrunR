@@ -89,6 +89,7 @@ riv <- read_sf(riv_path)
 ggplot() + 
   geom_sf(data = sub) + 
   geom_sf(data = riv, col = "royalblue", lwd = 0.75) + 
+  geom_sf_label(data = riv, aes(label = Channel)) +
   theme_bw()
 
 ```
@@ -97,7 +98,7 @@ ggplot() +
 
 SWAT projects (e.g. one of the demo projects) can be executed from R with the functions `run_swat2012()` to run a SWAT2012 project or `run_swatplus()` to run a SWAT+ project. The minimum requirements to execute a SWAT project are to provide the `project_path` to the project folder on the hard drive and to define the simulation outputs that the simulation should return to R.
 The definition of the simulation output always follows a simple pattern. An output variable that should be returned must be defined using the function `define_output()`.
-Below is a simple example to run a SWAT+ project and return the `variable = 'flo_out'` that is written into the `file = 'channel'` file for the spatial `unit = 1`. In the file channel the spatial unit relates to the subbasins. **Caution** in the demo SWAT+ model setup the lower subbasin is the subbasin 1.
+Below is a simple example to run a SWAT+ project and return the `variable = 'flo_out'` that is written into the `file = 'channel'` file for the spatial `unit = 1`. **Caution** in the demo SWAT+ model setup the main channel is channel number 1.
 
 ```{r, echo=FALSE}
 path_plus <- "C:/swatplus_demo"
@@ -114,36 +115,119 @@ q_out <- run_swatplus(project_path = plus_path,
                                              unit = 1))
 
 #> Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run': 
-#>   Thread 1 of 1   Time elapsed: 0S   Time remaining: 0S    
-#>   Completed 1 thread in 0S 
+#>  Thread 1 of 1   Time elapsed: 0S   Time remaining: 0S    
+#>  Completed 1 thread in 0S 
 #> Performing 1 simulation on 1 core: 
-#>   Simulation 1 of 1   Time elapsed: 5S   Time remaining: 0S
-#>   Completed 1 simulation in 5S
+#>  Simulation 1 of 1   Time elapsed: 3S   Time remaining: 0S
+#>  Completed 1 simulation in 3S
 ```
 
-The syntax definition of simulations outputs applies to SWAT+ and SWAT2012. The only difference between the two models in the outdefinition is how to correctly address the output variables. The output files are differenty organized in the two SWAT versions. Below you find an example to extract the simulation outputs of discharge at the main outlet in the SWAT2012 demo setup:
+The syntax definition of simulations outputs applies to SWAT+ and SWAT2012. The only difference between the two models in the outdefinition is how to correctly address the output variables. The output files are differenty organized in the two SWAT versions. Below you find an example to extract the simulation outputs of discharge at all three subbasin outlets in the SWAT2012 demo setup:
 
 ```{r, eval=FALSE}
 q_out <- run_swat2012(project_path = path_2012,
                       output = define_output(file = "RCH",
                                              variable = "FLOW_OUT",
-                                             unit = 3))
+                                             unit = 1:3))
 
-#> Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run': 
-#>   Thread 1 of 1   Time elapsed: 3S   Time remaining: 0S    
-#>   Completed 1 thread in 3S 
+#> Building 1 thread in 'Define:/your/path/swat2012_demo/.model_run': 
+#>  Thread 1 of 1   Time elapsed: 3S   Time remaining: 0S    
+#>  Completed 1 thread in 3S 
 #> Performing 1 simulation on 1 core: 
-#>   Simulation 1 of 1   Time elapsed: 4S   Time remaining: 0S
-#>   Completed 1 simulation in 4S
+#>  Simulation 1 of 1   Time elapsed: 4S   Time remaining: 0S
+#>  Completed 1 simulation in 4S
 ```
 
-The discharge in SWAT2012 is written in to the file *"output.rch"*. The discharge leaving a subbasin is written in the column *"FLOW_OUT"*. **Caution**: The unit for the main outlet of the catchment is number 3 in the SWAT2012 setup. The only additional difference in running a basic simuation with SWAT+ and SWAT2012 is the different function call (`run_swatplus()` or `run_swat2012()`).
+The discharge in SWAT2012 is written in to the file *"output.rch"*. The discharge leaving a subbasin is written in the column *"FLOW_OUT"*. The only additional difference in running a basic simuation with SWAT+ and SWAT2012 is the different function call (`run_swatplus()` or `run_swat2012()`).
 
 You might have noticed, that running SWAT also provides information on the progress. This is very convenient for long simulation runs with many model evaluations. If you implement the SWAT function into other function calls the writing to the console can be an undesired behavior. You can quiet the function call with the argument `quiet = TRUE`.
 
 ### Output definition
 
+The previous examples illustrated how to extract one ``variable` (but maybe for several `units`) from the simulation outputs. To extract several variables you can simply combine them in a `list()`. In the example below we extract several water balance components of the SWAT+ demo simulations. Aggregated variables for a SWAT+ simulation are written to the *'basin_wb'* file and there is only one spatial unit (the entire basin) written to that file. Therefore, the `unit` must be 1. Values different from 1 will not return any simulation results:
 
+```{r,eval=FALSE}
+wb_out <- run_swatplus(project_path = path_plus,
+           output = list(precip = define_output(file = "basin_wb",
+                                                variable = "precip",
+                                                unit = 1),
+                         q_sur  = define_output(file = "basin_wb",
+                                                variable = "surq_gen",
+                                                unit = 1),
+                         q_lat  = define_output(file = "basin_wb",
+                                                variable = "latq",
+                                                unit = 1),
+                         eta    = define_output(file = "basin_wb",
+                                                variable = "et",
+                                                unit = 1)))
+
+#> Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run': 
+#>  Thread 1 of 1   Time elapsed: 1S   Time remaining: 0S    
+#>  Completed 1 thread in 1S 
+#> Performing 1 simulation on 1 core: 
+#>  Simulation 1 of 1   Time elapsed: 2S   Time remaining: 0S
+#>  Completed 1 simulation in 2S
+```
+
+```{r, echo=FALSE}
+wb_out <- run_swatplus(project_path = path_plus,
+           output = list(precip = define_output(file = "basin_wb",
+                                                variable = "precip",
+                                                unit = 1),
+                         q_sur  = define_output(file = "basin_wb",
+                                                variable = "surq_gen",
+                                                unit = 1),
+                         q_lat  = define_output(file = "basin_wb",
+                                                variable = "latq",
+                                                unit = 1),
+                         eta    = define_output(file = "basin_wb",
+                                                variable = "et",
+                                                unit = 1)), quiet = T, keep_folder = T)
+```
+
+
+The output definition in a list has the additional advantage to optionally assign individual names to the variables (e.g. `list(name_a = define_output(...))`). The variables are returned in the output with that name in R then.
+
+### Exploring a simulation
+
+The goal of `SWATplusR` is to return the SWAT simulations in a *tidy* format. The simulation results look slightly different if only one simulation was performed, parameters were modified in a run, or multiple parameter sets were used to perform a large number of model evaluations. In general the outputs follow a general structure.
+
+If only one simulation was performed, where no model parameters were modified, `run_swat*()` returns a `tibble` with a `date` column and additional columns with the simulated values of the extracted variables on these dates. For the simulated water balance components the returned table looks as follows:
+
+```{r}
+wb_out
+```
+
+The *tidy* writing of the simulation results allows an easy processing of the data in the analysis workflow in R. Here is a quick example how to 'wrangle' the data with `dplyr` [@Wickham2019], `lubridate` [@Grolemund2011] and `tidyr` [@Wickham2018a] and then plotting the water balance components with `ggplot2`:
+
+```{r, message=FALSE}
+library(tidyr)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+
+
+wb_plot <- wb_out %>% 
+  mutate(year   = year(date),
+         month  = month(date)) %>% 
+  select(- date) %>% 
+  group_by(year, month) %>% 
+  summarise_all(funs(sum(.))) %>% 
+  ungroup() %>% 
+  select(-year) %>% 
+  group_by(month) %>% 
+  summarise_all(funs(mean(.))) %>% 
+  gather(., key = "variable", value = "value", - month)
+  
+ggplot() +
+  # geom_col(data = filter(wb_plot, variable == "precip"),
+  #          aes(x = month, y = value, fill = variable)) + 
+  geom_col(data = filter(wb_plot, variable != "precip"), 
+           aes(x = month, y = value, fill = variable), 
+           alpha = 0.9, position = "stack")
+  
+
+```
 
 
 ## References

@@ -399,7 +399,7 @@
 }
 
 @Book{Wickham2016,
-  title     = {ggplot2: Elegant Graphics for Data Analysis},
+  title     = {{ggplot2: Elegant Graphics for Data Analysis}},
   publisher = {Springer-Verlag New York},
   year      = {2016},
   author    = {Hadley Wickham},
