@@ -5,6 +5,10 @@ vignette: >
   %\VignetteIndexEntry{Exploring SWATplusR}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+bibliography: literature.bib
+link-citations: yes
+linkcolor: blue
+csl: copernicus.csl
 ---
 
 ```{r setup, include = FALSE}
@@ -14,50 +18,83 @@ knitr::opts_chunk$set(
 )
 ```
 
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+## Loading R packages
 
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
-
-## Vignette Info
-
-Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
-
-## Styles
-
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## Figures
-
-The figure sizes have been customised so that you can easily put two images side-by-side. 
-
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
+Before exploring the package load `SWATplusR`:
+```{r}
+library(SWATplusR)
 ```
 
-You can enable figure captions by `fig_caption: yes` in YAML:
 
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
+## Loading demos
 
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+### SWAT projects
 
-## More Examples
+`SWATplusR` provides very simple model setups of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. Demo model setups can be retrieved for SWAT2012 and for SWAT+. Currently a SWAT2012 demo is available for Windows and Linux, while for SWAT+ only a setup for Windows is currently available. A demo project can be loaded with the following command.
 
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+```{r, eval=FALSE}
+# The path where the SWAT demo project will be written
+demo_path <- "Define:/your/path"
 
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
+# Loading a SWAT+ demo project
+path_plus <- load_demo(dataset = "project",
+                       swat_version = "plus",
+                       path = demo_path)
+
+# Loading a SWAT2012 demo project
+path_2012 <- load_demo(dataset = "project",
+                       swat_version = "2012",
+                       path = demo_path)
 ```
 
-Also a quote using `>`:
+Here `load_demo()` loads a demo project data set and saves it in the defined `demo_path`. Additionally, the function returns the final demo project path (`path_plus` and `path_2012`) as a character string back to R. This path is directly usable to run the SWAT model in that path.
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+### Observation data
+`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. The data set is useful for the model evaluation of a demo project. You can load the observation data as follows:
+
+```{r}
+q_obs <- load_demo(dataset = "observation")
+
+q_obs
+```
+
+A quick plot of the observation data set:
+```{r}
+plot(q_obs, type = "l")
+```
+
+### Spatial data
+To visualize simulation results spatially, shape files of the subbasins, river network, and HRUs for the SWAT+ and the SWAT2012 demo setups are available from `SWATplusR`. For spatial data `load_demo()` only returns the paths to the shape files. As the spatial data for the two SWAT project setups looks different loading the data requires the definition of the `swat_version`.
+
+```{r}
+# Path to the subbasin shape file
+sub_path <- load_demo(dataset = "subbasin", swat_version = "plus")
+# Path to the subbasin shape file
+riv_path <- load_demo(dataset = "river", swat_version = "plus")
+
+sub_path
+```
+
+These paths you can use to load the spatial data with your preferred method. The package `sf` [@Pebesma2018a; @Pebesma2018b] provides a very elegant way to work with spatial vector objects in R that have a direct intergration for plotting in `ggplot2` [@Wickham2016].
+
+```{r}
+# Loading the sf and ggplot2 packages for the visualization
+library(sf)
+library(ggplot2)
+
+# Loading the spatial data as simple features
+sub <- read_sf(sub_path)
+riv <- read_sf(riv_path)
+
+ggplot() + 
+  geom_sf(data = sub) + 
+  geom_sf(data = riv, col = "royalblue", lwd = 0.75) + 
+  theme_bw()
+
+```
+
+## Definition of SWAT outputs
+
+
+
+## References

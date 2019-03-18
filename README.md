@@ -34,13 +34,18 @@ The functionality of `SWATplusR` is reduced to a few essential functions that ma
 Getting started with `SWATplusR`
 --------------------------------
 
-You can explore the basic functionality of `SWATplusR` in the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html) section. There you can learn the following basics:
+You can explore the basic functionality of `SWATplusR` in the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#loading-demos) section. There you can learn the following basics:
 
--   Loading a demo project and demo observation data [&gt;&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#figures)
--   Defining simulation outputs to return to R &gt;&gt;&gt;
+-   Loading demo data [&gt;&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#figures)
+    -   SWAT projects [&gt;&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.htmll#swat-projects)
+    -   Observation data [&gt;&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#observation-data)
+    -   Spatial catchment data [&gt;&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#spatial-data)
 -   Performing first SWAT model runs from R &gt;&gt;&gt;
+
 -   Defining parameter modifications for a SWAT run &gt;&gt;&gt;
+
 -   Running SWAT with a single parameter set &gt;&gt;&gt;
+
 -   Running SWAT with a table of parameter combinations &gt;&gt;&gt;
 
 The [Articles](https://chrisschuerz.github.io/SWATplusR/articles/) section is a collection of tutorials for typical topics on SWAT modeling. Here you can learn how to use `SWATplusR` in combination with other R packages to perform tasks such as:

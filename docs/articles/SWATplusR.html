@@ -84,9 +84,7 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1>Exploring SWATplusR</h1>
-                        <h4 class="author">Christoh Schürz</h4>
             
-            <h4 class="date">2019-03-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/chrisschuerz/SWATplusR/blob/master/vignettes/SWATplusR.Rmd"><code>vignettes/SWATplusR.Rmd</code></a></small>
       <div class="hidden name"><code>SWATplusR.Rmd</code></div>
@@ -95,12 +93,96 @@
 
     
     
+<div id="loading-r-packages" class="section level2">
+<h2 class="hasAnchor">
+<a href="#loading-r-packages" class="anchor"></a>Loading R packages</h2>
+<p>Before exploring the package load <code>SWATplusR</code>:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(SWATplusR)</code></pre></div>
+</div>
+<div id="loading-demos" class="section level2">
+<h2 class="hasAnchor">
+<a href="#loading-demos" class="anchor"></a>Loading demos</h2>
+<div id="swat-projects" class="section level3">
+<h3 class="hasAnchor">
+<a href="#swat-projects" class="anchor"></a>SWAT projects</h3>
+<p><code>SWATplusR</code> provides very simple model setups of a head watershed of the Little River Experimental Watershed <span class="citation">(LREW; Bosch et al., <a href="#ref-Bosch2007">2007</a>)</span>. Demo model setups can be retrieved for SWAT2012 and for SWAT+. Currently a SWAT2012 demo is available for Windows and Linux, while for SWAT+ only a setup for Windows is currently available. A demo project can be loaded with the following command.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># The path where the SWAT demo project will be written</span>
+demo_path &lt;-<span class="st"> "Define:/your/path"</span>
+
+<span class="co"># Loading a SWAT+ demo project</span>
+path_plus &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"project"</span>,
+                       <span class="dt">swat_version =</span> <span class="st">"plus"</span>,
+                       <span class="dt">path =</span> demo_path)
+
+<span class="co"># Loading a SWAT2012 demo project</span>
+path_<span class="dv">2012</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"project"</span>,
+                       <span class="dt">swat_version =</span> <span class="st">"2012"</span>,
+                       <span class="dt">path =</span> demo_path)</code></pre></div>
+<p>Here <code><a href="../reference/load_demo.html">load_demo()</a></code> loads a demo project data set and saves it in the defined <code>demo_path</code>. Additionally, the function returns the final demo project path (<code>path_plus</code> and <code>path_2012</code>) as a character string back to R. This path is directly usable to run the SWAT model in that path.</p>
+</div>
+<div id="observation-data" class="section level3">
+<h3 class="hasAnchor">
+<a href="#observation-data" class="anchor"></a>Observation data</h3>
+<p><code>SWATplusR</code> also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. The data set is useful for the model evaluation of a demo project. You can load the observation data as follows:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_obs &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"observation"</span>)
+
+q_obs
+<span class="co">#&gt; # A tibble: 16,437 x 2</span>
+<span class="co">#&gt;    date       q_out</span>
+<span class="co">#&gt;    &lt;date&gt;     &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 1968-01-01 0.16 </span>
+<span class="co">#&gt;  2 1968-01-02 0.570</span>
+<span class="co">#&gt;  3 1968-01-03 0.61 </span>
+<span class="co">#&gt;  4 1968-01-04 0.37 </span>
+<span class="co">#&gt;  5 1968-01-05 0.25 </span>
+<span class="co">#&gt;  6 1968-01-06 0.2  </span>
+<span class="co">#&gt;  7 1968-01-07 0.21 </span>
+<span class="co">#&gt;  8 1968-01-08 0.22 </span>
+<span class="co">#&gt;  9 1968-01-09 0.18 </span>
+<span class="co">#&gt; 10 1968-01-10 0.34 </span>
+<span class="co">#&gt; # ... with 16,427 more rows</span></code></pre></div>
+<p>A quick plot of the observation data set:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(q_obs, <span class="dt">type =</span> <span class="st">"l"</span>)</code></pre></div>
+<p><img src="SWATplusR_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
+</div>
+<div id="spatial-data" class="section level3">
+<h3 class="hasAnchor">
+<a href="#spatial-data" class="anchor"></a>Spatial data</h3>
+<p>To visualize simulation results spatially, shape files of the subbasins, river network, and HRUs for the SWAT+ and the SWAT2012 demo setups are available from <code>SWATplusR</code>. For spatial data <code><a href="../reference/load_demo.html">load_demo()</a></code> only returns the paths to the shape files. As the spatial data for the two SWAT project setups looks different loading the data requires the definition of the <code>swat_version</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Path to the subbasin shape file</span>
+sub_path &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"subbasin"</span>, <span class="dt">swat_version =</span> <span class="st">"plus"</span>)
+<span class="co"># Path to the subbasin shape file</span>
+riv_path &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"river"</span>, <span class="dt">swat_version =</span> <span class="st">"plus"</span>)
+
+sub_path
+<span class="co">#&gt; [1] "C:/Program Files/R/R-3.5.2/library/SWATplusR/extdata/plus_shapes/sub.shp"</span></code></pre></div>
+<p>These paths you can use to load the spatial data with your preferred method. The package <code>sf</code> <span class="citation">(Pebesma, <a href="#ref-Pebesma2018a">2018</a>; Pebesma et al., <a href="#ref-Pebesma2018b">2018</a>)</span> provides a very elegant way to work with spatial vector objects in R that have a direct intergration for plotting in <code>ggplot2</code> <span class="citation">(Wickham, <a href="#ref-Wickham2016">2016</a>)</span>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Loading the sf and ggplot2 packages for the visualization</span>
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(sf)
+<span class="co">#&gt; Linking to GEOS 3.6.1, GDAL 2.2.3, PROJ 4.9.3</span>
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)
+
+<span class="co"># Loading the spatial data as simple features</span>
+sub &lt;-<span class="st"> </span><span class="kw">read_sf</span>(sub_path)
+riv &lt;-<span class="st"> </span><span class="kw">read_sf</span>(riv_path)
+
+<span class="kw">ggplot</span>() <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">geom_sf</span>(<span class="dt">data =</span> sub) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">geom_sf</span>(<span class="dt">data =</span> riv, <span class="dt">col =</span> <span class="st">"royalblue"</span>, <span class="dt">lwd =</span> <span class="fl">0.75</span>) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
+<p><img src="SWATplusR_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
+</div>
+</div>
+<div id="definition-of-swat-outputs" class="section level2">
+<h2 class="hasAnchor">
+<a href="#definition-of-swat-outputs" class="anchor"></a>Definition of SWAT outputs</h2>
 <p>Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The <code>html_vignette</code> output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The <code>html_vignette</code> format:</p>
 <ul>
 <li>Never uses retina figures</li>
 <li>Has a smaller default figure size</li>
 <li>Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style</li>
 </ul>
+</div>
 <div id="vignette-info" class="section level2">
 <h2 class="hasAnchor">
 <a href="#vignette-info" class="anchor"></a>Vignette Info</h2>
@@ -120,7 +202,7 @@
 <p>The figure sizes have been customised so that you can easily put two images side-by-side.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(<span class="dv">10</span><span class="op">:</span><span class="dv">1</span>)</code></pre></div>
-<p><img src="SWATplusR_files/figure-html/unnamed-chunk-1-1.png" width="700"><img src="SWATplusR_files/figure-html/unnamed-chunk-1-2.png" width="700"></p>
+<p><img src="SWATplusR_files/figure-html/unnamed-chunk-7-1.png" width="700"><img src="SWATplusR_files/figure-html/unnamed-chunk-7-2.png" width="700"></p>
 <p>You can enable figure captions by <code>fig_caption: yes</code> in YAML:</p>
 <pre><code>output:
   rmarkdown::html_vignette:
@@ -294,6 +376,24 @@
 <p>“He who gives up [code] safety for [code] speed deserves neither.” (<a href="https://twitter.com/hadleywickham/status/504368538874703872">via</a>)</p>
 </blockquote>
 </div>
+<div id="references" class="section level2 unnumbered">
+<h2 class="hasAnchor">
+<a href="#references" class="anchor"></a>References</h2>
+<div id="refs" class="references">
+<div id="ref-Bosch2007">
+<p>Bosch, D. D., Sheridan, J. M., Lowrance, R. R., Hubbard, R. K., Strickland, T. C., Feyereisen, G. W. and Sullivan, D. G.: Little river experimental watershed database, Water Resources Research, 43(9), doi:<a href="https://doi.org/10.1029/2006wr005844">10.1029/2006wr005844</a>, 2007.</p>
+</div>
+<div id="ref-Pebesma2018a">
+<p>Pebesma, E.: Simple Features for R: Standardized Support for Spatial Vector Data, The R Journal, 10(1), 439–446, doi:<a href="https://doi.org/10.32614/RJ-2018-009">10.32614/RJ-2018-009</a>, 2018.</p>
+</div>
+<div id="ref-Pebesma2018b">
+<p>Pebesma, E., Bivand, R., Racine, E., Sumner, M., Cook, I., Keitt, T., Lovelace, R., Wickham, H., Ooms, J., Müller, K. and Pedersen, T. L.: sf: Simple Features for R. [online] Available from: <a href="https://CRAN.R-project.org/package=sf" class="uri">https://CRAN.R-project.org/package=sf</a> (Accessed 5 March 2019), 2018.</p>
+</div>
+<div id="ref-Wickham2016">
+<p>Wickham, H.: ggplot2: Elegant Graphics for Data Analysis, Springer-Verlag New York. [online] Available from: <a href="http://ggplot2.org" class="uri">http://ggplot2.org</a>, 2016.</p>
+</div>
+</div>
+</div>
 <div class="footnotes">
 <hr>
 <ol>
@@ -307,10 +407,14 @@
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#vignette-info">Vignette Info</a></li>
+<li><a href="#loading-r-packages">Loading R packages</a></li>
+      <li><a href="#loading-demos">Loading demos</a></li>
+      <li><a href="#definition-of-swat-outputs">Definition of SWAT outputs</a></li>
+      <li><a href="#vignette-info">Vignette Info</a></li>
       <li><a href="#styles">Styles</a></li>
       <li><a href="#figures">Figures</a></li>
       <li><a href="#more-examples">More Examples</a></li>
+      <li><a href="#references">References</a></li>
       </ul>
 </div>
       </div>

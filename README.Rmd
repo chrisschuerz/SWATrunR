@@ -51,13 +51,23 @@ knitr::include_graphics("man/figures/package_workflow.svg")
 
 ## Getting started with `SWATplusR`
 
-You can explore the basic functionality of `SWATplusR` in the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html) section. There you can learn the following basics:
+You can explore the basic functionality of `SWATplusR` in the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#loading-demos) section. There you can learn the following basics:
 
-- Loading a demo project and demo observation data [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#figures)
-- Defining simulation outputs to return to R >>>
+- Loading demo data [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#figures)
+    * SWAT projects [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.htmll#swat-projects)
+    * Observation data [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#observation-data)
+    * Spatial catchment data [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#spatial-data)
+
+
 - Performing first SWAT model runs from R >>>
+
+
 - Defining parameter modifications for a SWAT run >>>
+
+
 - Running SWAT with a single parameter set >>>
+
+
 - Running SWAT with a table of parameter combinations >>>
 
 The [Articles](https://chrisschuerz.github.io/SWATplusR/articles/) section is a collection of tutorials for typical topics on SWAT modeling. Here you can learn how to use `SWATplusR` in combination with other R packages to perform tasks such as:
