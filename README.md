@@ -40,8 +40,9 @@ You can explore the basic functionality of `SWATplusR` in the [Get started](http
     -   SWAT projects [&gt;&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.htmll#swat-projects)
     -   Observation data [&gt;&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#observation-data)
     -   Spatial catchment data [&gt;&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#spatial-data)
--   Performing first SWAT model runs from R &gt;&gt;&gt;
-
+-   Performing first SWAT model runs from R [&gt;&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#spatial-data)
+    -   Output definition [&gt;&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#spatial-data)
+    -   Exploring simulation results [&gt;&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#spatial-data)
 -   Defining parameter modifications for a SWAT run &gt;&gt;&gt;
 
 -   Running SWAT with a single parameter set &gt;&gt;&gt;

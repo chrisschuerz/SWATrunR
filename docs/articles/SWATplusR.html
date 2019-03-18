@@ -159,6 +159,7 @@ sub_path
 <p>These paths you can use to load the spatial data with your preferred method. The package <code>sf</code> <span class="citation">(Pebesma, <a href="#ref-Pebesma2018a">2018</a>; Pebesma et al., <a href="#ref-Pebesma2018b">2018</a>)</span> provides a very elegant way to work with spatial vector objects in R that have a direct intergration for plotting in <code>ggplot2</code> <span class="citation">(Wickham, <a href="#ref-Wickham2016">2016</a>)</span>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Loading the sf and ggplot2 packages for the visualization</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(sf)
+<span class="co">#&gt; Warning: package 'sf' was built under R version 3.5.3</span>
 <span class="co">#&gt; Linking to GEOS 3.6.1, GDAL 2.2.3, PROJ 4.9.3</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)
 
@@ -173,208 +174,34 @@ riv &lt;-<span class="st"> </span><span class="kw">read_sf</span>(riv_path)
 <p><img src="SWATplusR_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 </div>
 </div>
-<div id="definition-of-swat-outputs" class="section level2">
+<div id="first-swat-model-runs" class="section level2">
 <h2 class="hasAnchor">
-<a href="#definition-of-swat-outputs" class="anchor"></a>Definition of SWAT outputs</h2>
-<p>Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The <code>html_vignette</code> output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The <code>html_vignette</code> format:</p>
-<ul>
-<li>Never uses retina figures</li>
-<li>Has a smaller default figure size</li>
-<li>Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style</li>
-</ul>
-</div>
-<div id="vignette-info" class="section level2">
-<h2 class="hasAnchor">
-<a href="#vignette-info" class="anchor"></a>Vignette Info</h2>
-<p>Note the various macros within the <code>vignette</code> section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the <code>title</code> field and the <code>\VignetteIndexEntry</code> to match the title of your vignette.</p>
-</div>
-<div id="styles" class="section level2">
-<h2 class="hasAnchor">
-<a href="#styles" class="anchor"></a>Styles</h2>
-<p>The <code>html_vignette</code> template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:</p>
-<pre><code>output: 
-  rmarkdown::html_vignette:
-    css: mystyles.css</code></pre>
-</div>
-<div id="figures" class="section level2">
-<h2 class="hasAnchor">
-<a href="#figures" class="anchor"></a>Figures</h2>
-<p>The figure sizes have been customised so that you can easily put two images side-by-side.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(<span class="dv">10</span><span class="op">:</span><span class="dv">1</span>)</code></pre></div>
-<p><img src="SWATplusR_files/figure-html/unnamed-chunk-7-1.png" width="700"><img src="SWATplusR_files/figure-html/unnamed-chunk-7-2.png" width="700"></p>
-<p>You can enable figure captions by <code>fig_caption: yes</code> in YAML:</p>
-<pre><code>output:
-  rmarkdown::html_vignette:
-    fig_caption: yes</code></pre>
-<p>Then you can use the chunk option <code>fig.cap = "Your figure caption."</code> in <strong>knitr</strong>.</p>
-</div>
-<div id="more-examples" class="section level2">
-<h2 class="hasAnchor">
-<a href="#more-examples" class="anchor"></a>More Examples</h2>
-<p>You can write math expressions, e.g. <span class="math inline">\(Y = X\beta + \epsilon\)</span>, footnotes<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>, and tables, e.g. using <code><a href="https://www.rdocumentation.org/packages/knitr/topics/kable">knitr::kable()</a></code>.</p>
-<table class="table">
-<thead><tr class="header">
-<th></th>
-<th align="right">mpg</th>
-<th align="right">cyl</th>
-<th align="right">disp</th>
-<th align="right">hp</th>
-<th align="right">drat</th>
-<th align="right">wt</th>
-<th align="right">qsec</th>
-<th align="right">vs</th>
-<th align="right">am</th>
-<th align="right">gear</th>
-<th align="right">carb</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Mazda RX4</td>
-<td align="right">21.0</td>
-<td align="right">6</td>
-<td align="right">160.0</td>
-<td align="right">110</td>
-<td align="right">3.90</td>
-<td align="right">2.620</td>
-<td align="right">16.46</td>
-<td align="right">0</td>
-<td align="right">1</td>
-<td align="right">4</td>
-<td align="right">4</td>
-</tr>
-<tr class="even">
-<td>Mazda RX4 Wag</td>
-<td align="right">21.0</td>
-<td align="right">6</td>
-<td align="right">160.0</td>
-<td align="right">110</td>
-<td align="right">3.90</td>
-<td align="right">2.875</td>
-<td align="right">17.02</td>
-<td align="right">0</td>
-<td align="right">1</td>
-<td align="right">4</td>
-<td align="right">4</td>
-</tr>
-<tr class="odd">
-<td>Datsun 710</td>
-<td align="right">22.8</td>
-<td align="right">4</td>
-<td align="right">108.0</td>
-<td align="right">93</td>
-<td align="right">3.85</td>
-<td align="right">2.320</td>
-<td align="right">18.61</td>
-<td align="right">1</td>
-<td align="right">1</td>
-<td align="right">4</td>
-<td align="right">1</td>
-</tr>
-<tr class="even">
-<td>Hornet 4 Drive</td>
-<td align="right">21.4</td>
-<td align="right">6</td>
-<td align="right">258.0</td>
-<td align="right">110</td>
-<td align="right">3.08</td>
-<td align="right">3.215</td>
-<td align="right">19.44</td>
-<td align="right">1</td>
-<td align="right">0</td>
-<td align="right">3</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td>Hornet Sportabout</td>
-<td align="right">18.7</td>
-<td align="right">8</td>
-<td align="right">360.0</td>
-<td align="right">175</td>
-<td align="right">3.15</td>
-<td align="right">3.440</td>
-<td align="right">17.02</td>
-<td align="right">0</td>
-<td align="right">0</td>
-<td align="right">3</td>
-<td align="right">2</td>
-</tr>
-<tr class="even">
-<td>Valiant</td>
-<td align="right">18.1</td>
-<td align="right">6</td>
-<td align="right">225.0</td>
-<td align="right">105</td>
-<td align="right">2.76</td>
-<td align="right">3.460</td>
-<td align="right">20.22</td>
-<td align="right">1</td>
-<td align="right">0</td>
-<td align="right">3</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td>Duster 360</td>
-<td align="right">14.3</td>
-<td align="right">8</td>
-<td align="right">360.0</td>
-<td align="right">245</td>
-<td align="right">3.21</td>
-<td align="right">3.570</td>
-<td align="right">15.84</td>
-<td align="right">0</td>
-<td align="right">0</td>
-<td align="right">3</td>
-<td align="right">4</td>
-</tr>
-<tr class="even">
-<td>Merc 240D</td>
-<td align="right">24.4</td>
-<td align="right">4</td>
-<td align="right">146.7</td>
-<td align="right">62</td>
-<td align="right">3.69</td>
-<td align="right">3.190</td>
-<td align="right">20.00</td>
-<td align="right">1</td>
-<td align="right">0</td>
-<td align="right">4</td>
-<td align="right">2</td>
-</tr>
-<tr class="odd">
-<td>Merc 230</td>
-<td align="right">22.8</td>
-<td align="right">4</td>
-<td align="right">140.8</td>
-<td align="right">95</td>
-<td align="right">3.92</td>
-<td align="right">3.150</td>
-<td align="right">22.90</td>
-<td align="right">1</td>
-<td align="right">0</td>
-<td align="right">4</td>
-<td align="right">2</td>
-</tr>
-<tr class="even">
-<td>Merc 280</td>
-<td align="right">19.2</td>
-<td align="right">6</td>
-<td align="right">167.6</td>
-<td align="right">123</td>
-<td align="right">3.92</td>
-<td align="right">3.440</td>
-<td align="right">18.30</td>
-<td align="right">1</td>
-<td align="right">0</td>
-<td align="right">4</td>
-<td align="right">4</td>
-</tr>
-</tbody>
-</table>
-<p>Also a quote using <code>&gt;</code>:</p>
-<blockquote>
-<p>“He who gives up [code] safety for [code] speed deserves neither.” (<a href="https://twitter.com/hadleywickham/status/504368538874703872">via</a>)</p>
-</blockquote>
+<a href="#first-swat-model-runs" class="anchor"></a>First SWAT model runs</h2>
+<p>SWAT projects (e.g. one of the demo projects) can be executed from R with the functions <code><a href="../reference/run_swat2012.html">run_swat2012()</a></code> to run a SWAT2012 project or <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> to run a SWAT+ project. The minimum requirements to execute a SWAT project are to provide the <code>project_path</code> to the project folder on the hard drive and to define the simulation outputs that the simulation should return to R. The definition of the simulation output always follows a simple pattern. An output variable that should be returned must be defined using the function <code><a href="../reference/define_output.html">define_output()</a></code>. Below is a simple example to run a SWAT+ project and return the <code>variable = 'flo_out'</code> that is written into the <code>file = 'channel'</code> file for the spatial <code>unit = 1</code>. In the file channel the spatial unit relates to the subbasins. <strong>Caution</strong> in the demo SWAT+ model setup the lower subbasin is the subbasin 1.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> plus_path,
+                      <span class="dt">output =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
+                                             <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
+                                             <span class="dt">unit =</span> <span class="dv">1</span>))
+
+<span class="co">#&gt; Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run': </span>
+<span class="co">#&gt;   Thread 1 of 1   Time elapsed: 0S   Time remaining: 0S    </span>
+<span class="co">#&gt;   Completed 1 thread in 0S </span>
+<span class="co">#&gt; Performing 1 simulation on 1 core: </span>
+<span class="co">#&gt;   Simulation 1 of 1   Time elapsed: 5S   Time remaining: 0S</span>
+<span class="co">#&gt;   Completed 1 simulation in 5S</span></code></pre></div>
+<p>The syntax definition of simulations outputs applies to SWAT+ and SWAT2012. The only difference between the two models in the outdefinition is how to correctly address the output variables. The output files are differenty organized in the two SWAT versions. Below you find an example to extract the simulation outputs of discharge at the main outlet in the SWAT2012 demo setup:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swat2012.html">run_swat2012</a></span>(<span class="dt">project_path =</span> path_<span class="dv">2012</span>,
+                      <span class="dt">output =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"RCH"</span>,
+                                             <span class="dt">variable =</span> <span class="st">"FLOW_OUT"</span>,
+                                             <span class="dt">unit =</span> <span class="dv">3</span>))
+
+<span class="co">#&gt; Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run': </span>
+<span class="co">#&gt;   Thread 1 of 1   Time elapsed: 0S   Time remaining: 0S    </span>
+<span class="co">#&gt;   Completed 1 thread in 3S </span>
+<span class="co">#&gt; Performing 1 simulation on 1 core: </span>
+<span class="co">#&gt;   Simulation 1 of 1   Time elapsed: 5S   Time remaining: 0S</span>
+<span class="co">#&gt;   Completed 1 simulation in 4S</span></code></pre></div>
+<p>The discharge in SWAT2012 is written in to the file <em>“output.rch”</em>. The discharge leaving a subbasin is written in the column <em>“FLOW_OUT”</em>. <strong>Caution</strong>: The unit for the main outlet of the catchment is number 3 in the SWAT2012 setup. The only additional difference in running a basic simuation with SWAT+ and SWAT2012 is the different function call (<code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> or <code><a href="../reference/run_swat2012.html">run_swat2012()</a></code>).</p>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="hasAnchor">
@@ -394,12 +221,6 @@ riv &lt;-<span class="st"> </span><span class="kw">read_sf</span>(riv_path)
 </div>
 </div>
 </div>
-<div class="footnotes">
-<hr>
-<ol>
-<li id="fn1"><p>A footnote here.<a href="#fnref1">↩</a></p></li>
-</ol>
-</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -409,11 +230,7 @@ riv &lt;-<span class="st"> </span><span class="kw">read_sf</span>(riv_path)
       <ul class="nav nav-pills nav-stacked">
 <li><a href="#loading-r-packages">Loading R packages</a></li>
       <li><a href="#loading-demos">Loading demos</a></li>
-      <li><a href="#definition-of-swat-outputs">Definition of SWAT outputs</a></li>
-      <li><a href="#vignette-info">Vignette Info</a></li>
-      <li><a href="#styles">Styles</a></li>
-      <li><a href="#figures">Figures</a></li>
-      <li><a href="#more-examples">More Examples</a></li>
+      <li><a href="#first-swat-model-runs">First SWAT model runs</a></li>
       <li><a href="#references">References</a></li>
       </ul>
 </div>
