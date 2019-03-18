@@ -61,7 +61,7 @@ You can explore the basic functionality of `SWATplusR` in the [Get started](http
 
 
 - Performing first SWAT model runs from R [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#first-swat-model-runs)
-    * Output definition [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#spatial-data)
+    * Output definition [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#output-definition)
     * Exploring simulation results [>>>](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#spatial-data)
 
 

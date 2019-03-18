@@ -196,12 +196,17 @@ riv &lt;-<span class="st"> </span><span class="kw">read_sf</span>(riv_path)
                                              <span class="dt">unit =</span> <span class="dv">3</span>))
 
 <span class="co">#&gt; Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run': </span>
-<span class="co">#&gt;   Thread 1 of 1   Time elapsed: 0S   Time remaining: 0S    </span>
+<span class="co">#&gt;   Thread 1 of 1   Time elapsed: 3S   Time remaining: 0S    </span>
 <span class="co">#&gt;   Completed 1 thread in 3S </span>
 <span class="co">#&gt; Performing 1 simulation on 1 core: </span>
-<span class="co">#&gt;   Simulation 1 of 1   Time elapsed: 5S   Time remaining: 0S</span>
+<span class="co">#&gt;   Simulation 1 of 1   Time elapsed: 4S   Time remaining: 0S</span>
 <span class="co">#&gt;   Completed 1 simulation in 4S</span></code></pre></div>
 <p>The discharge in SWAT2012 is written in to the file <em>“output.rch”</em>. The discharge leaving a subbasin is written in the column <em>“FLOW_OUT”</em>. <strong>Caution</strong>: The unit for the main outlet of the catchment is number 3 in the SWAT2012 setup. The only additional difference in running a basic simuation with SWAT+ and SWAT2012 is the different function call (<code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> or <code><a href="../reference/run_swat2012.html">run_swat2012()</a></code>).</p>
+<p>You might have noticed, that running SWAT also provides information on the progress. This is very convenient for long simulation runs with many model evaluations. If you implement the SWAT function into other function calls the writing to the console can be an undesired behavior. You can quiet the function call with the argument <code>quiet = TRUE</code>.</p>
+<div id="output-definition" class="section level3">
+<h3 class="hasAnchor">
+<a href="#output-definition" class="anchor"></a>Output definition</h3>
+</div>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="hasAnchor">
