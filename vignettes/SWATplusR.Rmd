@@ -306,4 +306,9 @@ q_out$parameter
 ```
 
 
+```{r}
+q_out$simulation
+```
+
+
 ## References
