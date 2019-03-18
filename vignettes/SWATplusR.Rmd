@@ -126,7 +126,7 @@ The syntax definition of simulations outputs applies to SWAT+ and SWAT2012. The 
 
 ```{r, eval=FALSE}
 q_out <- run_swat2012(project_path = path_2012,
-                      output = define_output(file = "RCH",
+                      output = define_output(file = "rch",
                                              variable = "FLOW_OUT",
                                              unit = 1:3))
 
@@ -137,11 +137,9 @@ q_out <- run_swat2012(project_path = path_2012,
 #>  Simulation 1 of 1   Time elapsed: 4S   Time remaining: 0S
 #>  Completed 1 simulation in 4S
 ```
-```{r, eval=FALSE}
-q_out <- run_swat2012(project_path = path_2012,
-                      output = define_output(file = "RCH",
-                                             variable = "FLOW_OUT",
-                                             unit = 1:3))
+
+```{r}
+q_out <- readRDS("D:/Projects_R/SWATplusR/vignettes/datasets/q_out.rds")
 ```
 
 
@@ -177,19 +175,7 @@ wb_out <- run_swatplus(project_path = path_plus,
 ```
 
 ```{r, echo=FALSE}
-wb_out <- run_swatplus(project_path = path_plus,
-           output = list(precip = define_output(file = "basin_wb",
-                                                variable = "precip",
-                                                unit = 1),
-                         q_sur  = define_output(file = "basin_wb",
-                                                variable = "surq_gen",
-                                                unit = 1),
-                         q_lat  = define_output(file = "basin_wb",
-                                                variable = "latq",
-                                                unit = 1),
-                         eta    = define_output(file = "basin_wb",
-                                                variable = "et",
-                                                unit = 1)), quiet = T, keep_folder = T)
+wb_out <- readRDS("D:/Projects_R/SWATplusR/vignettes/datasets/wb_out.rds")
 ```
 
 
