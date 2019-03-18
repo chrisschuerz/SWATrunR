@@ -285,6 +285,13 @@ q_out <- run_swatplus(project_path = path_plus,
                                        unit = 1)),
                       parameter = par_set,
                       n_thread = 4)
+
+#> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
+#>  Thread 4 of 4   Time elapsed: 2S   Time remaining: 0S    
+#>  Completed 4 thread in 2S
+#> Performing 8 simulations on 4 cores:
+#>  Simulation 8 of 8   Time elapsed: 5S   Time remaining: 0S
+#>  Completed 8 simulations in 5S
 ```
 
 
