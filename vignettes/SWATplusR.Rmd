@@ -230,7 +230,7 @@ par_mod <- c("cn2.hru|change = abschg" = 5)
 Many options to constrain a parameter change are available in `SWATplusR` (*in the current version of `SWATplusR` only for SWAT2012*). Constraints for the alteration of a parameter is added with a '|' and a logical expression. Below you find an example for the change of the curve number 'CN2' in a SWAT2012 setup, that is only effective for the subbasins 1 to 5 and only for the land uses "WWHT" and "CORN". Also take care that 'CN2' is a parameter of the '.mgt' input file:
 
 ```{r, eval=FALSE}
-par_mod <- c("CN2.mgt|change = abschg | sub == 1:5 | luse %in% c("WWHT", "CORN") " = 5)
+par_mod <- c("CN2.mgt|change = abschg | sub == 1:5 | luse %in% c('WWHT', 'CORN') " = 5)
 ```
 
 Individual parameter names can be assigned with the `::` operator. At the beginning of a parameter definition the individual parameter name is provided followed by '::' and the actual parameter definition:
@@ -251,7 +251,7 @@ par_single <- c("cn2.hru|change = pctchg" = - 5,
 To include the parameter changes in the SWAT+ model execution the defined vector is simply passed with the argument `parameter` in the `run_swatplus()` function call:
 
 ```{r, eval=F}
-q_out <- run_swatplus(project_path = proj_path,
+q_out <- run_swatplus(project_path = path_plus,
                       output = define_output(file = "channel",
                                              variable = "flo_out",
                                              unit = 1),
@@ -276,7 +276,7 @@ par_set
 The implementation in the `run_swat*()` function works the same way. To execute multiple SWAT simulations with many parameter sets the `SWATplusR` package provides an option parallel computing. To perform a parallel model execution the number of parallel threads is defined with the input argument `n_thread`.
 
 ```{r, eval=F}
-q_out <- run_swatplus(project_path = proj_path,
+q_out <- run_swatplus(project_path = path_plus,
   output = list(q_sur  = define_output(file = "basin_wb",
                                        variable = "surq_gen",
                                        unit = 1),
