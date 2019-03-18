@@ -185,7 +185,7 @@ The output definition in a list has the additional advantage to optionally assig
 
 The goal of `SWATplusR` is to return the SWAT simulations in a *tidy* format. The simulation results look slightly different if only one simulation was performed, parameters were modified in a run, or multiple parameter sets were used to perform a large number of model evaluations. In general the outputs follow a general structure.
 
-If only one simulation was performed, where no model parameters were modified, `run_swat*()` returns a `tibble` with a `date` column and the columns with the simulated values of the extracted variables. The output table of the simulated water balance components has a date column and columns with the four extracted water balance components. The variable names are the individual names that we defined in the output definition:
+If only one simulation was performed, where no model parameters were modified, `run_swat*()` returns a `tibble` [@Mueller2019] with a `date` column and the columns with the simulated values of the extracted variables. The output table of the simulated water balance components has a date column and columns with the four extracted water balance components. The variable names are the individual names that we defined in the output definition:
 
 ```{r}
 wb_out
@@ -292,6 +292,17 @@ q_out <- run_swatplus(project_path = path_plus,
 #> Performing 8 simulations on 4 cores:
 #>  Simulation 8 of 8   Time elapsed: 5S   Time remaining: 0S
 #>  Completed 8 simulations in 5S
+```
+
+```{r, echo = F}
+q_out <- readRDS(here::here("vignettes/datasets/q_out_8.rds"))
+```
+
+### Exploring simulations with parameter alterations
+When parameters were altered in a simulation run, the performed parameter changes are saved in the simulation outputs by default. As a consequence, the entire simulation output cannot be provided in a single `tibble` anymore and will be returned as a list with two main list entries. `output$parameter` provides all information on the parameter changes that were performed in the simulation runs. `output$simulation` provides the simulation results. The outputs of the previous model execution of the SWAT+ demo project has the following structure:
+
+```{r}
+q_out$parameter
 ```
 
 
