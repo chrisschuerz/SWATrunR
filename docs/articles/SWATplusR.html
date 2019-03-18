@@ -156,7 +156,7 @@ riv_path &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lo
 
 sub_path
 <span class="co">#&gt; [1] "C:/Program Files/R/R-3.5.2/library/SWATplusR/extdata/plus_shapes/sub.shp"</span></code></pre></div>
-<p>These paths you can use to load the spatial data with your preferred method. The package <code>sf</code> <span class="citation">(Pebesma, <a href="#ref-Pebesma2018a">2018</a>; Pebesma et al., <a href="#ref-Pebesma2018b">2018</a>)</span> provides a very elegant way to work with spatial vector objects in R that have a direct intergration for plotting in <code>ggplot2</code> <span class="citation">(Wickham, <a href="#ref-Wickham2016">2016</a>)</span>.</p>
+<p>These paths you can use to load the spatial data with your preferred method. The package <code>sf</code> <span class="citation">(Pebesma, <a href="#ref-Pebesma2018a">2018</a>; Pebesma et al., <a href="#ref-Pebesma2018b">2018</a>)</span> provides a very elegant way to work with spatial vector objects in R that have a direct integration for plotting in <code>ggplot2</code> <span class="citation">(Wickham, <a href="#ref-Wickham2016">2016</a>)</span>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Loading the sf and ggplot2 packages for the visualization</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(sf)
 <span class="co">#&gt; Warning: package 'sf' was built under R version 3.5.3</span>
@@ -167,9 +167,9 @@ sub_path
 sub &lt;-<span class="st"> </span><span class="kw">read_sf</span>(sub_path)
 riv &lt;-<span class="st"> </span><span class="kw">read_sf</span>(riv_path)
 
-<span class="kw">ggplot</span>() <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">geom_sf</span>(<span class="dt">data =</span> sub) <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">geom_sf</span>(<span class="dt">data =</span> riv, <span class="dt">col =</span> <span class="st">"royalblue"</span>, <span class="dt">lwd =</span> <span class="fl">0.75</span>) <span class="op">+</span><span class="st"> </span>
+<span class="kw">ggplot</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_sf</span>(<span class="dt">data =</span> sub) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_sf</span>(<span class="dt">data =</span> riv, <span class="dt">col =</span> <span class="st">"royalblue"</span>, <span class="dt">lwd =</span> <span class="fl">0.75</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_sf_label</span>(<span class="dt">data =</span> riv, <span class="kw">aes</span>(<span class="dt">label =</span> Channel)) <span class="op">+</span>
 <span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
 <p><img src="SWATplusR_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
@@ -179,35 +179,36 @@ riv &lt;-<span class="st"> </span><span class="kw">read_sf</span>(riv_path)
 <h2 class="hasAnchor">
 <a href="#first-swat-model-runs" class="anchor"></a>First SWAT model runs</h2>
 <p>SWAT projects (e.g. one of the demo projects) can be executed from R with the functions <code><a href="../reference/run_swat2012.html">run_swat2012()</a></code> to run a SWAT2012 project or <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> to run a SWAT+ project. The minimum requirements to execute a SWAT project are to provide the <code>project_path</code> to the project folder on the hard drive and to define the simulation outputs that the simulation should return to R. The definition of the simulation output always follows a simple pattern. An output variable that should be returned must be defined using the function <code><a href="../reference/define_output.html">define_output()</a></code>. Below is a simple example to run a SWAT+ project and return the <code>variable = 'flo_out'</code> that is written into the <code>file = 'channel'</code> file for the spatial <code>unit = 1</code>. <strong>Caution</strong> in the demo SWAT+ model setup the main channel is channel number 1.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> plus_path,
-                      <span class="dt">output =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
-                                             <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
-                                             <span class="dt">unit =</span> <span class="dv">1</span>))
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out_plus &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> plus_path,
+                           <span class="dt">output =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
+                                                  <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
+                                                  <span class="dt">unit =</span> <span class="dv">1</span>))
 
-<span class="co">#&gt; Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run': </span>
+<span class="co">#&gt; Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run':</span>
 <span class="co">#&gt;  Thread 1 of 1   Time elapsed: 0S   Time remaining: 0S    </span>
-<span class="co">#&gt;  Completed 1 thread in 0S </span>
-<span class="co">#&gt; Performing 1 simulation on 1 core: </span>
+<span class="co">#&gt;  Completed 1 thread in 0S</span>
+<span class="co">#&gt; Performing 1 simulation on 1 core:</span>
 <span class="co">#&gt;  Simulation 1 of 1   Time elapsed: 3S   Time remaining: 0S</span>
 <span class="co">#&gt;  Completed 1 simulation in 3S</span></code></pre></div>
-<p>The syntax definition of simulations outputs applies to SWAT+ and SWAT2012. The only difference between the two models in the outdefinition is how to correctly address the output variables. The output files are differenty organized in the two SWAT versions. Below you find an example to extract the simulation outputs of discharge at all three subbasin outlets in the SWAT2012 demo setup:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swat2012.html">run_swat2012</a></span>(<span class="dt">project_path =</span> path_<span class="dv">2012</span>,
-                      <span class="dt">output =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"RCH"</span>,
-                                             <span class="dt">variable =</span> <span class="st">"FLOW_OUT"</span>,
-                                             <span class="dt">unit =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">3</span>))
+<p>The syntax definition of simulations outputs applies to SWAT+ and SWAT2012. The only difference between the two models in the output definition is how to correctly address the output variables. The output files are organized in different ways in SWAT+ and SWAT2012. Below you find an example to extract the simulation outputs of discharge at all three subbasin outlets in the SWAT2012 demo setup:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out_<span class="dv">2012</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swat2012.html">run_swat2012</a></span>(<span class="dt">project_path =</span> path_<span class="dv">2012</span>,
+                           <span class="dt">output =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"rch"</span>,
+                                                  <span class="dt">variable =</span> <span class="st">"FLOW_OUT"</span>,
+                                                  <span class="dt">unit =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">3</span>))
 
-<span class="co">#&gt; Building 1 thread in 'Define:/your/path/swat2012_demo/.model_run': </span>
+<span class="co">#&gt; Building 1 thread in 'Define:/your/path/swat2012_demo/.model_run':</span>
 <span class="co">#&gt;  Thread 1 of 1   Time elapsed: 3S   Time remaining: 0S    </span>
-<span class="co">#&gt;  Completed 1 thread in 3S </span>
-<span class="co">#&gt; Performing 1 simulation on 1 core: </span>
+<span class="co">#&gt;  Completed 1 thread in 3S</span>
+<span class="co">#&gt; Performing 1 simulation on 1 core:</span>
 <span class="co">#&gt;  Simulation 1 of 1   Time elapsed: 4S   Time remaining: 0S</span>
 <span class="co">#&gt;  Completed 1 simulation in 4S</span></code></pre></div>
-<p>The discharge in SWAT2012 is written in to the file <em>“output.rch”</em>. The discharge leaving a subbasin is written in the column <em>“FLOW_OUT”</em>. The only additional difference in running a basic simuation with SWAT+ and SWAT2012 is the different function call (<code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> or <code><a href="../reference/run_swat2012.html">run_swat2012()</a></code>).</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out_<span class="dv">2012</span> &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/readRDS">readRDS</a></span>(here<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/here/topics/here">here</a></span>(<span class="st">"vignettes/datasets/q_out.rds"</span>))</code></pre></div>
+<p>The discharge in SWAT2012 is written in to the file <em>“output.rch”</em>. The discharge leaving a subbasin is written in the column <em>“FLOW_OUT”</em>. The only additional difference in running a basic simulation with SWAT+ and SWAT2012 is the different function call (<code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> or <code><a href="../reference/run_swat2012.html">run_swat2012()</a></code>).</p>
 <p>You might have noticed, that running SWAT also provides information on the progress. This is very convenient for long simulation runs with many model evaluations. If you implement the SWAT function into other function calls the writing to the console can be an undesired behavior. You can quiet the function call with the argument <code>quiet = TRUE</code>.</p>
 <div id="output-definition" class="section level3">
 <h3 class="hasAnchor">
 <a href="#output-definition" class="anchor"></a>Output definition</h3>
-<p>The previous examples illustrated how to extract one `<code>variable</code> (but maybe for several <code>units</code>) from the simulation outputs. To extract several variables you can simply combine them in a <code><a href="https://www.rdocumentation.org/packages/base/topics/list">list()</a></code>. In the example below we extract several water balance components of the SWAT+ demo simulations. Aggregated variables for a SWAT+ simulation are written to the <em>‘basin_wb’</em> file and there is only one spatial unit (the entire basin) written to that file. Therefore, the <code>unit</code> must be 1. Values different from 1 will not return any simulation results:</p>
+<p>The previous examples illustrated how to extract one <code>variable</code> (but maybe for several <code>units</code>) from the simulation outputs. To extract several variables you can simply combine them in a <code><a href="https://www.rdocumentation.org/packages/base/topics/list">list()</a></code>. In the example below we extract several water balance components of the SWAT+ demo simulations. Aggregated variables for a SWAT+ simulation are written to the <em>‘basin_wb’</em> file and there is only one spatial unit (the entire basin) written to that file. Therefore, the <code>unit</code> must be 1. Values different from 1 will not return any simulation results:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">wb_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
            <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">precip =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"basin_wb"</span>,
                                                 <span class="dt">variable =</span> <span class="st">"precip"</span>,
@@ -222,10 +223,10 @@ riv &lt;-<span class="st"> </span><span class="kw">read_sf</span>(riv_path)
                                                 <span class="dt">variable =</span> <span class="st">"et"</span>,
                                                 <span class="dt">unit =</span> <span class="dv">1</span>)))
 
-<span class="co">#&gt; Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run': </span>
+<span class="co">#&gt; Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run':</span>
 <span class="co">#&gt;  Thread 1 of 1   Time elapsed: 1S   Time remaining: 0S    </span>
-<span class="co">#&gt;  Completed 1 thread in 1S </span>
-<span class="co">#&gt; Performing 1 simulation on 1 core: </span>
+<span class="co">#&gt;  Completed 1 thread in 1S</span>
+<span class="co">#&gt; Performing 1 simulation on 1 core:</span>
 <span class="co">#&gt;  Simulation 1 of 1   Time elapsed: 2S   Time remaining: 0S</span>
 <span class="co">#&gt;  Completed 1 simulation in 2S</span></code></pre></div>
 <p>The output definition in a list has the additional advantage to optionally assign individual names to the variables (e.g. <code><a href="https://www.rdocumentation.org/packages/base/topics/list">list(name_a = define_output(...))</a></code>). The variables are returned in the output with that name in R then.</p>
@@ -234,7 +235,7 @@ riv &lt;-<span class="st"> </span><span class="kw">read_sf</span>(riv_path)
 <h3 class="hasAnchor">
 <a href="#exploring-a-simulation" class="anchor"></a>Exploring a simulation</h3>
 <p>The goal of <code>SWATplusR</code> is to return the SWAT simulations in a <em>tidy</em> format. The simulation results look slightly different if only one simulation was performed, parameters were modified in a run, or multiple parameter sets were used to perform a large number of model evaluations. In general the outputs follow a general structure.</p>
-<p>If only one simulation was performed, where no model parameters were modified, <code>run_swat*()</code> returns a <code>tibble</code> with a <code>date</code> column and additional columns with the simulated values of the extracted variables on these dates. For the simulated water balance components the returned table looks as follows:</p>
+<p>If only one simulation was performed, where no model parameters were modified, <code>run_swat*()</code> returns a <code>tibble</code> <span class="citation">(Müller and Wickham, <a href="#ref-Mueller2019">2019</a>)</span> with a <code>date</code> column and the columns with the simulated values of the extracted variables. The output table of the simulated water balance components has a date column and columns with the four extracted water balance components. The variable names are the individual names that we defined in the output definition:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">wb_out
 <span class="co">#&gt; # A tibble: 3,653 x 5</span>
 <span class="co">#&gt;    date       precip q_sur q_lat   eta</span>
@@ -250,43 +251,181 @@ riv &lt;-<span class="st"> </span><span class="kw">read_sf</span>(riv_path)
 <span class="co">#&gt;  9 2003-01-09  0     0     0.844 0.716</span>
 <span class="co">#&gt; 10 2003-01-10  0     0     0.817 0.423</span>
 <span class="co">#&gt; # ... with 3,643 more rows</span></code></pre></div>
-<p>The <em>tidy</em> writing of the simulation results allows an easy processing of the data in the analysis workflow in R. Here is a quick example how to ‘wrangle’ the data with <code>dplyr</code> <span class="citation">(Wickham et al., <a href="#ref-Wickham2019">2019</a>)</span>, <code>lubridate</code> <span class="citation">(Grolemund and Wickham, <a href="#ref-Grolemund2011">2011</a>)</span> and <code>tidyr</code> <span class="citation">(Wickham and Henry, <a href="#ref-Wickham2018a">2018</a>)</span> and then plotting the water balance components with <code>ggplot2</code>:</p>
+<p>In case no variable name is assigned in the output definition (as in the simulations of the discharge above), the variable name of the extracted variable is used as the variable name. When several units are defined in <code><a href="../reference/define_output.html">define_output()</a></code> (e.g. in the example above <code>unit = 1:3</code>) a column in the output table is created for each unit and the unit number is added to the variable name. This is the case for the the simulation of <em>‘FLOW_OUT’</em> in the example above:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out_<span class="dv">2012</span>
+<span class="co">#&gt; # A tibble: 3,653 x 4</span>
+<span class="co">#&gt;    date       FLOW_OUT_1 FLOW_OUT_2 FLOW_OUT_3</span>
+<span class="co">#&gt;    &lt;date&gt;          &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 2003-01-01      0.174     0.103       0.413</span>
+<span class="co">#&gt;  2 2003-01-02      0.154     0.0956      0.377</span>
+<span class="co">#&gt;  3 2003-01-03      0.150     0.0935      0.369</span>
+<span class="co">#&gt;  4 2003-01-04      0.148     0.0921      0.363</span>
+<span class="co">#&gt;  5 2003-01-05      0.146     0.0912      0.359</span>
+<span class="co">#&gt;  6 2003-01-06      0.145     0.0906      0.357</span>
+<span class="co">#&gt;  7 2003-01-07      0.144     0.0901      0.355</span>
+<span class="co">#&gt;  8 2003-01-08      0.144     0.0897      0.354</span>
+<span class="co">#&gt;  9 2003-01-09      0.143     0.0894      0.353</span>
+<span class="co">#&gt; 10 2003-01-10      0.143     0.0890      0.352</span>
+<span class="co">#&gt; # ... with 3,643 more rows</span></code></pre></div>
+<p>The <em>tidy</em> writing of the simulation results allows an easy processing of the data in the analysis workflow in R. Here is a quick example how to ‘wrangle’ the simulated discharge data with <code>dplyr</code> <span class="citation">(Wickham et al., <a href="#ref-Wickham2019">2019</a>)</span> and <code>tidyr</code> <span class="citation">(Wickham and Henry, <a href="#ref-Wickham2018a">2018</a>)</span> and plotting it with <code>ggplot2</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(tidyr)
 <span class="co">#&gt; Warning: package 'tidyr' was built under R version 3.5.3</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dplyr)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(lubridate)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)
 
+q_plot &lt;-<span class="st"> </span>q_out_<span class="dv">2012</span> <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">select</span>(date, FLOW_OUT_<span class="dv">3</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">rename</span>(<span class="dt">q_sim =</span> FLOW_OUT_<span class="dv">3</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">left_join</span>(., q_obs, <span class="dt">by =</span> <span class="st">"date"</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">rename</span>(<span class="dt">q_obs =</span> q_out) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">gather</span>(., <span class="dt">key =</span> <span class="st">"variable"</span>, <span class="dt">value =</span> <span class="st">"discharge"</span>, <span class="op">-</span>date)
 
-wb_plot &lt;-<span class="st"> </span>wb_out <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">year   =</span> <span class="kw">year</span>(date),
-         <span class="dt">month  =</span> <span class="kw">month</span>(date)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span><span class="st"> </span>date) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(year, month) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">summarise_all</span>(<span class="kw">funs</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sum">sum</a></span>(.))) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>year) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(month) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">summarise_all</span>(<span class="kw">funs</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/mean">mean</a></span>(.))) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">gather</span>(., <span class="dt">key =</span> <span class="st">"variable"</span>, <span class="dt">value =</span> <span class="st">"value"</span>, <span class="op">-</span><span class="st"> </span>month)
-<span class="co">#&gt; Warning: funs() is soft deprecated as of dplyr 0.8.0</span>
-<span class="co">#&gt; please use list() instead</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; # Before:</span>
-<span class="co">#&gt; funs(name = f(.)</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; # After: </span>
-<span class="co">#&gt; list(name = ~f(.))</span>
-<span class="co">#&gt; This warning is displayed once per session.</span>
-  
-<span class="kw">ggplot</span>() <span class="op">+</span>
-<span class="st">  </span><span class="co"># geom_col(data = filter(wb_plot, variable == "precip"),</span>
-<span class="st">  </span><span class="co">#          aes(x = month, y = value, fill = variable)) + </span>
-<span class="st">  </span><span class="kw">geom_col</span>(<span class="dt">data =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(wb_plot, variable <span class="op">!=</span><span class="st"> "precip"</span>), 
-           <span class="kw">aes</span>(<span class="dt">x =</span> month, <span class="dt">y =</span> value, <span class="dt">fill =</span> variable), 
-           <span class="dt">alpha =</span> <span class="fl">0.9</span>, <span class="dt">position =</span> <span class="st">"stack"</span>)</code></pre></div>
-<p><img src="SWATplusR_files/figure-html/unnamed-chunk-14-1.png" width="700"></p>
+<span class="kw">ggplot</span>(<span class="dt">data =</span> q_plot) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> discharge, <span class="dt">col =</span> variable, <span class="dt">lty =</span> variable)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_color_manual</span>(<span class="dt">values =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"black"</span>, <span class="st">"tomato3"</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
+<p><img src="SWATplusR_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
 </div>
+</div>
+<div id="model-parameter-alteration" class="section level2">
+<h2 class="hasAnchor">
+<a href="#model-parameter-alteration" class="anchor"></a>Model parameter alteration</h2>
+<p>The capability to alter model parameters in a SWAT simulation is an essential option in <code>SWATplusR</code>. Model parameters can be modified in a SWAT simulation by passing the respective parameters with the argument <code>parameter</code> in <code>run_swat*()</code>. A single parameter set can be provided as a vector. Many parameter sets that should be used in simulations have to be provided in a <code>tibble</code>.</p>
+<p>To modify a model parameter information on the type of change (relative, absolute change etc.), the extent of the change (e.g. all or selected subbasins/land uses/ soil types etc.) and the magnitude of change are required. In <code>SWATplusR</code> most of that information is passed with the variable name. Thus, the variable names use a very specific syntax. A parameter name can consist of several parts, where some are required and others are optional. The minimum requirements for the elements of a parameter name are the actual name of the parameter in the model an the type of change. Options for the type of change are <em>‘relchg’</em> and <em>‘pctchg’</em> to alter a parameter by a fraction or a percentage of the initial parameter value, <em>“abschg”</em> to add an absolute value to the initial parameter value, or <em>“absval”</em> to replace a parameter by an absolute value. In the example below the parameter curve number (‘cn2’) that is defined on HRU level will be increased by the absolute value 5 in all HRUs.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_mod &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"cn2.hru|change = abschg"</span> =<span class="st"> </span><span class="dv">5</span>)</code></pre></div>
+<p>Many options to constrain a parameter change are available in <code>SWATplusR</code> (<em>in the current version of <code>SWATplusR</code> only for SWAT2012</em>). Constraints for the alteration of a parameter is added with a ‘|’ and a logical expression. Below you find an example for the change of the curve number ‘CN2’ in a SWAT2012 setup, that is only effective for the subbasins 1 to 5 and only for the land uses “WWHT” and “CORN”. Also take care that ‘CN2’ is a parameter of the ‘.mgt’ input file:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_mod &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"CN2.mgt|change = abschg | sub == 1:5 | luse %in% c('WWHT', 'CORN') "</span> =<span class="st"> </span><span class="dv">5</span>)</code></pre></div>
+<p>Individual parameter names can be assigned with the <code>::</code> operator. At the beginning of a parameter definition the individual parameter name is provided followed by ‘::’ and the actual parameter definition:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_mod &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"my_name::cn2.hru|change = abschg"</span> =<span class="st"> </span><span class="dv">5</span>)</code></pre></div>
+<div id="simulation-with-a-single-parameter-set" class="section level3">
+<h3 class="hasAnchor">
+<a href="#simulation-with-a-single-parameter-set" class="anchor"></a>Simulation with a single parameter set</h3>
+<p>To define single parameter set a named vector is generated. The names define the parameters the type of change. Below a single parameter set is generated where all ‘cn2’ values in a SWAT+ model setup are reduced by 5 percent and the ‘alpha.gw’ value was set to 0.5 globally.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_single &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"cn2.hru|change = pctchg"</span> =<span class="st"> </span><span class="op">-</span><span class="st"> </span><span class="dv">5</span>,
+                <span class="st">"alpha.gw|change = absval"</span> =<span class="st"> </span><span class="fl">0.5</span>)</code></pre></div>
+<p>To include the parameter changes in the SWAT+ model execution the defined vector is simply passed with the argument <code>parameter</code> in the <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> function call:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
+                      <span class="dt">output =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
+                                             <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
+                                             <span class="dt">unit =</span> <span class="dv">1</span>),
+                      <span class="dt">parameter =</span> par_single)
+
+<span class="co">#&gt; Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run':</span>
+<span class="co">#&gt;  Thread 1 of 1   Time elapsed: 1S   Time remaining: 0S    </span>
+<span class="co">#&gt;  Completed 1 thread in 1S</span>
+<span class="co">#&gt; Performing 1 simulation on 1 core:</span>
+<span class="co">#&gt;  Simulation 1 of 1   Time elapsed: 2S   Time remaining: 0S</span>
+<span class="co">#&gt;  Completed 1 simulation in 2S</span></code></pre></div>
+</div>
+<div id="simulations-with-many-parameter-setups" class="section level3">
+<h3 class="hasAnchor">
+<a href="#simulations-with-many-parameter-setups" class="anchor"></a>Simulations with many parameter setups</h3>
+<p>The same workflow works with several parameter sets when they are defined in a <code>tibble</code>. The example below uses the same parameters as above, but in this case a <code>tibble</code> was defined with 8 random realizations for each parameter within the defined boundaries.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_set &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="st">"cn2.hru|change = abschg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif</a></span>(<span class="dv">8</span>,<span class="op">-</span><span class="dv">15</span>,<span class="dv">10</span>),
+                  <span class="st">"alpha.gw|change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif</a></span>(<span class="dv">8</span>, <span class="dv">0</span>, <span class="dv">1</span>))
+par_set</code></pre></div>
+<p>The implementation in the <code>run_swat*()</code> function works the same way. To execute multiple SWAT simulations with many parameter sets the <code>SWATplusR</code> package provides an option parallel computing. To perform a parallel model execution the number of parallel threads is defined with the input argument <code>n_thread</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
+                      <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_sur  =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"basin_wb"</span>,
+                                                           <span class="dt">variable =</span> <span class="st">"surq_gen"</span>,
+                                                           <span class="dt">unit =</span> <span class="dv">1</span>),
+                      <span class="dt">q_lat  =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"basin_wb"</span>,
+                                             <span class="dt">variable =</span> <span class="st">"latq"</span>,
+                                             <span class="dt">unit =</span> <span class="dv">1</span>)),
+                      <span class="dt">parameter =</span> par_set,
+                      <span class="dt">n_thread =</span> <span class="dv">4</span>)
+
+<span class="co">#&gt; Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':</span>
+<span class="co">#&gt;  Thread 4 of 4   Time elapsed: 2S   Time remaining: 0S    </span>
+<span class="co">#&gt;  Completed 4 thread in 2S</span>
+<span class="co">#&gt; Performing 8 simulations on 4 cores:</span>
+<span class="co">#&gt;  Simulation 8 of 8   Time elapsed: 5S   Time remaining: 0S</span>
+<span class="co">#&gt;  Completed 8 simulations in 5S</span></code></pre></div>
+</div>
+<div id="exploring-simulations-with-parameter-alterations" class="section level3">
+<h3 class="hasAnchor">
+<a href="#exploring-simulations-with-parameter-alterations" class="anchor"></a>Exploring simulations with parameter alterations</h3>
+<p>When parameters were altered in a simulation run, the performed parameter changes are saved in the simulation outputs by default. As a consequence, the entire simulation output cannot be provided in a single <code>tibble</code> anymore and will be returned as a list with two main list entries. <code>output$parameter</code> provides all information on the parameter changes that were performed in the simulation runs. <code>output$simulation</code> provides the simulation results. The outputs of the previous model execution of the SWAT+ demo project has the following structure</p>
+<p>The list entry <code>$parameter</code> holds two <code>tibbles</code>. The first <code>tibble</code> shows the values of the parameter changes of each model evaluation that was performed with <code>run_swat*()</code>. Each row of the <code>tibble</code> represents a parameter set that was used in a model run. The second <code>tibble</code> provides information on the parameter names, their actual names in the model, the type of change and the constraints on the parameter:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out<span class="op">$</span>parameter
+<span class="co">#&gt; $values</span>
+<span class="co">#&gt; # A tibble: 8 x 2</span>
+<span class="co">#&gt;        cn2 alpha</span>
+<span class="co">#&gt;      &lt;dbl&gt; &lt;dbl&gt;</span>
+<span class="co">#&gt; 1   0.360  0.401</span>
+<span class="co">#&gt; 2 -11.3    0.151</span>
+<span class="co">#&gt; 3 -11.1    0.752</span>
+<span class="co">#&gt; 4  -5.67   0.608</span>
+<span class="co">#&gt; 5  -9.94   0.590</span>
+<span class="co">#&gt; 6   8.37   0.571</span>
+<span class="co">#&gt; 7   4.52   0.408</span>
+<span class="co">#&gt; 8   0.0230 0.115</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; $definition</span>
+<span class="co">#&gt; # A tibble: 2 x 4</span>
+<span class="co">#&gt;   par_name parameter file_name change</span>
+<span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;     &lt;chr&gt; </span>
+<span class="co">#&gt; 1 cn2      cn2       hru       abschg</span>
+<span class="co">#&gt; 2 alpha    alpha     gw        absval</span></code></pre></div>
+<p>The list entry <code>$simulation</code> provides the simulation runs that corresponds to each parameter set. Different to the single simulation without parameter changes is that now the simulated variables are not saved in a single <code>tibble</code>, but as a <code>list</code> of <code>tibbles</code>. In this case each simulated variable is saved in one <code>tibble</code>, where the first column of each <code>tibble</code> is the ‘date’ and the other columns are the individual simulation runs. Now the tibbles are named by the variables and each individual run saved in the tibbles is named ‘run_1’ to run ‘run_n’. In the example two variables were simulated, <code>q_out$simulation$q_sur</code> and <code>q_out$simulation$q_lat</code>. Each <code>tibble</code> holds the date and the runs 1 to 8:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out<span class="op">$</span>simulation
+<span class="co">#&gt; $q_sur</span>
+<span class="co">#&gt; # A tibble: 3,653 x 9</span>
+<span class="co">#&gt;    date       run_1 run_2 run_3 run_4 run_5 run_6 run_7 run_8</span>
+<span class="co">#&gt;    &lt;date&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 2003-01-01 0.149 0.023 0.024 0.059 0.029 0.335 0.221 0.144</span>
+<span class="co">#&gt;  2 2003-01-02 0.022 0.003 0.003 0.009 0.004 0.053 0.035 0.021</span>
+<span class="co">#&gt;  3 2003-01-03 0.005 0.001 0.001 0.002 0.001 0.013 0.008 0.005</span>
+<span class="co">#&gt;  4 2003-01-04 0.001 0     0     0.001 0     0.003 0.002 0.001</span>
+<span class="co">#&gt;  5 2003-01-05 0     0     0     0     0     0.001 0.001 0    </span>
+<span class="co">#&gt;  6 2003-01-06 0     0     0     0     0     0     0     0    </span>
+<span class="co">#&gt;  7 2003-01-07 0     0     0     0     0     0     0     0    </span>
+<span class="co">#&gt;  8 2003-01-08 0     0     0     0     0     0     0     0    </span>
+<span class="co">#&gt;  9 2003-01-09 0     0     0     0     0     0     0     0    </span>
+<span class="co">#&gt; 10 2003-01-10 0     0     0     0     0     0     0     0    </span>
+<span class="co">#&gt; # ... with 3,643 more rows</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; $q_lat</span>
+<span class="co">#&gt; # A tibble: 3,653 x 9</span>
+<span class="co">#&gt;    date       run_1 run_2 run_3 run_4 run_5 run_6 run_7 run_8</span>
+<span class="co">#&gt;    &lt;date&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 2003-01-01 2.27  2.52  2.52  2.44  2.51  1.81  2.06  2.28 </span>
+<span class="co">#&gt;  2 2003-01-02 1.67  1.9   1.90  1.82  1.89  1.32  1.51  1.68 </span>
+<span class="co">#&gt;  3 2003-01-03 1.34  1.54  1.54  1.47  1.53  1.05  1.21  1.34 </span>
+<span class="co">#&gt;  4 2003-01-04 1.14  1.32  1.32  1.26  1.31  0.894 1.03  1.15 </span>
+<span class="co">#&gt;  5 2003-01-05 1.03  1.19  1.19  1.13  1.18  0.802 0.931 1.03 </span>
+<span class="co">#&gt;  6 2003-01-06 0.956 1.10  1.10  1.05  1.10  0.744 0.866 0.961</span>
+<span class="co">#&gt;  7 2003-01-07 0.906 1.04  1.04  0.994 1.03  0.704 0.822 0.911</span>
+<span class="co">#&gt;  8 2003-01-08 0.869 0.995 0.994 0.952 0.988 0.675 0.788 0.874</span>
+<span class="co">#&gt;  9 2003-01-09 0.838 0.957 0.956 0.917 0.95  0.651 0.761 0.843</span>
+<span class="co">#&gt; 10 2003-01-10 0.812 0.925 0.925 0.888 0.919 0.63  0.737 0.817</span>
+<span class="co">#&gt; # ... with 3,643 more rows</span></code></pre></div>
+</div>
+</div>
+<div id="saving-and-loading-simulations" class="section level2">
+<h2 class="hasAnchor">
+<a href="#saving-and-loading-simulations" class="anchor"></a>Saving and loading Simulations</h2>
+<p>In many cases it is advantageous to save the simulations incrementally after each SWAT model evaluation, for instance when long simulation runs would be lost if the computer or the R instance crashes, or when the simulation results cannot be stored in the RAM storage at all.</p>
+<p>Simulations can be saved incrementally in an <em>SQLite</em> data base on the local hard drive, by passing a name for the save folder with the argument <code>save_file</code> in <code>run_swat*()</code>. By default the data base with the name <code>save_file</code> is saved in the project folder. An individual path for the <code>save_file</code> can be defined with the argument <code>save_path</code>. In case the simulations should be only saved in the data base and not returned back to R, the argument <code>return_output = FALSE</code> has to be set.</p>
+<p>In the example above these arguments are simply added to the <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> function call, to save the simulations in a data base instead of returning them back to R:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
+                      <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_sur  =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"basin_wb"</span>,
+                                                           <span class="dt">variable =</span> <span class="st">"surq_gen"</span>,
+                                                           <span class="dt">unit =</span> <span class="dv">1</span>),
+                      <span class="dt">q_lat  =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"basin_wb"</span>,
+                                             <span class="dt">variable =</span> <span class="st">"latq"</span>,
+                                             <span class="dt">unit =</span> <span class="dv">1</span>)),
+                      <span class="dt">parameter =</span> par_set,
+                      <span class="dt">n_thread =</span> <span class="dv">4</span>,
+                      <span class="dt">save_file =</span> <span class="st">"q_sur_lat"</span>,
+                      <span class="dt">return_output =</span> <span class="ot">FALSE</span>)
+
+<span class="co">#&gt; Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':</span>
+<span class="co">#&gt;  Thread 4 of 4   Time elapsed: 2S   Time remaining: 0S    </span>
+<span class="co">#&gt;  Completed 4 thread in 2S</span>
+<span class="co">#&gt; Performing 8 simulations on 4 cores:</span>
+<span class="co">#&gt;  Simulation 8 of 8   Time elapsed: 6S   Time remaining: 0S</span>
+<span class="co">#&gt;  Completed 8 simulations in 6S</span></code></pre></div>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="hasAnchor">
@@ -295,8 +434,8 @@ wb_plot &lt;-<span class="st"> </span>wb_out <span class="op">%&gt;%</span><span
 <div id="ref-Bosch2007">
 <p>Bosch, D. D., Sheridan, J. M., Lowrance, R. R., Hubbard, R. K., Strickland, T. C., Feyereisen, G. W. and Sullivan, D. G.: Little river experimental watershed database, Water Resources Research, 43(9), doi:<a href="https://doi.org/10.1029/2006wr005844">10.1029/2006wr005844</a>, 2007.</p>
 </div>
-<div id="ref-Grolemund2011">
-<p>Grolemund, G. and Wickham, H.: Dates and times made easy withlubridate, Journal of Statistical Software, 40(3), doi:<a href="https://doi.org/10.18637/jss.v040.i03">10.18637/jss.v040.i03</a>, 2011.</p>
+<div id="ref-Mueller2019">
+<p>Müller, K. and Wickham, H.: Tibble: Simple data frames. [online] Available from: <a href="https://CRAN.R-project.org/package=tibble" class="uri">https://CRAN.R-project.org/package=tibble</a> (Accessed 5 March 2019), 2019.</p>
 </div>
 <div id="ref-Pebesma2018a">
 <p>Pebesma, E.: Simple Features for R: Standardized Support for Spatial Vector Data, The R Journal, 10(1), 439–446, doi:<a href="https://doi.org/10.32614/RJ-2018-009">10.32614/RJ-2018-009</a>, 2018.</p>
@@ -325,6 +464,8 @@ wb_plot &lt;-<span class="st"> </span>wb_out <span class="op">%&gt;%</span><span
 <li><a href="#loading-r-packages">Loading R packages</a></li>
       <li><a href="#loading-demos">Loading demos</a></li>
       <li><a href="#first-swat-model-runs">First SWAT model runs</a></li>
+      <li><a href="#model-parameter-alteration">Model parameter alteration</a></li>
+      <li><a href="#saving-and-loading-simulations">Saving and loading Simulations</a></li>
       <li><a href="#references">References</a></li>
       </ul>
 </div>
