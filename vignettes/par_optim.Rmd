@@ -19,41 +19,48 @@ knitr::opts_chunk$set(
 
 ## R packages
 
-There are many optimization routines available in R. The base R package `stats` [@Rcore2019] provides the function `optim` that offers several standard methods for model parameter optimization. The `hydromad` [@Andrews2018] package provides a complete environment for hydrological modeling in R. It also offers several optimization algorithms that are standard methods in hydrological modelling, such as the Shuffled Complex Evolution algorithm [SCE; @Duan1993], or the Dynamically Dimensioned Search algoritm [DDS; @Tolson2007]. The `hydromad` package can be installed following the instructions on the [hydromad website](http://hydromad.catchment.org/#installation). A flexible integration of the DDS algorithm for R can also be found on the following [github repository](https://github.com/bdb67/Dynamically-Dimensioned-Search) [@Bass2019]. 
+There are many optimization routines available in R. The base R package `stats` [@Rcore2019] provides the function `optim` that offers several standard methods for model parameter optimization. The `hydromad` [@Andrews2018] package provides a complete environment for hydrological modeling in R. It also offers several optimization algorithms that are standard methods in hydrological modelling, such as the Shuffled Complex Evolution algorithm [SCE; @Duan1993], or the Dynamically Dimensioned Search algoritm [DDS; @Tolson2007].  A flexible integration of the DDS algorithm for R can also be found on the following [github repository](https://github.com/bdb67/Dynamically-Dimensioned-Search) [@Bass2019]. 
 Multiple goodness-of-fit functions are available from literature to evaluate simulated time series with observed time series of that variable. The `hydroGOF` package [@MZB2017] summarizes frequently used functions for the evaluation of time series of hydrological variables. 
 
-Before exploring the package load `SWATplusR`:
+### Package installation
+
+If you do not have installed any of the required R package, follow the instructions for the respective R package.
+
+The `hydromad` package can be installed following the instructions on the [hydromad website](http://hydromad.catchment.org/#installation).
+
+The other R packages are available from CRAN and can be installed with the following commands:
+```{r}
+install.packages("hydroGOF")
+install.packages("dplyr")
+install.packages("tidyr")
+install.packages("ggplot2")
+```
+
+### Loading R packages
 ```{r}
 library(SWATplusR)
 library(hydromad)
 library(hydroGOF)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
 ```
 
-## Loading demos
+## Loading demo data
 
-### SWAT projects
-
-`SWATplusR` provides very simple model setups of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. Demo model setups can be retrieved for SWAT2012 and for SWAT+. Currently a SWAT2012 demo is available for Windows and Linux, while for SWAT+ only a setup for Windows is currently available. A demo project can be loaded with the following command.
+The optimization example uses the SWAT+ demo project available from `SWATplusR`. The demo project is a very simple model setups of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. You can load the to your hard drive as follows:
 
 ```{r, eval=FALSE}
 # The path where the SWAT demo project will be written
 demo_path <- "Define:/your/path"
 
-# Loading a SWAT+ demo project
+# Loading the SWAT+ demo project on your hard drive
 path_plus <- load_demo(dataset = "project",
                        swat_version = "plus",
                        path = demo_path)
-
-# Loading a SWAT2012 demo project
-path_2012 <- load_demo(dataset = "project",
-                       swat_version = "2012",
-                       path = demo_path)
 ```
 
-Here `load_demo()` loads a demo project data set and saves it in the defined `demo_path`. Additionally, the function returns the final demo project path (`path_plus` and `path_2012`) as a character string back to R. This path is directly usable to run the SWAT model in that path.
-
-### Observation data
-`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. The data set is useful for the model evaluation of a demo project. You can load the observation data as follows:
+`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2012-12-31. Therfore, we load the demo data and limit it to this time period:
 
 ```{r}
 q_obs <- load_demo(dataset = "observation")
@@ -62,7 +69,7 @@ q_obs <- filter(q_obs, date >= ymd("2003-01-01"),
                        date <= "2012-12-31")
 ```
 
-## Parameter optimization
+## Parameter optimization with `optim`
 
 A way to find a model parametrization that results in model setup that adequately reproduces observation data is to perform parameter optimization. Several routines such as the Shuffled Complex Evolution algorithm [SCE; @Duan1993], or the Dynamically Dimensioned Search algorithm [DDS; @Tolson2007] among others are frequently used in hydrological modeling. The two examples below demonstrate the implementation of a 'quasi-Newton' method [@Byrd1995] with the generic `optim()` function and the implementation of the SCE algorithm that is available in the `hydromad` package.
 
@@ -99,7 +106,7 @@ par_names <- c("cn2.hru | change = abschg",
                "esco.hru | change = absval")
 par_init <- c(0, 5, 50, 0 , 0, 0.5, 0.5)
 par_lwr  <- c(-15, 0.5,  10, -50, -50, 0, 0)
-par_upr  <- c( 10,  25, 100,  50,  50, 1, 1)
+par_upr  <- c( 10,  50, 100,  50,  50, 1, 1)
 names(par_init) <- par_names
 names(par_lwr) <- par_names
 names(par_upr) <- par_names
@@ -109,10 +116,49 @@ To perform the parameter optimization the defined model that should be optimized
 
 ```{r, eval=FALSE}
 opt_bfgs <- optim(par_init, swat_optim, method = "L-BFGS-B",
-                  lower = par_lwr, upper = par_upr,
-                  control = list(trace = 1))
-opt_sce  <- SCEoptim(swat_opt, par, lower = par_lwr, upper = par_upr,
+                  lower = par_lwr, upper = par_upr)
+opt_sce  <- SCEoptim(swat_optim, par_init, lower = par_lwr, upper = par_upr,
                      control = list(reltol = 10^(-3), trace = 1))
+```
+## Parameter optimization with `hydromad`
+
+```{r}
+opt_sce  <- SCEoptim(swat_optim, par_init, lower = par_lwr, upper = par_upr,
+                     control = list(reltol = 10^(-3), trace = 1))
+#> Nr Iter  Nr Fun Eval    Current best function    Current worst function
+#>     1       391                -0.736847                   497.542
+#>     2       610                 -0.73938                   497.542
+#>     3       888                -0.740991                   497.542
+#>     4      1230                -0.741591                   497.542
+#>     5      1532                -0.742106                   497.542
+#>     6      1718                -0.742826                   497.542
+#>     7      1882                -0.743112                   497.542
+#>     8      2061                -0.744018                   497.542
+#>     9      2272                -0.744347                   497.542
+#>    10      2476                -0.744557                   497.542
+#>    11      2712                -0.744565                   481.458
+#>    12      2954                -0.744565                   481.458
+#>    13      3140                -0.744565                   481.458
+#>    14      3342                -0.744596                   481.458
+```
+
+```{r}
+par_best <- as_tibble(opt_sce$BESTMEM.ALL)
+
+q_sim <- run_swatplus(project_path = "C:/swatplus_demo",
+                      output = define_output(file = "channel",
+                                             variable = "flo_out",
+                                             unit = 1),
+                      parameter = par_best,
+                      start_date = "2000-01-01",
+                      end_date = "2012-12-31",
+                      years_skip = 3,
+                      n_thread = 4)
+
+#> Building 4 threads in 'C:/swatplus_demo/.model_run': 
+#>  Completed 4 threads in 0S                                                  
+#> Performing 14 simulations on 4 cores: 
+#>  Completed 14 simulations in 10S 
 ```
 
 ## References
