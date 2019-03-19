@@ -1,0 +1,116 @@
+---
+title: "Exploring SWATplusR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exploring SWATplusR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: literature.bib
+link-citations: yes
+csl: copernicus.csl
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## R packages
+
+
+Before exploring the package load `SWATplusR`:
+```{r}
+library(SWATplusR)
+library(hydromad)
+library(hydroGOF)
+```
+
+## Loading demos
+
+### SWAT projects
+
+`SWATplusR` provides very simple model setups of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. Demo model setups can be retrieved for SWAT2012 and for SWAT+. Currently a SWAT2012 demo is available for Windows and Linux, while for SWAT+ only a setup for Windows is currently available. A demo project can be loaded with the following command.
+
+```{r, eval=FALSE}
+# The path where the SWAT demo project will be written
+demo_path <- "Define:/your/path"
+
+# Loading a SWAT+ demo project
+path_plus <- load_demo(dataset = "project",
+                       swat_version = "plus",
+                       path = demo_path)
+
+# Loading a SWAT2012 demo project
+path_2012 <- load_demo(dataset = "project",
+                       swat_version = "2012",
+                       path = demo_path)
+```
+
+Here `load_demo()` loads a demo project data set and saves it in the defined `demo_path`. Additionally, the function returns the final demo project path (`path_plus` and `path_2012`) as a character string back to R. This path is directly usable to run the SWAT model in that path.
+
+### Observation data
+`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. The data set is useful for the model evaluation of a demo project. You can load the observation data as follows:
+
+```{r}
+q_obs <- load_demo(dataset = "observation")
+
+q_obs <- filter(q_obs, date >= ymd("2003-01-01"),
+                       date <= "2012-12-31")
+```
+
+## Parameter optimization
+
+A way to find a model parametrization that results in model setup that adequately reproduces observation data is to perform parameter optimization. Several routines such as the Shuffled Complex Evolution algorithm [SCE; @Duan1993], or the Dynamically Dimensioned Search algorithm [DDS; @Tolson2007] among others are frequently used in hydrological modeling. The two examples below demonstrate the implementation of a 'quasi-Newton' method [@Byrd1995] with the generic `optim()` function and the implementation of the SCE algorithm that is available in the `hydromad` package.
+
+Both optimization algorithms again require a function that returns a scalar for the optimization. Thus, the SWAT model has to be implemented in a function that performs the model evaluation with observation data and returns a measure of goodness-of-fit for which the model parameters will be optimized.
+
+```{r, eval=FALSE}
+swat_optim <- function(par) {
+  names(par) <- par_names
+  q_sim <- run_swatplus(project_path = "C:/swatplus_demo",
+                        output = define_output(file = "channel",
+                                              variable = "flo_out",
+                                              unit = 1),
+                        parameter = par,
+                        start_date = "2000-01-01",
+                        end_date = "2012-12-31",
+                        years_skip = 3,
+                        quiet = TRUE,
+                        keep_folder = TRUE,
+                        refresh = FALSE)
+  nse_q <- - NSE(q_sim$simulation$flo_out/8.64, q_obs$q_out)
+  return(nse_q)
+  }
+```
+
+The optimization algorithms require the parameters to be optimized, starting values, and upper and lower parameter boundaries to define the range in which the algorithm searches the best parameter set.
+
+```{r, eval=FALSE}
+par_names <- c("cn2.hru | change = abschg",
+               "lat_ttime.hru | change = absval",
+               "lat_len.hru | change = absval",
+               "k.sol | change = pctchg",
+               "z.sol | change = pctchg",
+               "epco.hru | change = absval",
+               "esco.hru | change = absval")
+par_init <- c(0, 5, 50, 0 , 0, 0.5, 0.5)
+par_lwr  <- c(-15, 0.5,  10, -50, -50, 0, 0)
+par_upr  <- c( 10,  25, 100,  50,  50, 1, 1)
+names(par_init) <- par_names
+names(par_lwr) <- par_names
+names(par_upr) <- par_names
+```
+
+To perform the parameter optimization the defined model that should be optimized and the parameters with their initial values and boundaries are implemented as follows.
+
+```{r, eval=FALSE}
+opt_bfgs <- optim(par_init, swat_optim, method = "L-BFGS-B",
+                  lower = par_lwr, upper = par_upr,
+                  control = list(trace = 1))
+opt_sce  <- SCEoptim(swat_opt, par, lower = par_lwr, upper = par_upr,
+                     control = list(reltol = 10^(-3), trace = 1))
+```
+
+## References
