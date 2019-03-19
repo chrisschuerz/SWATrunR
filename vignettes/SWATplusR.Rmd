@@ -265,7 +265,7 @@ q_out <- run_swatplus(project_path = path_plus,
 #>  Completed 1 simulation in 2S
 ```
 
-### Simulations with many parameter setups
+### Simulations with many parameter sets
 The same workflow works with several parameter sets when they are defined in a `tibble`. The example below uses the same parameters as above, but in this case a `tibble` was defined with 8 random realizations for each parameter within the defined boundaries.
 
 ```{r, eval=FALSE}
@@ -287,10 +287,10 @@ q_out <- run_swatplus(project_path = path_plus,
                       n_thread = 4)
 
 #> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
-#>  Thread 4 of 4   Time elapsed: 2S   Time remaining: 0S    
+#>  Thread 2 of 4   Time elapsed: 1S   Time remaining: 1S    
 #>  Completed 4 thread in 2S
 #> Performing 8 simulations on 4 cores:
-#>  Simulation 8 of 8   Time elapsed: 5S   Time remaining: 0S
+#>  Simulation 4 of 8   Time elapsed: 4S   Time remaining: 4S
 #>  Completed 8 simulations in 5S
 ```
 
@@ -316,31 +316,92 @@ q_out$simulation
 
 ## Saving and loading Simulations
 
-In many cases it is advantageous to save the simulations incrementally after each SWAT model evaluation, for instance when long simulation runs would be lost if the computer or the R instance crashes, or when the simulation results cannot be stored in the RAM storage at all.
+In many cases it is advantageous to save the simulations incrementally after each model evaluation, for instance when long simulation runs would be lost if the computer or the R instance crashes, or when the simulation results cannot be stored in the RAM storage at all.
 
 Simulations can be saved incrementally in an *SQLite* data base on the local hard drive, by passing a name for the save folder with the argument `save_file` in `run_swat*()`. By default the data base with the name `save_file` is saved in the project folder. An individual path for the `save_file` can be defined with the argument `save_path`. In case the simulations should be only saved in the data base and not returned back to R, the argument `return_output = FALSE` has to be set.
 
-In the example above these arguments are simply added to the `run_swatplus()` function call, to save the simulations in a data base instead of returning them back to R:
+These arguments are simply added to the `run_swatplus()` function call to save the simulations in a data base instead of returning them back to R. Below the arguments are added to the previous simulation:
 
 ```{r, eval=F}
-q_out <- run_swatplus(project_path = path_plus,
-                      output = list(q_sur  = define_output(file = "basin_wb",
-                                                           variable = "surq_gen",
-                                                           unit = 1),
-                      q_lat  = define_output(file = "basin_wb",
-                                             variable = "latq",
-                                             unit = 1)),
-                      parameter = par_set,
-                      n_thread = 4,
-                      save_file = "q_sur_lat",
-                      return_output = FALSE)
+run_swatplus(project_path = path_plus,
+            output = list(q_sur  = define_output(file = "basin_wb",
+                                                 variable = "surq_gen",
+                                                 unit = 1),
+            q_lat  = define_output(file = "basin_wb",
+                                   variable = "latq",
+                                   unit = 1)),
+            parameter = par_set,
+            n_thread = 4,
+            save_file = "q_sur_lat",
+            return_output = FALSE)
 
 #> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
-#>  Thread 4 of 4   Time elapsed: 2S   Time remaining: 0S    
+#>  Thread 2 of 4   Time elapsed: 1S   Time remaining: 1S    
 #>  Completed 4 thread in 2S
 #> Performing 8 simulations on 4 cores:
-#>  Simulation 8 of 8   Time elapsed: 6S   Time remaining: 0S
+#>  Simulation 4 of 8   Time elapsed: 3S   Time remaining: 3S
 #>  Completed 8 simulations in 6S
 ```
+
+You can see that the function did not return any results in R but generated a folder that we called "q_sur_lat" passed by the argument `save_file` in the project folder. That folder now contains several data bases. The first data base is called "par_dat.sqlite" and stores the parameter information and the date vector. Further, each of the parallel threads of the simulation generated a data base where each thread wrote the simulation results (This is necessary to avoid access conflicts when writing to data bases in parallel). The simulation data bases are always called "sim_thread_i.sqlite", where "i" are the indexes of the individual threads (1 to 4 in this case).
+
+`SWATplusR` provides two options to access the saved simulations. Loading large data bases into the R environment can take a long time. If you only want to know the the content of saved simulations (e.g. to check the successful simulation runs after a crash) you can scan the saved runs with the function `scan_swat_run()`. The function writes meta information on the saved SWAT simulations into the console. The function returns the following for our saved runs:
+
+```{r, eval=FALSE}
+# Set the path to the folder where the date bases were saved
+path_saved_q <- "Path:/to/the/folder/q_sur_lat"
+
+scan_swat_run(save_dir = path_saved_q)
+#> Simulation period:
+#>  2003-01-01 to 2012-12-31
+#>
+#> Simulated variables:
+#> q_lat: runs 1 to 8
+#> q_sur: runs 1 to 8
+#>
+#> Parameter set:
+#> # A tibble: 8 x 2
+#>        cn2 alpha
+#>      <dbl> <dbl>
+#> 1   0.360  0.401
+#> 2 -11.3    0.151
+#> 3 -11.1    0.752
+#> 4  -5.67   0.608
+#> 5  -9.94   0.590
+#> 6   8.37   0.571
+#> 7   4.52   0.408
+#> 8   0.0230 0.115
+#> # A tibble: 2 x 4
+#>   par_name parameter file_name change
+#>   <chr>    <chr>     <chr>     <chr>
+#> 1 cn2      cn2       hru       abschg
+#> 2 alpha    alpha     gw        absval
+
+```
+
+`scan_swat_run()` returns information on the simulation period, which output variables were saved and which simulation runs were executed for these variables. Further, information on the used model parameter sets is written.
+
+With `load_swat_run()` you can then load the simulations saved in the data bases. In case the entire set of simulations cannot be loaded in to the RAM storage the function provides the option to only load parts of the saved simulations. In the example below for example we load only the variable "q_lat" and only the first three runs into R:
+
+
+```{r, echo=FALSE}
+q_subset <- readRDS("D:/Projects_R/SWATplusR/vignettes/datasets/q_subset.rds")
+```
+
+```{r, eval = FALSE}
+q_subset <- load_swat_run(save_dir = path_saved_q,
+                          variable = "q_lat",
+                          run = 1:3)
+```
+
+```{r}
+q_subset
+```
+
+
+## Further `SWATplusR` input arguments
+
+The functions `run_swat2012()` and `run_swatplus()` have many further input arguments that allow to control important settings of a SWAT simulation. Here I will just mention a few of the essential ones. A detailed overview of the input arguments is provided in the respective function documentations.
+The simulation period can be controlled with the arguments `start_date` and `end_date`. The format writing the outputs of the simulations in the SWAT project folder is controlled by the arguments `output_interval` to define whether the simulations are written with daily, monthly or yearly time steps, `years_skip` to define the simulated years that should be skipped for writing the simulation outputs. With the argument `run_index` a subset of the provided parameter combinations can be simulated. This is useful, when for instance distributing the simulations on multiple computers, or when continuing the simulations after a crash.
 
 ## References

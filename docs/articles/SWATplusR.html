@@ -317,9 +317,9 @@ q_plot &lt;-<span class="st"> </span>q_out_<span class="dv">2012</span> <span cl
 <span class="co">#&gt;  Simulation 1 of 1   Time elapsed: 2S   Time remaining: 0S</span>
 <span class="co">#&gt;  Completed 1 simulation in 2S</span></code></pre></div>
 </div>
-<div id="simulations-with-many-parameter-setups" class="section level3">
+<div id="simulations-with-many-parameter-sets" class="section level3">
 <h3 class="hasAnchor">
-<a href="#simulations-with-many-parameter-setups" class="anchor"></a>Simulations with many parameter setups</h3>
+<a href="#simulations-with-many-parameter-sets" class="anchor"></a>Simulations with many parameter sets</h3>
 <p>The same workflow works with several parameter sets when they are defined in a <code>tibble</code>. The example below uses the same parameters as above, but in this case a <code>tibble</code> was defined with 8 random realizations for each parameter within the defined boundaries.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_set &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="st">"cn2.hru|change = abschg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif</a></span>(<span class="dv">8</span>,<span class="op">-</span><span class="dv">15</span>,<span class="dv">10</span>),
                   <span class="st">"alpha.gw|change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif</a></span>(<span class="dv">8</span>, <span class="dv">0</span>, <span class="dv">1</span>))
@@ -336,10 +336,10 @@ par_set</code></pre></div>
                       <span class="dt">n_thread =</span> <span class="dv">4</span>)
 
 <span class="co">#&gt; Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':</span>
-<span class="co">#&gt;  Thread 4 of 4   Time elapsed: 2S   Time remaining: 0S    </span>
+<span class="co">#&gt;  Thread 2 of 4   Time elapsed: 1S   Time remaining: 1S    </span>
 <span class="co">#&gt;  Completed 4 thread in 2S</span>
 <span class="co">#&gt; Performing 8 simulations on 4 cores:</span>
-<span class="co">#&gt;  Simulation 8 of 8   Time elapsed: 5S   Time remaining: 0S</span>
+<span class="co">#&gt;  Simulation 4 of 8   Time elapsed: 4S   Time remaining: 4S</span>
 <span class="co">#&gt;  Completed 8 simulations in 5S</span></code></pre></div>
 </div>
 <div id="exploring-simulations-with-parameter-alterations" class="section level3">
@@ -405,27 +405,106 @@ par_set</code></pre></div>
 <div id="saving-and-loading-simulations" class="section level2">
 <h2 class="hasAnchor">
 <a href="#saving-and-loading-simulations" class="anchor"></a>Saving and loading Simulations</h2>
-<p>In many cases it is advantageous to save the simulations incrementally after each SWAT model evaluation, for instance when long simulation runs would be lost if the computer or the R instance crashes, or when the simulation results cannot be stored in the RAM storage at all.</p>
+<p>In many cases it is advantageous to save the simulations incrementally after each model evaluation, for instance when long simulation runs would be lost if the computer or the R instance crashes, or when the simulation results cannot be stored in the RAM storage at all.</p>
 <p>Simulations can be saved incrementally in an <em>SQLite</em> data base on the local hard drive, by passing a name for the save folder with the argument <code>save_file</code> in <code>run_swat*()</code>. By default the data base with the name <code>save_file</code> is saved in the project folder. An individual path for the <code>save_file</code> can be defined with the argument <code>save_path</code>. In case the simulations should be only saved in the data base and not returned back to R, the argument <code>return_output = FALSE</code> has to be set.</p>
-<p>In the example above these arguments are simply added to the <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> function call, to save the simulations in a data base instead of returning them back to R:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
-                      <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_sur  =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"basin_wb"</span>,
-                                                           <span class="dt">variable =</span> <span class="st">"surq_gen"</span>,
-                                                           <span class="dt">unit =</span> <span class="dv">1</span>),
-                      <span class="dt">q_lat  =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"basin_wb"</span>,
-                                             <span class="dt">variable =</span> <span class="st">"latq"</span>,
-                                             <span class="dt">unit =</span> <span class="dv">1</span>)),
-                      <span class="dt">parameter =</span> par_set,
-                      <span class="dt">n_thread =</span> <span class="dv">4</span>,
-                      <span class="dt">save_file =</span> <span class="st">"q_sur_lat"</span>,
-                      <span class="dt">return_output =</span> <span class="ot">FALSE</span>)
+<p>These arguments are simply added to the <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> function call to save the simulations in a data base instead of returning them back to R. Below the arguments are added to the previous simulation:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
+            <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_sur  =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"basin_wb"</span>,
+                                                 <span class="dt">variable =</span> <span class="st">"surq_gen"</span>,
+                                                 <span class="dt">unit =</span> <span class="dv">1</span>),
+            <span class="dt">q_lat  =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"basin_wb"</span>,
+                                   <span class="dt">variable =</span> <span class="st">"latq"</span>,
+                                   <span class="dt">unit =</span> <span class="dv">1</span>)),
+            <span class="dt">parameter =</span> par_set,
+            <span class="dt">n_thread =</span> <span class="dv">4</span>,
+            <span class="dt">save_file =</span> <span class="st">"q_sur_lat"</span>,
+            <span class="dt">return_output =</span> <span class="ot">FALSE</span>)
 
 <span class="co">#&gt; Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':</span>
-<span class="co">#&gt;  Thread 4 of 4   Time elapsed: 2S   Time remaining: 0S    </span>
+<span class="co">#&gt;  Thread 2 of 4   Time elapsed: 1S   Time remaining: 1S    </span>
 <span class="co">#&gt;  Completed 4 thread in 2S</span>
 <span class="co">#&gt; Performing 8 simulations on 4 cores:</span>
-<span class="co">#&gt;  Simulation 8 of 8   Time elapsed: 6S   Time remaining: 0S</span>
+<span class="co">#&gt;  Simulation 4 of 8   Time elapsed: 3S   Time remaining: 3S</span>
 <span class="co">#&gt;  Completed 8 simulations in 6S</span></code></pre></div>
+<p>You can see that the function did not return any results in R but generated a folder that we called “q_sur_lat” passed by the argument <code>save_file</code> in the project folder. That folder now contains several data bases. The first data base is called “par_dat.sqlite” and stores the parameter information and the date vector. Further, each of the parallel threads of the simulation generated a data base where each thread wrote the simulation results (This is necessary to avoid access conflicts when writing to data bases in parallel). The simulation data bases are always called “sim_thread_i.sqlite”, where “i” are the indexes of the individual threads (1 to 4 in this case).</p>
+<p><code>SWATplusR</code> provides two options to access the saved simulations. Loading large data bases into the R environment can take a long time. If you only want to know the the content of saved simulations (e.g. to check the successful simulation runs after a crash) you can scan the saved runs with the function <code><a href="../reference/scan_swat_run.html">scan_swat_run()</a></code>. The function writes meta information on the saved SWAT simulations into the console. The function returns the following for our saved runs:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Set the path to the folder where the date bases were saved</span>
+path_saved_q &lt;-<span class="st"> "Path:/to/the/folder/q_sur_lat"</span>
+
+<span class="kw"><a href="../reference/scan_swat_run.html">scan_swat_run</a></span>(<span class="dt">save_dir =</span> path_saved_q)
+<span class="co">#&gt; Simulation period:</span>
+<span class="co">#&gt;  2003-01-01 to 2012-12-31</span>
+<span class="co">#&gt;</span>
+<span class="co">#&gt; Simulated variables:</span>
+<span class="co">#&gt; q_lat: runs 1 to 8</span>
+<span class="co">#&gt; q_sur: runs 1 to 8</span>
+<span class="co">#&gt;</span>
+<span class="co">#&gt; Parameter set:</span>
+<span class="co">#&gt; # A tibble: 8 x 2</span>
+<span class="co">#&gt;        cn2 alpha</span>
+<span class="co">#&gt;      &lt;dbl&gt; &lt;dbl&gt;</span>
+<span class="co">#&gt; 1   0.360  0.401</span>
+<span class="co">#&gt; 2 -11.3    0.151</span>
+<span class="co">#&gt; 3 -11.1    0.752</span>
+<span class="co">#&gt; 4  -5.67   0.608</span>
+<span class="co">#&gt; 5  -9.94   0.590</span>
+<span class="co">#&gt; 6   8.37   0.571</span>
+<span class="co">#&gt; 7   4.52   0.408</span>
+<span class="co">#&gt; 8   0.0230 0.115</span>
+<span class="co">#&gt; # A tibble: 2 x 4</span>
+<span class="co">#&gt;   par_name parameter file_name change</span>
+<span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;     &lt;chr&gt;</span>
+<span class="co">#&gt; 1 cn2      cn2       hru       abschg</span>
+<span class="co">#&gt; 2 alpha    alpha     gw        absval</span></code></pre></div>
+<p><code><a href="../reference/scan_swat_run.html">scan_swat_run()</a></code> returns information on the simulation period, which output variables were saved and which simulation runs were executed for these variables. Further, information on the used model parameter sets is written.</p>
+<p>With <code><a href="../reference/load_swat_run.html">load_swat_run()</a></code> you can then load the simulations saved in the data bases. In case the entire set of simulations cannot be loaded in to the RAM storage the function provides the option to only load parts of the saved simulations. In the example below for example we load only the variable “q_lat” and only the first three runs into R:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_subset &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_swat_run.html">load_swat_run</a></span>(<span class="dt">save_dir =</span> path_saved_q,
+                          <span class="dt">variable =</span> <span class="st">"q_lat"</span>,
+                          <span class="dt">run =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">3</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_subset
+<span class="co">#&gt; $parameter</span>
+<span class="co">#&gt; $parameter$values</span>
+<span class="co">#&gt; # A tibble: 8 x 2</span>
+<span class="co">#&gt;        cn2 alpha</span>
+<span class="co">#&gt;      &lt;dbl&gt; &lt;dbl&gt;</span>
+<span class="co">#&gt; 1   0.360  0.401</span>
+<span class="co">#&gt; 2 -11.3    0.151</span>
+<span class="co">#&gt; 3 -11.1    0.752</span>
+<span class="co">#&gt; 4  -5.67   0.608</span>
+<span class="co">#&gt; 5  -9.94   0.590</span>
+<span class="co">#&gt; 6   8.37   0.571</span>
+<span class="co">#&gt; 7   4.52   0.408</span>
+<span class="co">#&gt; 8   0.0230 0.115</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; $parameter$definition</span>
+<span class="co">#&gt; # A tibble: 2 x 4</span>
+<span class="co">#&gt;   par_name parameter file_name change</span>
+<span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;     &lt;chr&gt; </span>
+<span class="co">#&gt; 1 cn2      cn2       hru       abschg</span>
+<span class="co">#&gt; 2 alpha    alpha     gw        absval</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; $simulation</span>
+<span class="co">#&gt; $simulation$q_lat</span>
+<span class="co">#&gt; # A tibble: 3,653 x 4</span>
+<span class="co">#&gt;    date                run_1 run_2 run_3</span>
+<span class="co">#&gt;    &lt;dttm&gt;              &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 2003-01-01 00:00:00 2.27  2.52  2.52 </span>
+<span class="co">#&gt;  2 2003-01-02 00:00:00 1.67  1.9   1.90 </span>
+<span class="co">#&gt;  3 2003-01-03 00:00:00 1.34  1.54  1.54 </span>
+<span class="co">#&gt;  4 2003-01-04 00:00:00 1.14  1.32  1.32 </span>
+<span class="co">#&gt;  5 2003-01-05 00:00:00 1.03  1.19  1.19 </span>
+<span class="co">#&gt;  6 2003-01-06 00:00:00 0.956 1.10  1.10 </span>
+<span class="co">#&gt;  7 2003-01-07 00:00:00 0.906 1.04  1.04 </span>
+<span class="co">#&gt;  8 2003-01-08 00:00:00 0.869 0.995 0.994</span>
+<span class="co">#&gt;  9 2003-01-09 00:00:00 0.838 0.957 0.956</span>
+<span class="co">#&gt; 10 2003-01-10 00:00:00 0.812 0.925 0.925</span>
+<span class="co">#&gt; # ... with 3,643 more rows</span></code></pre></div>
+</div>
+<div id="further-swatplusr-input-arguments" class="section level2">
+<h2 class="hasAnchor">
+<a href="#further-swatplusr-input-arguments" class="anchor"></a>Further <code>SWATplusR</code> input arguments</h2>
+<p>The functions <code><a href="../reference/run_swat2012.html">run_swat2012()</a></code> and <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> have many further input arguments that allow to control important settings of a SWAT simulation. Here I will just mention a few of the essential ones. A detailed overview of the input arguments is provided in the respective function documentations. The simulation period can be controlled with the arguments <code>start_date</code> and <code>end_date</code>. The format writing the outputs of the simulations in the SWAT project folder is controlled by the arguments <code>output_interval</code> to define whether the simulations are written with daily, monthly or yearly time steps, <code>years_skip</code> to define the simulated years that should be skipped for writing the simulation outputs. With the argument <code>run_index</code> a subset of the provided parameter combinations can be simulated. This is useful, when for instance distributing the simulations on multiple computers, or when continuing the simulations after a crash.</p>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="hasAnchor">
@@ -466,6 +545,7 @@ par_set</code></pre></div>
       <li><a href="#first-swat-model-runs">First SWAT model runs</a></li>
       <li><a href="#model-parameter-alteration">Model parameter alteration</a></li>
       <li><a href="#saving-and-loading-simulations">Saving and loading Simulations</a></li>
+      <li><a href="#further-swatplusr-input-arguments">Further <code>SWATplusR</code> input arguments</a></li>
       <li><a href="#references">References</a></li>
       </ul>
 </div>
