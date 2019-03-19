@@ -19,8 +19,8 @@ knitr::opts_chunk$set(
 
 ## R packages
 
-There are many optimization routines available in R. The base R package `stats` [@Rcore2019] provides the function `optim` that offers several standard methods for model parameter optimization. The `hydromad` [@Andrews2018] package provides a complete environment for hydrological modeling in R. It also offers several optimization algorithms that are standard methods in hydrological modelling, such as the Shuffled Complex Evolution algorithm [SCE; @Duan1993], or the Dynamically Dimensioned Search algoritm [DDS; @Tolson2007].  A flexible integration of the DDS algorithm for R can also be found on the following [github repository](https://github.com/bdb67/Dynamically-Dimensioned-Search) [@Bass2019]. 
-Multiple goodness-of-fit functions are available from literature to evaluate simulated time series with observed time series of that variable. The `hydroGOF` package [@MZB2017] summarizes frequently used functions for the evaluation of time series of hydrological variables. 
+There are many optimization routines available in R. The base R package `stats` [@Rcore2019] provides the function `optim` that offers several standard methods for model parameter optimization. The `hydromad` [@Andrews2018] package provides a complete environment for hydrological modeling in R. It also offers several optimization algorithms that are standard methods in hydrological modeling, such as the Shuffled Complex Evolution algorithm [SCE; @Duan1993], or the Dynamically Dimensioned Search algorithm [DDS; @Tolson2007].  A flexible integration of the DDS algorithm for R can also be found on the following [github repository](https://github.com/bdb67/Dynamically-Dimensioned-Search) [@Bass2019].
+Multiple goodness-of-fit functions are available from literature to evaluate simulated time series with observed time series of that variable. The `hydroGOF` package [@MZB2017] summarizes frequently used functions for the evaluation of time series of hydrological variables.
 
 ### Package installation
 
@@ -60,7 +60,7 @@ path_plus <- load_demo(dataset = "project",
                        path = demo_path)
 ```
 
-`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2012-12-31. Therfore, we load the demo data and limit it to this time period:
+`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2012-12-31. Therefore, we load the demo data and limit it to this time period:
 
 ```{r}
 q_obs <- load_demo(dataset = "observation")
@@ -68,15 +68,12 @@ q_obs <- load_demo(dataset = "observation")
 q_obs <- filter(q_obs, date >= ymd("2003-01-01"),
                        date <= "2012-12-31")
 ```
+## Definition of the function to optimize
 
-## Parameter optimization with `optim`
-
-A way to find a model parametrization that results in model setup that adequately reproduces observation data is to perform parameter optimization. Several routines such as the Shuffled Complex Evolution algorithm [SCE; @Duan1993], or the Dynamically Dimensioned Search algorithm [DDS; @Tolson2007] among others are frequently used in hydrological modeling. The two examples below demonstrate the implementation of a 'quasi-Newton' method [@Byrd1995] with the generic `optim()` function and the implementation of the SCE algorithm that is available in the `hydromad` package.
-
-Both optimization algorithms again require a function that returns a scalar for the optimization. Thus, the SWAT model has to be implemented in a function that performs the model evaluation with observation data and returns a measure of goodness-of-fit for which the model parameters will be optimized.
+Most optimizers require a function as an input argument that uses a parameter set as input and returns a scalar value as a result. To use the `run_swatplus()` function in the optimization we wrap a function around the SWAT model execution that will be implemented in the optimizer to search the optimum parameter set that minimizes the return value (minimization is usually the default option in optimizers). Below you see how you can implement the model execution into a function that can be optimized:
 
 ```{r, eval=FALSE}
-swat_optim <- function(par) {
+swat_optim <- function(par, obs) {
   names(par) <- par_names
   q_sim <- run_swatplus(project_path = "C:/swatplus_demo",
                         output = define_output(file = "channel",
@@ -86,15 +83,20 @@ swat_optim <- function(par) {
                         start_date = "2000-01-01",
                         end_date = "2012-12-31",
                         years_skip = 3,
-                        quiet = TRUE,
-                        keep_folder = TRUE,
-                        refresh = FALSE)
-  nse_q <- - NSE(q_sim$simulation$flo_out/8.64, q_obs$q_out)
+                        quiet = TRUE)
+
+  nse_q <- - NSE(q_sim$simulation$flo_out/8.64, obs)
   return(nse_q)
   }
 ```
 
-The optimization algorithms require the parameters to be optimized, starting values, and upper and lower parameter boundaries to define the range in which the algorithm searches the best parameter set.
+We defined a function that has one input argument `par` that is the named parameter vector that will be passed to `run_swatplus()`. The simulation will return the discharge at the main outlet (`unit = 1`) for the time period 2003-01-01 to 2012-12-31 (considering the `years_skip = 3` as warm up period). In this case we set the function to be `quiet = TRUE`. In a next step the function uses the observed discharge values from `q_obs$q_out` for the same period and evaluate the simulated discharges using the `NSE()` from the package `hydroGOF` that is then returned as a single value. You can see that we implemented the negative NSE as we will minimize with `optim()`
+
+## Parameter optimization with `optim`
+
+The `optim()` function provides several optimization routines (see the 'Details' section in the R help file). Most of the offered algorithms, however, do not provide the option to define parameter boundaries. Though, constraining SWAT model parameters is essential as these are bound in the model. The `method = 'L-BFGS-B'` implements a 'quasi-Newton' method according to @Byrd1995 and allows to define parameter boundaries.
+
+In the optimization example we will use 7 parameters that are frequently used for model calibration with respect to simulated discharge. The `optim` function requires starting values (`par_init`) and in the case of `method = 'L-BFGS-B'` we can also define upper (`par_upr`) and lower (`par_lwr`) boundaries for the parameters to optimize. We name the parameter sets using the syntax for SWAT model parameters that is required for the `run_swat*()` functions (see the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration) section on 'Model parameter optimization' to learn more on parameter names):
 
 ```{r, eval=FALSE}
 par_names <- c("cn2.hru | change = abschg",
@@ -111,16 +113,16 @@ names(par_init) <- par_names
 names(par_lwr) <- par_names
 names(par_upr) <- par_names
 ```
-
-To perform the parameter optimization the defined model that should be optimized and the parameters with their initial values and boundaries are implemented as follows.
+The defined optimization function `swat_optim()` can now be implemented in the algorithm as follows:
 
 ```{r, eval=FALSE}
-opt_bfgs <- optim(par_init, swat_optim, method = "L-BFGS-B",
+opt_bfgs <- optim(par = par_init, swat_optim, method = "L-BFGS-B",
                   lower = par_lwr, upper = par_upr)
-opt_sce  <- SCEoptim(swat_optim, par_init, lower = par_lwr, upper = par_upr,
-                     control = list(reltol = 10^(-3), trace = 1))
 ```
+
 ## Parameter optimization with `hydromad`
+
+The implementation of the SCE algorithm provided by `hydromad` with the function `SCEoptim()` follows an almost identical syntax as the `optim()` function. Therefore, we can perform the optimization in almost the same manner as above. In `SCEoptim()` we will add however a few control arguments to define some settings in the optimization, such as the relative tolerance `reltol = 0.001` that is used to stop the optimization when the improvements in NSE are below the threshold, `tolsteps = 3` to stop after the third time the improvement in NSE was below the threshold, and `trace = 1` to get feedback from each optimization cycle. The optimization run looks as follows:
 
 ```{r}
 opt_sce  <- SCEoptim(swat_optim, par_init, lower = par_lwr, upper = par_upr,
@@ -136,10 +138,6 @@ opt_sce  <- SCEoptim(swat_optim, par_init, lower = par_lwr, upper = par_upr,
 #>     8      2061                -0.744018                   497.542
 #>     9      2272                -0.744347                   497.542
 #>    10      2476                -0.744557                   497.542
-#>    11      2712                -0.744565                   481.458
-#>    12      2954                -0.744565                   481.458
-#>    13      3140                -0.744565                   481.458
-#>    14      3342                -0.744596                   481.458
 ```
 
 ```{r}
@@ -155,10 +153,10 @@ q_sim <- run_swatplus(project_path = "C:/swatplus_demo",
                       years_skip = 3,
                       n_thread = 4)
 
-#> Building 4 threads in 'C:/swatplus_demo/.model_run': 
+#> Building 4 threads in 'C:/swatplus_demo/.model_run':
 #>  Completed 4 threads in 0S                                                  
-#> Performing 14 simulations on 4 cores: 
-#>  Completed 14 simulations in 10S 
+#> Performing 14 simulations on 4 cores:
+#>  Completed 14 simulations in 10S
 ```
 
 ## References
