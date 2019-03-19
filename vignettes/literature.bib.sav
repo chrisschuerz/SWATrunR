@@ -937,4 +937,22 @@
   publisher = {Foundation for Open Access Statistic},
 }
 
+@Manual{Bass2019,
+  title   = {{Tolson \& Shoemaker's DDS Algorithm implementation in R }},
+  author  = {Brandon Bass},
+  year    = {2014},
+  note    = {Latest commit 9099835 on 4 Nov 2014},
+  url     = {https://github.com/bdb67/Dynamically-Dimensioned-Search},
+  urldate = {2019-03-19},
+}
+
+@Manual{Andrews2018,
+  title   = {hydromad: Hydrological Model Assessment and Development},
+  author  = {Felix Andrews and Joseph Guillaume},
+  year    = {2018},
+  note    = {R package version 0.9-26},
+  url     = {http://hydromad.catchment.org/},
+  urldate = {2},
+}
+
 @Comment{jabref-meta: databaseType:bibtex;}

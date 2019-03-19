@@ -19,6 +19,8 @@ knitr::opts_chunk$set(
 
 ## R packages
 
+There are many optimization routines available in R. The base R package `stats` [@Rcore2019] provides the function `optim` that offers several standard methods for model parameter optimization. The `hydromad` [@Andrews2018] package provides a complete environment for hydrological modeling in R. It also offers several optimization algorithms that are standard methods in hydrological modelling, such as the Shuffled Complex Evolution algorithm [SCE; @Duan1993], or the Dynamically Dimensioned Search algoritm [DDS; @Tolson2007]. The `hydromad` package can be installed following the instructions on the [hydromad website](http://hydromad.catchment.org/#installation). A flexible integration of the DDS algorithm for R can also be found on the following [github repository](https://github.com/bdb67/Dynamically-Dimensioned-Search) [@Bass2019]. 
+Multiple goodness-of-fit functions are available from literature to evaluate simulated time series with observed time series of that variable. The `hydroGOF` package [@MZB2017] summarizes frequently used functions for the evaluation of time series of hydrological variables. 
 
 Before exploring the package load `SWATplusR`:
 ```{r}
