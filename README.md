@@ -52,9 +52,9 @@ You can explore the basic functionality of `SWATplusR` in the [Get started](http
 
 The [Articles](https://chrisschuerz.github.io/SWATplusR/articles/) section is a collection of tutorials for typical topics on SWAT modeling. Here you can learn how to use `SWATplusR` in combination with other R packages to perform tasks such as:
 
--   Parameter sensitivity analysis &gt;&gt;
--   Model parameter optimization &gt;&gt;
--   Parameter sampling and model calibration &gt;&gt;
+-   Parameter sensitivity analysis [&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/par_sensitivity.html)
+-   Model parameter optimization [&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/par_optim.html)
+-   Parameter sampling and model calibration [&gt;&gt;](https://chrisschuerz.github.io/SWATplusR/articles/par_sampl_calib.html)
 -   Visualization &gt;&gt;
 
 The Articles section will be updated in the future with further topics that can be relevant for any modeling workflow with `SWATplusR`.
