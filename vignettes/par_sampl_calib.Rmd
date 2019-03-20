@@ -29,7 +29,7 @@ If you do not have installed any of the required R package, follow the instructi
 The `hydromad` package can be installed following the instructions on the [hydromad website](http://hydromad.catchment.org/#installation).
 
 The other R packages are available from CRAN and can be installed with the following commands:
-```{r}
+```{r, eval=FALSE}
 install.packages("hydroGOF")
 install.packages("dplyr")
 install.packages("tidyr")
@@ -37,7 +37,7 @@ install.packages("ggplot2")
 ```
 
 ### Loading R packages
-```{r}
+```{r, eval=FALSE}
 library(SWATplusR)
 library(hydromad)
 library(hydroGOF)
@@ -62,7 +62,7 @@ path_plus <- load_demo(dataset = "project",
 
 `SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2012-12-31. Therefore, we load the demo data and limit it to this time period:
 
-```{r}
+```{r, eval=FALSE}
 q_obs <- load_demo(dataset = "observation")
 
 q_obs <- filter(q_obs, date >= ymd("2003-01-01"),
