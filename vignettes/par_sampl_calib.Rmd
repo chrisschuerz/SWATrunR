@@ -1,0 +1,111 @@
+---
+title: "Parameter optimization"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exploring SWATplusR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: literature.bib
+link-citations: yes
+csl: copernicus.csl
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## R packages
+
+There are many optimization routines available in R. The base R package `stats` [@Rcore2019] provides the function `optim()` that offers several standard methods for model parameter optimization. The `hydromad` [@Andrews2018] package provides a complete environment for hydrological modeling in R. It also offers several optimization algorithms that are standard methods in hydrological modeling, such as the Shuffled Complex Evolution algorithm [SCE; @Duan1993], or the Dynamically Dimensioned Search algorithm [DDS; @Tolson2007]. A flexible integration of the DDS algorithm for R can also be found on the following [github repository](https://github.com/bdb67/Dynamically-Dimensioned-Search) [@Bass2019].
+Multiple goodness-of-fit functions are available from literature to evaluate simulated time series with observed time series of that variable. The `hydroGOF` package [@MZB2017] summarizes frequently used functions for the evaluation of time series of hydrological variables.
+
+### Package installation
+
+If you do not have installed any of the required R package, follow the instructions for the respective R package.
+
+The `hydromad` package can be installed following the instructions on the [hydromad website](http://hydromad.catchment.org/#installation).
+
+The other R packages are available from CRAN and can be installed with the following commands:
+```{r}
+install.packages("hydroGOF")
+install.packages("dplyr")
+install.packages("tidyr")
+install.packages("ggplot2")
+```
+
+### Loading R packages
+```{r}
+library(SWATplusR)
+library(hydromad)
+library(hydroGOF)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+## Loading demo data
+
+The optimization example uses the SWAT+ demo project available from `SWATplusR`. The demo project is a very simple model setups of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. You can load the to your hard drive as follows:
+
+```{r, eval=FALSE}
+# The path where the SWAT demo project will be written
+demo_path <- "Define:/your/path"
+
+# Loading the SWAT+ demo project on your hard drive
+path_plus <- load_demo(dataset = "project",
+                       swat_version = "plus",
+                       path = demo_path)
+```
+
+`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2012-12-31. Therefore, we load the demo data and limit it to this time period:
+
+```{r}
+q_obs <- load_demo(dataset = "observation")
+
+q_obs <- filter(q_obs, date >= ymd("2003-01-01"),
+                       date <= "2012-12-31")
+```
+
+## Definition of the function to optimize
+
+Most optimizers require a function as an input argument that uses a parameter set as input and returns a scalar value as a result. To use the `run_swatplus()` function in the optimization we wrap a function around the SWAT model execution that will be implemented in the optimizer to search the optimum parameter set that minimizes the return value (minimization is usually the default option in optimizers). Below you see how you can implement the model execution into a function that can be optimized:
+
+```{r, eval=FALSE}
+swat_optim <- function(par, obs) {
+  q_sim <- run_swatplus(project_path = "C:/swatplus_demo",
+                        output = define_output(file = "channel",
+                                              variable = "flo_out",
+                                              unit = 1),
+                        parameter = par,
+                        start_date = "2000-01-01",
+                        end_date = "2012-12-31",
+                        years_skip = 3,
+                        quiet = TRUE)
+
+  nse_q <- - NSE(q_sim$simulation$flo_out/8.64, obs)
+  return(nse_q)
+}
+
+swat_optim <- function(par, obs) {
+  q_sim <- run_swatplus(project_path = "C:/swatplus_demo",
+                        output = define_output(file = "channel",
+                                              variable = "flo_out",
+                                              unit = 1),
+                        parameter = par,
+                        start_date = "2000-01-01",
+                        end_date = "2012-12-31",
+                        years_skip = 3,
+                        quiet = TRUE)
+
+  nse_q <- - NSE(q_sim$simulation$flo_out/8.64, obs)
+  return(nse_q)
+  }
+```
+
+We defined a function that has one input argument `par` that is the named parameter vector that will be passed to `run_swatplus()`. The simulation will return the discharge at the main outlet (`unit = 1`) for the time period 2003-01-01 to 2012-12-31 (considering the `years_skip = 3` as warm up period). In this case we set the function to be `quiet = TRUE`. In a next step the function uses the observed discharge values from `q_obs$q_out` for the same period and evaluate the simulated discharges using the `NSE()` from the package `hydroGOF` that is then returned as a single value. You can see that we implemented the negative NSE as we will minimize with `optim()`
+
+
+## References

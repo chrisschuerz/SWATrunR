@@ -1,5 +1,5 @@
 ---
-title: "Exploring SWATplusR"
+title: "Parameter optimization"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Exploring SWATplusR}
@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 
 ## R packages
 
-There are many optimization routines available in R. The base R package `stats` [@Rcore2019] provides the function `optim` that offers several standard methods for model parameter optimization. The `hydromad` [@Andrews2018] package provides a complete environment for hydrological modeling in R. It also offers several optimization algorithms that are standard methods in hydrological modeling, such as the Shuffled Complex Evolution algorithm [SCE; @Duan1993], or the Dynamically Dimensioned Search algorithm [DDS; @Tolson2007].  A flexible integration of the DDS algorithm for R can also be found on the following [github repository](https://github.com/bdb67/Dynamically-Dimensioned-Search) [@Bass2019].
+There are many optimization routines available in R. The base R package `stats` [@Rcore2019] provides the function `optim()` that offers several standard methods for model parameter optimization. The `hydromad` [@Andrews2018] package provides a complete environment for hydrological modeling in R. It also offers several optimization algorithms that are standard methods in hydrological modeling, such as the Shuffled Complex Evolution algorithm [SCE; @Duan1993], or the Dynamically Dimensioned Search algorithm [DDS; @Tolson2007]. A flexible integration of the DDS algorithm for R can also be found on the following [github repository](https://github.com/bdb67/Dynamically-Dimensioned-Search) [@Bass2019].
 Multiple goodness-of-fit functions are available from literature to evaluate simulated time series with observed time series of that variable. The `hydroGOF` package [@MZB2017] summarizes frequently used functions for the evaluation of time series of hydrological variables.
 
 ### Package installation
@@ -29,26 +29,29 @@ If you do not have installed any of the required R package, follow the instructi
 The `hydromad` package can be installed following the instructions on the [hydromad website](http://hydromad.catchment.org/#installation).
 
 The other R packages are available from CRAN and can be installed with the following commands:
-```{r}
+```{r, eval = FALSE}
 install.packages("hydroGOF")
 install.packages("dplyr")
+install.packages("lubridate")
 install.packages("tidyr")
 install.packages("ggplot2")
 ```
 
 ### Loading R packages
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(SWATplusR)
 library(hydromad)
 library(hydroGOF)
 library(dplyr)
+library(lubridate)
 library(tidyr)
 library(ggplot2)
+
 ```
 
 ## Loading demo data
 
-The optimization example uses the SWAT+ demo project available from `SWATplusR`. The demo project is a very simple model setups of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. You can load the to your hard drive as follows:
+The optimization example uses the SWAT+ demo project available from `SWATplusR`. The demo project is a simple model setup of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. You can load the to your hard drive as follows:
 
 ```{r, eval=FALSE}
 # The path where the SWAT demo project will be written
@@ -68,23 +71,26 @@ q_obs <- load_demo(dataset = "observation")
 q_obs <- filter(q_obs, date >= ymd("2003-01-01"),
                        date <= "2012-12-31")
 ```
+
 ## Definition of the function to optimize
 
-Most optimizers require a function as an input argument that uses a parameter set as input and returns a scalar value as a result. To use the `run_swatplus()` function in the optimization we wrap a function around the SWAT model execution that will be implemented in the optimizer to search the optimum parameter set that minimizes the return value (minimization is usually the default option in optimizers). Below you see how you can implement the model execution into a function that can be optimized:
+Most optimizers require a function as an input argument that uses a parameter set as input and returns a scalar value as a result. To use the `run_swatplus()` function in the optimization we wrap a function around the SWAT model execution that will be implemented in the optimizer to search the optimum parameter set that minimizes the return value (minimization is usually the default option in optimizers). An important side note for running SWAT+, the discharge is written in $ha \cdot m \cdot day{-1}$ (in our case it is day!). A conversion to $m^{3} \cdot s^{-1}$ requires to devide by $8.64$. Below you see how you can implement the model execution into a function that can be optimized:
 
-```{r, eval=FALSE}
+```{r}
+swat_model <- function(par) {
+  run_swatplus(project_path = path_plus,
+               output = define_output(file = "channel",
+                                     variable = "flo_out",
+                                     unit = 1),
+               parameter = par,
+               start_date = "2000-01-01",
+               end_date = "2012-12-31",
+               years_skip = 3,
+               quiet = TRUE)
+}
+
 swat_optim <- function(par, obs) {
-  names(par) <- par_names
-  q_sim <- run_swatplus(project_path = "C:/swatplus_demo",
-                        output = define_output(file = "channel",
-                                              variable = "flo_out",
-                                              unit = 1),
-                        parameter = par,
-                        start_date = "2000-01-01",
-                        end_date = "2012-12-31",
-                        years_skip = 3,
-                        quiet = TRUE)
-
+  q_sim <- swat_model(par)
   nse_q <- - NSE(q_sim$simulation$flo_out/8.64, obs)
   return(nse_q)
   }
@@ -106,27 +112,69 @@ par_names <- c("cn2.hru | change = abschg",
                "z.sol | change = pctchg",
                "epco.hru | change = absval",
                "esco.hru | change = absval")
-par_init <- c(0, 5, 50, 0 , 0, 0.5, 0.5)
+par_init <- c(0, 3, 50, 0 , 0, 0.5, 0.5)
 par_lwr  <- c(-15, 0.5,  10, -50, -50, 0, 0)
 par_upr  <- c( 10,  50, 100,  50,  50, 1, 1)
 names(par_init) <- par_names
 names(par_lwr) <- par_names
 names(par_upr) <- par_names
 ```
+
 The defined optimization function `swat_optim()` can now be implemented in the algorithm as follows:
 
 ```{r, eval=FALSE}
-opt_bfgs <- optim(par = par_init, swat_optim, method = "L-BFGS-B",
-                  lower = par_lwr, upper = par_upr)
+opt_bfgs <- optim(par = par_init, fn = swat_optim, method = "L-BFGS-B",
+                  lower = par_lwr, upper = par_upr, obs = q_obs$q_out, 
+                  control = list(maxit = 100))
 ```
 
-## Parameter optimization with `hydromad`
+```{r, echo = FALSE}
+opt_bfgs <- readRDS(here::here("vignettes/datasets/opt_bfgs.rds"))
+```
+
+
+We omitted any feedback of the optimization in that case. If you want to get som feedback of the optimization routine you can set the control parameter `trace = 6` in the list of control parameters above. The result of the optimization is saved in a list object. Relevant information is given by the list entries `opt_bfgs$par` that provides the final optimum parameter set and `opt_bfgs$value` that shows the optimized onbjective criterion, in our case the NSE:
+
+```{r}
+opt_bfgs$par
+
+opt_bfgs$value
+```
+
+To visualize the discharge time series with the found parameter set we have to rerun the `swat_model()` we defined above with the optimimum parameter set:
+
+```{r, eval=FALSE}
+q_bfgs <- swat_model(opt_bfgs$par)
+```
+
+```{r, echo=FALSE}
+q_bfgs <- readRDS(here::here("vignettes/datasets/q_bfgs.rds"))
+```
+
+
+We will visualize the simulation with the optimized parameter set together with the observed discharge. We prepare our data with `dplyr` [@Wickham2019] and `tidyr` [@Wickham2018a] and plot it with `ggplot2`:
+
+```{r}
+q_plot <- q_bfgs$simulation %>%
+  rename(., q_sim = flo_out) %>%
+  mutate(q_sim = q_sim/8.64) %>% 
+  left_join(., q_obs, by = "date") %>%
+  rename(q_obs = q_out) %>%
+  gather(., key = "variable", value = "discharge", -date)
+
+ggplot(data = q_plot) +
+  geom_line(aes(x = date, y = discharge, col = variable, lty = variable)) +
+  scale_color_manual(values = c("black", "tomato3")) +
+  theme_bw()
+```
+
+## Parameter optimization with `SCEoptim()`
 
 The implementation of the SCE algorithm provided by `hydromad` with the function `SCEoptim()` follows an almost identical syntax as the `optim()` function. Therefore, we can perform the optimization in almost the same manner as above. In `SCEoptim()` we will add however a few control arguments to define some settings in the optimization, such as the relative tolerance `reltol = 0.001` that is used to stop the optimization when the improvements in NSE are below the threshold, `tolsteps = 3` to stop after the third time the improvement in NSE was below the threshold, and `trace = 1` to get feedback from each optimization cycle. The optimization run looks as follows:
 
-```{r}
+```{r, eval = FALSE}
 opt_sce  <- SCEoptim(swat_optim, par_init, lower = par_lwr, upper = par_upr,
-                     control = list(reltol = 10^(-3), trace = 1))
+                     control = list(reltol = 10^(-3), tolsteps = 3, trace = 1))
 #> Nr Iter  Nr Fun Eval    Current best function    Current worst function
 #>     1       391                -0.736847                   497.542
 #>     2       610                 -0.73938                   497.542
@@ -140,23 +188,50 @@ opt_sce  <- SCEoptim(swat_optim, par_init, lower = par_lwr, upper = par_upr,
 #>    10      2476                -0.744557                   497.542
 ```
 
-```{r}
+```{r, echo = FALSE}
+opt_sce <- readRDS(here::here("vignettes/datasets/opt_sce.rds"))
+```
+
+The optimization result with `SCEoptim()` provides more detailed information compared to `optim()`, such as the best parameter set of each iteration step. In our example you can see that all ten simulations actually resulted in almost the same model performance, a look at the respctive paramter sets shows however, that some paramters strongly vary between these results. Therefore, it can be interesting to have a look on all ten simulation results. The best parameter set for each iteration step is saved in the variable `opt_sce$BESTMEM.ALL`. We will write them in a `tibble` [@Mueller2019] to use them in our simulations. In a next step we can run the SWAT+ model with these ten parameter sets. We will use parallel computing here to have shorter computation times:
+
+```{r, eval=FALSE}
 par_best <- as_tibble(opt_sce$BESTMEM.ALL)
 
-q_sim <- run_swatplus(project_path = "C:/swatplus_demo",
-                      output = define_output(file = "channel",
-                                             variable = "flo_out",
-                                             unit = 1),
+q_sce <- run_swatplus(project_path = plus_path,
+                      output = list(q_sim = define_output(file = "channel",
+                                                          variable = "flo_out",
+                                                          unit = 1)),
                       parameter = par_best,
                       start_date = "2000-01-01",
                       end_date = "2012-12-31",
                       years_skip = 3,
                       n_thread = 4)
 
-#> Building 4 threads in 'C:/swatplus_demo/.model_run':
+#> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
 #>  Completed 4 threads in 0S                                                  
-#> Performing 14 simulations on 4 cores:
-#>  Completed 14 simulations in 10S
+#> Performing 10 simulations on 4 cores:
+#>  Completed 10 simulations in 8S
+```
+
+```{r, echo = FALSE}
+q_sce <- readRDS(here::here("vignettes/datasets/q_sce_best.rds"))
+```
+
+
+```{r}
+sce_plot <- q_sce$simulation$q_sim %>%
+  mutate_if(is.numeric, funs(./8.64)) %>% 
+  gather(., key = "variable", value = "discharge", -date)
+
+obs_plot <- rename(q_obs, q_obs = q_out)
+
+ggplot() +
+  geom_line(data = obs_plot, aes(x = date, y = q_obs), col = "black") +
+  geom_line(data = sce_plot, 
+            aes(x = date, y = discharge, col = variable), lty = 2) +
+  scale_color_brewer(palette = "Set3") +
+  ylab("discharge") + 
+  theme_bw()
 ```
 
 ## References
