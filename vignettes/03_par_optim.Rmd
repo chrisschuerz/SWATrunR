@@ -1,5 +1,5 @@
 ---
-title: "Parameter optimization"
+title: "03 - Parameter optimization"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Exploring SWATplusR}

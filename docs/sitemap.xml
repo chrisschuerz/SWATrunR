@@ -256,13 +256,13 @@
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/write_swatplus_setup.html</loc>
   </url>
   <url>
-    <loc>http://chrisschuerz.github.io/SWATplusR/articles/par_optim.html</loc>
+    <loc>http://chrisschuerz.github.io/SWATplusR/articles/01_par_sensitivity.html</loc>
   </url>
   <url>
-    <loc>http://chrisschuerz.github.io/SWATplusR/articles/par_sampl_calib.html</loc>
+    <loc>http://chrisschuerz.github.io/SWATplusR/articles/02_par_sampl_calib.html</loc>
   </url>
   <url>
-    <loc>http://chrisschuerz.github.io/SWATplusR/articles/par_sensitivity.html</loc>
+    <loc>http://chrisschuerz.github.io/SWATplusR/articles/03_par_optim.html</loc>
   </url>
   <url>
     <loc>http://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html</loc>

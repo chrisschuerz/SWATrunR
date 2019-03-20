@@ -1,0 +1,230 @@
+---
+title: "01 - Parameter sensitivity analysis"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exploring SWATplusR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: literature.bib
+link-citations: yes
+csl: copernicus.csl
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## R packages
+
+Several R packages provide methods for sensitivity analysis. Two of the widely implemented packages are `sensitivity` [@Iooss2018] and `fast` [@Reusser2015]. `fast` provides the Fourier Amplitude Sensitivity Test (FAST) as single method for sensitivity analysis. The implementation of FAST, however, is very well suited to implement it in a workflow with `SWATplusR`. `sensitivity` is a very comprehensive collection of methods for sensitivity analysis (it actually includes the FAST method as well). The implementation in a workflow with `SWATplusR` is, however, less flexible.
+In this example we will use two frequently applied methods for sensitivity analysis that are provided by these two R packages, the method of Solbol [-@Sobol1993] provided by `sensitivity` and FAST [@Cukier1973] provided by `fast`.
+Most methods for sensitivity analysis require a scalar model result to assess the sensitivity of that output variable to changes in the inputs. Multiple goodness-of-fit functions are available from literature to evaluate simulated time series with observed time series of that variable that result in scalar values. The `hydroGOF` package [@MZB2017] summarizes frequently used functions for the evaluation of time series of hydrological variables.
+
+### Package installation
+
+If you do not have installed any of the required R package, follow the instructions for the respective R package. All of the required R packages are available from CRAN and can be installed with the following commands:
+```{r, eval=FALSE}
+install.packages("sensitivity")
+install.packages("fast")
+install.packages("hydroGOF")
+install.packages("dplyr")
+install.packages("forcats")
+install.packages("tidyr")
+install.packages("ggplot2")
+```
+
+### Loading R packages
+```{r, message=FALSE, warning=FALSE}
+library(SWATplusR)
+library(sensitivity)
+library(fast)
+library(hydroGOF)
+library(dplyr)
+library(forcats)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+```
+
+## Loading demo data
+
+The sensitivity analysis example uses the SWAT+ demo project available from `SWATplusR`. The demo project is a simple model setup of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. You can load the to your hard drive as follows:
+
+```{r, eval=FALSE}
+# The path where the SWAT demo project will be written
+demo_path <- "Define:/your/path"
+
+# Loading the SWAT+ demo project on your hard drive
+path_plus <- load_demo(dataset = "project",
+                       swat_version = "plus",
+                       path = demo_path)
+```
+
+`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2007-12-31. Therefore, we load the demo data and limit it to this time period:
+
+```{r}
+q_obs <- load_demo(dataset = "observation")
+
+q_obs <- filter(q_obs, date >= ymd("2003-01-01"),
+                       date <= "2007-12-31")
+```
+
+## Model parameters
+
+In the sensitivity analyses we will use 7 parameters that are frequently used for model calibration with respect to simulated discharge. In a first step we define the parameter names as these control the parameter alteration in the `run_swat*()` functions. If you want to learn in detai how to define the parameter names correctly see the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration) section on 'Model parameter alteration':
+
+```{r}
+par_names <- c("cn2.hru | change = abschg",
+               "lat_ttime.hru | change = absval",
+               "lat_len.hru | change = absval",
+               "k.sol | change = pctchg",
+               "z.sol | change = pctchg",
+               "esco.hru | change = absval",
+               "epco.hru | change = absval")
+```
+
+## Sensitivity analysis with `fast`
+
+### Parameter sampling
+
+The Fourier Amplitude Sensitivity Test (FAST) is a method to perform GSA with few model evaluations. It only requires a few simulations when the number of parameters is low and strongly increases to tenth of thousands of model evaluations for more than 20 parameters. To keep the number of model evaluations low we use the 7 selected parameters above.
+
+The FAST method requires a specific parameter sampling design, that is available in `fast` with the function `fast_parameters()`.
+
+```{r}
+par_fast <- fast_parameters(
+  minimum = c(-15, 0.5,  10, -50, -50, 0,  0),
+  maximum = c( 10,  50, 100,  50,  50, 1,  1),
+    names = par_names) %>%
+  as_tibble()
+
+par_fast
+```
+
+### Model simulation and evaluation
+To perform a FAST analysis for 7 parameters 167 model evaluations are required. We implement the sampled FAST parameter combinations in the SWAT+ demo project by passing the parameter table with the argument `parameter` in the `run_swaplus()` function. We will perform the sensitivity analysis for the simulation period 2003-01-01 to 2007-12-31 (to accord with the simulation workflow of the tutorial on [Parameter sampling an model calibration](https://chrisschuerz.github.io/SWATplusR/articles/par_sampl_calib.html), as sensitivity analysis is often followed by the model calibration).
+
+```{r, eval=FALSE}
+q_fast <- run_swatplus(project_path = path_plus,
+            output = list(q_out = define_output(file = "channel",
+                                  variable = "flo_out",
+                                  unit = 3)),
+            parameter = par_fast,
+            start_date = "2000-01-01",
+            end_date = "2007-12-31",
+            years_skip = 3,
+            n_thread = 4)
+
+#> Building 4 threads in 'C:/swatplus_demo/.model_run':
+#>  Completed 4 threads in 0S
+#> Performing 167 simulations on 4 cores:
+#>  Completed 167 simulations in 1M 18S
+```
+
+The model runs that used the parameter sets sampled with `fast` are evaluated using the NSE [@Nash1970] criterion for daily discharge for the time period 2003 to 2012.
+
+The `NSE()` function is available from the `hydroGOF` package. The simulations are evaluated with the daily observations of discharge for the period 2003 to 2007. The calculated NSE values can than be used to assess the sensitivity of the NSE to changes in parameter values with the function `sensitivity()` from the `fast` package:  
+
+```{r, eval=FALSE}
+nse_fast <- q_fast$simulation$q_out %>%
+  select(-date) %>%
+  map_dbl(., ~NSE(.x, q_obs$q_out))
+
+sens_fast <- sensitivity(nse_fast, 7)
+```
+
+### Visualization of the FAST sensitivities
+
+To visualize the calculated sensitivities we first arrange the results in a `tibble` [@Mueller2019]. It is a good idea to rank the parameters in the plot of their sensitivities. Therefore, we convert the parameter names to factors and sort them according to their sensitivity results using the functionality of the `forcats` package [@Wickham2019a]. We plot the parameter ranking in a barplot using `ggplot2` [@Wickham2016].
+
+```{r, eval=FALSE}
+result_fast <- tibble(parameter = q_fast$parameter$definition$par_name,
+                      fast      = sens_fast) %>%
+  mutate(parameter = factor(parameter) %>% fct_reorder(., fast))
+```
+
+```{r, echo = FALSE}
+result_fast <- readRDS(here::here("vignettes/datasets/fast.rds"))
+```
+
+```{r}
+ggplot(data = result_fast) +
+  geom_bar(aes(x = parameter, y = fast), stat = "identity") +
+  xlab("Parameter") +
+  ylab("Sensitivity") +
+  coord_flip() +
+  theme_bw()
+```
+
+## Sensitivity analysis with the method of Sobol
+
+The method of Sobol is a reference method for GSA. To implement the SWAT model in the GSA workflow with `sensitivity` a function has to be defined that returns the a scalar variable for which the sensitivity is assessed.
+
+```{r, eval=FALSE}
+swat_sobol <- function(par, obs) {
+  q_sim <- run_swatplus(project_path = proj_path,
+                        output = define_output(file = "channel",
+                                               variable = "flo_out",
+                                               unit = 1),
+                        parameter = par,
+                        start_date = "2000-01-01",
+                        end_date = "2007-12-31",
+                        years_skip = 3, n_thread = 4,
+                        add_date = FALSE)
+  nse_q <- map_dbl(q_sim$simulation$flo_out/8.64, ~ NSE(.x, obs))
+  return(nse_q)
+}
+```
+To perform GSA with the method of Sobol two random sets of samples with the same sample size for the parameters that should be analyzed are required.
+
+```{r, eval=FALSE}
+par_bound <- tibble("cn2.hru | change = abschg" = c(-15, 10),
+                    "lat_ttime.hru | change = absval" = c(0.5, 50),
+                    "lat_len.hru | change = absval" = c(10, 100),
+                    "k.sol | change = pctchg" = c(-50, 50),
+                    "z.sol | change = pctchg" = c(-50, 50),
+                    "esco.hru | change = absval" = c(0, 1),
+                    "epco.hru | change = absval" = c(0, 1))
+n_par  <- 7
+n_samp <- 500
+x1 <- data.frame(matrix(runif(n_par * n_samp), nrow = n_samp)) %>%
+  set_names(., names(par_bound)) %>%
+  map2_dfc(., par_bound, ~ (.x * (.y[2] - .y[1]) + .y[1]))
+x2 <- data.frame(matrix(runif(n_par * n_samp), nrow = n_samp)) %>%
+  set_names(., names(par_bound)) %>%
+  map2_dfc(., par_bound, ~ (.x * (.y[2] - .y[1]) + .y[1]))
+```
+
+To perform the sensitivity analysis with using method of Sobol the following command has to be executed. In total 4000 model evaluations are necessary to analyze 7 parameters with 500 Sobol samples.
+
+```{r, eval=FALSE}
+sens_sobol <- sobol(model = swat_nse, X1 = x1, X2 = x2, 
+                    obs = q_obs$q_out, nboot = 100)
+```
+
+```{r, echo=FALSE}
+sens_sobol <- readRDS(here::here("vignettes/datasets/sobol.rds"))
+```
+
+### Visualization of the Sobol analysis
+
+Similar to the visualization of the results with the FAST method the results of the GSA with the method of Solbol are plotted.
+
+
+```{r}
+plot_sobol <- sens_sobol$S %>%
+  mutate(parameter = rownames(.)) %>%
+  mutate(parameter = factor(parameter) %>% fct_reorder(., original))
+ggplot(data = plot_sobol) +
+  geom_pointrange(aes(x = parameter, y = original ,
+                      ymin = `min. c.i.`, ymax = `max. c.i.`)) +
+  coord_flip() +
+  xlab("Parameter") +
+  ylab("Sensitivity") +
+  theme_bw()
+```
+
+## References

@@ -972,7 +972,7 @@
 }
 
 @Manual{Dutang2018,
-  title   = {randtoolbox: Generating and Testing Random Numbers},
+  title   = {{randtoolbox: Generating and Testing Random Numbers}},
   author  = {Dutang Christophe and Savicky Petr},
   year    = {2018},
   note    = {R package version 1.17.1},

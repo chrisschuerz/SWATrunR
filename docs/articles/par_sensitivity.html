@@ -5,11 +5,11 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parameter optimization • SWATplusR</title>
+<title>01 - Parameter sensitivity analysis • SWATplusR</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/sandstone/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Parameter optimization">
+<script src="../pkgdown.js"></script><meta property="og:title" content="01 - Parameter sensitivity analysis">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -56,13 +56,13 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/par_optim.html">Parameter optimization</a>
+      <a href="../articles/par_optim.html">03 - Parameter optimization</a>
     </li>
     <li>
-      <a href="../articles/par_sampl_calib.html">Parameter sampling and model calibration</a>
+      <a href="../articles/par_sampl_calib.html">02 - Parameter sampling and model calibration</a>
     </li>
     <li>
-      <a href="../articles/par_sensitivity.html">Parameter optimization</a>
+      <a href="../articles/par_sensitivity.html">01 - Parameter sensitivity analysis</a>
     </li>
   </ul>
 </li>
@@ -89,7 +89,7 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>Parameter optimization</h1>
+      <h1>01 - Parameter sensitivity analysis</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/chrisschuerz/SWATplusR/blob/master/vignettes/par_sensitivity.Rmd"><code>vignettes/par_sensitivity.Rmd</code></a></small>
@@ -106,11 +106,12 @@
 <div id="package-installation" class="section level3">
 <h3 class="hasAnchor">
 <a href="#package-installation" class="anchor"></a>Package installation</h3>
-<p>If you do not have installed any of the required R package, follow the instructions for the respective R package. All of the reuired R packages are available from CRAN and can be installed with the following commands:</p>
+<p>If you do not have installed any of the required R package, follow the instructions for the respective R package. All of the required R packages are available from CRAN and can be installed with the following commands:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"sensitivity"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"fast"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"hydroGOF"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"dplyr"</span>)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"forcats"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"tidyr"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"ggplot2"</span>)</code></pre></div>
 </div>
@@ -122,6 +123,7 @@
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(fast)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(hydroGOF)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dplyr)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(forcats)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(lubridate)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(tidyr)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)</code></pre></div>
@@ -138,46 +140,152 @@ demo_path &lt;-<span class="st"> "Define:/your/path"</span>
 path_plus &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"project"</span>,
                        <span class="dt">swat_version =</span> <span class="st">"plus"</span>,
                        <span class="dt">path =</span> demo_path)</code></pre></div>
-<p><code>SWATplusR</code> also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2012-12-31. Therefore, we load the demo data and limit it to this time period:</p>
+<p><code>SWATplusR</code> also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2007-12-31. Therefore, we load the demo data and limit it to this time period:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_obs &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"observation"</span>)
 
 q_obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2003-01-01"</span>),
-                       date <span class="op">&lt;=</span><span class="st"> "2012-12-31"</span>)</code></pre></div>
+                       date <span class="op">&lt;=</span><span class="st"> "2007-12-31"</span>)</code></pre></div>
 </div>
-<div id="definition-of-the-function-to-optimize" class="section level2">
+<div id="model-parameters" class="section level2">
 <h2 class="hasAnchor">
-<a href="#definition-of-the-function-to-optimize" class="anchor"></a>Definition of the function to optimize</h2>
-<p>Most optimizers require a function as an input argument that uses a parameter set as input and returns a scalar value as a result. To use the <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> function in the optimization we wrap a function around the SWAT model execution that will be implemented in the optimizer to search the optimum parameter set that minimizes the return value (minimization is usually the default option in optimizers). Below you see how you can implement the model execution into a function that can be optimized:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">swat_optim &lt;-<span class="st"> </span><span class="cf">function</span>(par, obs) {
-  q_sim &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> <span class="st">"C:/swatplus_demo"</span>,
+<a href="#model-parameters" class="anchor"></a>Model parameters</h2>
+<p>In the sensitivity analyses we will use 7 parameters that are frequently used for model calibration with respect to simulated discharge. In a first step we define the parameter names as these control the parameter alteration in the <code>run_swat*()</code> functions. If you want to learn in detai how to define the parameter names correctly see the <a href="https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration">Get started</a> section on ‘Model parameter alteration’:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_names &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"cn2.hru | change = abschg"</span>,
+               <span class="st">"lat_ttime.hru | change = absval"</span>,
+               <span class="st">"lat_len.hru | change = absval"</span>,
+               <span class="st">"k.sol | change = pctchg"</span>,
+               <span class="st">"z.sol | change = pctchg"</span>,
+               <span class="st">"esco.hru | change = absval"</span>,
+               <span class="st">"epco.hru | change = absval"</span>)</code></pre></div>
+</div>
+<div id="sensitivity-analysis-with-fast" class="section level2">
+<h2 class="hasAnchor">
+<a href="#sensitivity-analysis-with-fast" class="anchor"></a>Sensitivity analysis with <code>fast</code>
+</h2>
+<div id="parameter-sampling" class="section level3">
+<h3 class="hasAnchor">
+<a href="#parameter-sampling" class="anchor"></a>Parameter sampling</h3>
+<p>The Fourier Amplitude Sensitivity Test (FAST) is a method to perform GSA with few model evaluations. It only requires a few simulations when the number of parameters is low and strongly increases to tenth of thousands of model evaluations for more than 20 parameters. To keep the number of model evaluations low we use the 7 selected parameters above.</p>
+<p>The FAST method requires a specific parameter sampling design, that is available in <code>fast</code> with the function <code>fast_parameters()</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_fast &lt;-<span class="st"> </span><span class="kw">fast_parameters</span>(
+  <span class="dt">minimum =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">15</span>, <span class="fl">0.5</span>,  <span class="dv">10</span>, <span class="op">-</span><span class="dv">50</span>, <span class="op">-</span><span class="dv">50</span>, <span class="dv">0</span>,  <span class="dv">0</span>),
+  <span class="dt">maximum =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>( <span class="dv">10</span>,  <span class="dv">50</span>, <span class="dv">100</span>,  <span class="dv">50</span>,  <span class="dv">50</span>, <span class="dv">1</span>,  <span class="dv">1</span>),
+    <span class="dt">names =</span> par_names) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">as_tibble</span>()
+
+par_fast
+<span class="co">#&gt; # A tibble: 167 x 7</span>
+<span class="co">#&gt;    `cn2.hru | chan~ `lat_ttime.hru ~ `lat_len.hru | ~ `k.sol | change~</span>
+<span class="co">#&gt;               &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;</span>
+<span class="co">#&gt;  1          -13.8              44.3              84.3           -29.5 </span>
+<span class="co">#&gt;  2          -11.2              32.7              52.3            12.0 </span>
+<span class="co">#&gt;  3           -8.67             21.1              20.3            47.0 </span>
+<span class="co">#&gt;  4           -6.11              9.45             31.1             5.42</span>
+<span class="co">#&gt;  5           -3.55              2.89             63.1           -36.1 </span>
+<span class="co">#&gt;  6           -0.994            14.5              95.1           -22.9 </span>
+<span class="co">#&gt;  7            1.57             26.1              73.4            18.7 </span>
+<span class="co">#&gt;  8            4.13             37.8              41.4            40.4 </span>
+<span class="co">#&gt;  9            6.69             49.4              10              -1.20</span>
+<span class="co">#&gt; 10            9.25             39.3              42.0           -42.8 </span>
+<span class="co">#&gt; # ... with 157 more rows, and 3 more variables: `z.sol | change =</span>
+<span class="co">#&gt; #   pctchg` &lt;dbl&gt;, `esco.hru | change = absval` &lt;dbl&gt;, `epco.hru | change</span>
+<span class="co">#&gt; #   = absval` &lt;dbl&gt;</span></code></pre></div>
+</div>
+<div id="model-simulation-and-evaluation" class="section level3">
+<h3 class="hasAnchor">
+<a href="#model-simulation-and-evaluation" class="anchor"></a>Model simulation and evaluation</h3>
+<p>To perform a FAST analysis for 7 parameters 167 model evaluations are required. We implement the sampled FAST parameter combinations in the SWAT+ demo project by passing the parameter table with the argument <code>parameter</code> in the <code>run_swaplus()</code> function. We will perform the sensitivity analysis for the simulation period 2003-01-01 to 2007-12-31 (to accord with the simulation workflow of the tutorial on <a href="https://chrisschuerz.github.io/SWATplusR/articles/par_sampl_calib.html">Parameter sampling an model calibration</a>, as sensitivity analysis is often followed by the model calibration).</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_fast &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
+            <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_out =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
+                                  <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
+                                  <span class="dt">unit =</span> <span class="dv">3</span>)),
+            <span class="dt">parameter =</span> par_fast,
+            <span class="dt">start_date =</span> <span class="st">"2000-01-01"</span>,
+            <span class="dt">end_date =</span> <span class="st">"2007-12-31"</span>,
+            <span class="dt">years_skip =</span> <span class="dv">3</span>,
+            <span class="dt">n_thread =</span> <span class="dv">4</span>)
+
+<span class="co">#&gt; Building 4 threads in 'C:/swatplus_demo/.model_run':</span>
+<span class="co">#&gt;  Completed 4 threads in 0S</span>
+<span class="co">#&gt; Performing 167 simulations on 4 cores:</span>
+<span class="co">#&gt;  Completed 167 simulations in 1M 18S</span></code></pre></div>
+<p>The model runs that used the parameter sets sampled with <code>fast</code> are evaluated using the NSE <span class="citation">(Nash and Sutcliffe, <a href="#ref-Nash1970">1970</a>)</span> criterion for daily discharge for the time period 2003 to 2012.</p>
+<p>The <code>NSE()</code> function is available from the <code>hydroGOF</code> package. The simulations are evaluated with the daily observations of discharge for the period 2003 to 2007. The calculated NSE values can than be used to assess the sensitivity of the NSE to changes in parameter values with the function <code>sensitivity()</code> from the <code>fast</code> package:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nse_fast &lt;-<span class="st"> </span>q_fast<span class="op">$</span>simulation<span class="op">$</span>q_out <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">map_dbl</span>(., <span class="op">~</span><span class="kw">NSE</span>(.x, q_obs<span class="op">$</span>q_out))
+
+sens_fast &lt;-<span class="st"> </span><span class="kw">sensitivity</span>(nse_fast, <span class="dv">7</span>)</code></pre></div>
+</div>
+<div id="visualization-of-the-fast-sensitivities" class="section level3">
+<h3 class="hasAnchor">
+<a href="#visualization-of-the-fast-sensitivities" class="anchor"></a>Visualization of the FAST sensitivities</h3>
+<p>To visualize the calculated sensitivities we first arrange the results in a <code>tibble</code> <span class="citation">(Müller and Wickham, <a href="#ref-Mueller2019">2019</a>)</span>. It is a good idea to rank the parameters in the plot of their sensitivities. Therefore, we convert the parameter names to factors and sort them according to their sensitivity results using the functionality of the <code>forcats</code> package <span class="citation">(Wickham, <a href="#ref-Wickham2019a">2019</a>)</span>. We plot the parameter ranking in a barplot using <code>ggplot2</code> <span class="citation">(Wickham, <a href="#ref-Wickham2016">2016</a>)</span>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">result_fast &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">parameter =</span> q_fast<span class="op">$</span>parameter<span class="op">$</span>definition<span class="op">$</span>par_name,
+                      <span class="dt">fast      =</span> sens_fast) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">parameter =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/factor">factor</a></span>(parameter) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">fct_reorder</span>(., fast))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(<span class="dt">data =</span> result_fast) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_bar</span>(<span class="kw">aes</span>(<span class="dt">x =</span> parameter, <span class="dt">y =</span> fast), <span class="dt">stat =</span> <span class="st">"identity"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">xlab</span>(<span class="st">"Parameter"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ylab</span>(<span class="st">"Sensitivity"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">coord_flip</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">theme_bw</span>()<span class="op">+</span>
+<span class="st">  </span><span class="kw">theme</span>(<span class="dt">text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">14</span>))</code></pre></div>
+<p><img src="par_sensitivity_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
+</div>
+</div>
+<div id="sensitivity-analysis-with-the-method-of-sobol" class="section level2">
+<h2 class="hasAnchor">
+<a href="#sensitivity-analysis-with-the-method-of-sobol" class="anchor"></a>Sensitivity analysis with the method of Sobol</h2>
+<p>The method of Sobol is a reference method for GSA. To implement the SWAT model in the GSA workflow with <code>sensitivity</code> a function has to be defined that returns the a scalar variable for which the sensitivity is assessed.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">swat_sobol &lt;-<span class="st"> </span><span class="cf">function</span>(par, obs) {
+  q_sim &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> proj_path,
                         <span class="dt">output =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
-                                              <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
-                                              <span class="dt">unit =</span> <span class="dv">1</span>),
+                                               <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
+                                               <span class="dt">unit =</span> <span class="dv">1</span>),
                         <span class="dt">parameter =</span> par,
                         <span class="dt">start_date =</span> <span class="st">"2000-01-01"</span>,
-                        <span class="dt">end_date =</span> <span class="st">"2012-12-31"</span>,
-                        <span class="dt">years_skip =</span> <span class="dv">3</span>,
-                        <span class="dt">quiet =</span> <span class="ot">TRUE</span>)
-
-  nse_q &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span><span class="kw">NSE</span>(q_sim<span class="op">$</span>simulation<span class="op">$</span>flo_out<span class="op">/</span><span class="fl">8.64</span>, obs)
+                        <span class="dt">end_date =</span> <span class="st">"2007-12-31"</span>,
+                        <span class="dt">years_skip =</span> <span class="dv">3</span>, <span class="dt">n_thread =</span> <span class="dv">4</span>,
+                        <span class="dt">add_date =</span> <span class="ot">FALSE</span>)
+  nse_q &lt;-<span class="st"> </span><span class="kw">map_dbl</span>(q_sim<span class="op">$</span>simulation<span class="op">$</span>flo_out<span class="op">/</span><span class="fl">8.64</span>, <span class="op">~</span><span class="st"> </span><span class="kw">NSE</span>(.x, obs))
   <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/function">return</a></span>(nse_q)
-}
-
-swat_optim &lt;-<span class="st"> </span><span class="cf">function</span>(par, obs) {
-  q_sim &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> <span class="st">"C:/swatplus_demo"</span>,
-                        <span class="dt">output =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
-                                              <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
-                                              <span class="dt">unit =</span> <span class="dv">1</span>),
-                        <span class="dt">parameter =</span> par,
-                        <span class="dt">start_date =</span> <span class="st">"2000-01-01"</span>,
-                        <span class="dt">end_date =</span> <span class="st">"2012-12-31"</span>,
-                        <span class="dt">years_skip =</span> <span class="dv">3</span>,
-                        <span class="dt">quiet =</span> <span class="ot">TRUE</span>)
-
-  nse_q &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span><span class="kw">NSE</span>(q_sim<span class="op">$</span>simulation<span class="op">$</span>flo_out<span class="op">/</span><span class="fl">8.64</span>, obs)
-  <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/function">return</a></span>(nse_q)
-  }</code></pre></div>
-<p>We defined a function that has one input argument <code>par</code> that is the named parameter vector that will be passed to <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code>. The simulation will return the discharge at the main outlet (<code>unit = 1</code>) for the time period 2003-01-01 to 2012-12-31 (considering the <code>years_skip = 3</code> as warm up period). In this case we set the function to be <code>quiet = TRUE</code>. In a next step the function uses the observed discharge values from <code>q_obs$q_out</code> for the same period and evaluate the simulated discharges using the <code>NSE()</code> from the package <code>hydroGOF</code> that is then returned as a single value. You can see that we implemented the negative NSE as we will minimize with <code><a href="https://www.rdocumentation.org/packages/stats/topics/optim">optim()</a></code></p>
+}</code></pre></div>
+<p>To perform GSA with the method of Sobol two random sets of samples with the same sample size for the parameters that should be analyzed are required.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_bound &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="st">"cn2.hru | change = abschg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">15</span>, <span class="dv">10</span>),
+                    <span class="st">"lat_ttime.hru | change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="fl">0.5</span>, <span class="dv">50</span>),
+                    <span class="st">"lat_len.hru | change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">10</span>, <span class="dv">100</span>),
+                    <span class="st">"k.sol | change = pctchg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">50</span>, <span class="dv">50</span>),
+                    <span class="st">"z.sol | change = pctchg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">50</span>, <span class="dv">50</span>),
+                    <span class="st">"esco.hru | change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">0</span>, <span class="dv">1</span>),
+                    <span class="st">"epco.hru | change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">0</span>, <span class="dv">1</span>))
+n_par  &lt;-<span class="st"> </span><span class="dv">7</span>
+n_samp &lt;-<span class="st"> </span><span class="dv">500</span>
+x1 &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.frame">data.frame</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif</a></span>(n_par <span class="op">*</span><span class="st"> </span>n_samp), <span class="dt">nrow =</span> n_samp)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">set_names</span>(., <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_bound)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">map2_dfc</span>(., par_bound, <span class="op">~</span><span class="st"> </span>(.x <span class="op">*</span><span class="st"> </span>(.y[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>.y[<span class="dv">1</span>]) <span class="op">+</span><span class="st"> </span>.y[<span class="dv">1</span>]))
+x2 &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.frame">data.frame</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif</a></span>(n_par <span class="op">*</span><span class="st"> </span>n_samp), <span class="dt">nrow =</span> n_samp)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">set_names</span>(., <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_bound)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">map2_dfc</span>(., par_bound, <span class="op">~</span><span class="st"> </span>(.x <span class="op">*</span><span class="st"> </span>(.y[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>.y[<span class="dv">1</span>]) <span class="op">+</span><span class="st"> </span>.y[<span class="dv">1</span>]))</code></pre></div>
+<p>To perform the sensitivity analysis with using method of Sobol the following command has to be executed. In total 4000 model evaluations are necessary to analyze 7 parameters with 500 Sobol samples.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sens_sobol &lt;-<span class="st"> </span><span class="kw">sobol</span>(<span class="dt">model =</span> swat_nse, <span class="dt">X1 =</span> x1, <span class="dt">X2 =</span> x2, 
+                    <span class="dt">obs =</span> q_obs<span class="op">$</span>q_out, <span class="dt">nboot =</span> <span class="dv">100</span>)</code></pre></div>
+<div id="visualization-of-the-sobol-analysis" class="section level3">
+<h3 class="hasAnchor">
+<a href="#visualization-of-the-sobol-analysis" class="anchor"></a>Visualization of the Sobol analysis</h3>
+<p>Similar to the visualization of the results with the FAST method the results of the GSA with the method of Solbol are plotted.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">plot_sobol &lt;-<span class="st"> </span>sens_sobol<span class="op">$</span>S <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">parameter =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">rownames</a></span>(.)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">parameter =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/factor">factor</a></span>(parameter) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">fct_reorder</span>(., original))
+<span class="kw">ggplot</span>(<span class="dt">data =</span> plot_sobol) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_pointrange</span>(<span class="kw">aes</span>(<span class="dt">x =</span> parameter, <span class="dt">y =</span> original ,
+                      <span class="dt">ymin =</span> <span class="st">`</span><span class="dt">min. c.i.</span><span class="st">`</span>, <span class="dt">ymax =</span> <span class="st">`</span><span class="dt">max. c.i.</span><span class="st">`</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">coord_flip</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">xlab</span>(<span class="st">"Parameter"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ylab</span>(<span class="st">"Sensitivity"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
+<p><img src="par_sensitivity_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
+</div>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="hasAnchor">
@@ -195,11 +303,23 @@ swat_optim &lt;-<span class="st"> </span><span class="cf">function</span>(par, o
 <div id="ref-MZB2017">
 <p>Mauricio Zambrano-Bigiarini: HydroGOF: Goodness-of-fit functions for comparison of simulated and observed hydrological time series., 2017.</p>
 </div>
+<div id="ref-Mueller2019">
+<p>Müller, K. and Wickham, H.: Tibble: Simple data frames. [online] Available from: <a href="https://CRAN.R-project.org/package=tibble" class="uri">https://CRAN.R-project.org/package=tibble</a> (Accessed 5 March 2019), 2019.</p>
+</div>
+<div id="ref-Nash1970">
+<p>Nash, J. E. and Sutcliffe, J. V.: River flow forecasting through conceptual models part I - A discussion of principles, Journal of Hydrology, 10(3), 282–290, doi:<a href="https://doi.org/10.1016/0022-1694(70)90255-6">10.1016/0022-1694(70)90255-6</a>, 1970.</p>
+</div>
 <div id="ref-Reusser2015">
 <p>Reusser, D.: Fast: Implementation of the fourier amplitude sensitivity test (fast). [online] Available from: <a href="https://CRAN.R-project.org/package=fast" class="uri">https://CRAN.R-project.org/package=fast</a> (Accessed 5 March 2019), 2015.</p>
 </div>
 <div id="ref-Sobol1993">
 <p>Sobol, I. M.: Sensitivity analysis for nonlinear mathematical models, Mathematical Modelling and Computational Experiments, 4(1), 407–414, doi:<a href="https://doi.org/10.18287/0134-2452-2015-39-4-459-461.">10.18287/0134-2452-2015-39-4-459-461.</a>, 1993.</p>
+</div>
+<div id="ref-Wickham2016">
+<p>Wickham, H.: ggplot2: Elegant Graphics for Data Analysis, Springer-Verlag New York. [online] Available from: <a href="http://ggplot2.org" class="uri">http://ggplot2.org</a>, 2016.</p>
+</div>
+<div id="ref-Wickham2019a">
+<p>Wickham, H.: Forcats: Tools for working with categorical variables (factors). [online] Available from: <a href="https://CRAN.R-project.org/package=forcats" class="uri">https://CRAN.R-project.org/package=forcats</a> (Accessed 5 March 2019), 2019.</p>
 </div>
 </div>
 </div>
@@ -212,7 +332,9 @@ swat_optim &lt;-<span class="st"> </span><span class="cf">function</span>(par, o
       <ul class="nav nav-pills nav-stacked">
 <li><a href="#r-packages">R packages</a></li>
       <li><a href="#loading-demo-data">Loading demo data</a></li>
-      <li><a href="#definition-of-the-function-to-optimize">Definition of the function to optimize</a></li>
+      <li><a href="#model-parameters">Model parameters</a></li>
+      <li><a href="#sensitivity-analysis-with-fast">Sensitivity analysis with <code>fast</code></a></li>
+      <li><a href="#sensitivity-analysis-with-the-method-of-sobol">Sensitivity analysis with the method of Sobol</a></li>
       <li><a href="#references">References</a></li>
       </ul>
 </div>
