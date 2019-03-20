@@ -68,7 +68,7 @@ path_plus <- load_demo(dataset = "project",
 q_obs <- load_demo(dataset = "observation")
 
 q_obs <- filter(q_obs, date >= ymd("2003-01-01"),
-                       date <= "2012-12-31")
+                       date <= ymd("2012-12-31"))
 ```
 
 ## Definition of the function to optimize
@@ -101,7 +101,7 @@ We defined a function that has one input argument `par` that is the named parame
 
 The `optim()` function provides several optimization routines (see the 'Details' section in the R help file). Most of the offered algorithms, however, do not provide the option to define parameter boundaries. Though, constraining SWAT model parameters is essential as these are bound in the model. The `method = 'L-BFGS-B'` implements a 'quasi-Newton' method according to @Byrd1995 and allows to define parameter boundaries.
 
-In the optimization example we will use 7 parameters that are frequently used for model calibration with respect to simulated discharge. The `optim` function requires starting values (`par_init`) and in the case of `method = 'L-BFGS-B'` we can also define upper (`par_upr`) and lower (`par_lwr`) boundaries for the parameters to optimize. We name the parameter sets using the syntax for SWAT model parameters that is required for the `run_swat*()` functions (see the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration) section on 'Model parameter optimization' to learn more on parameter names):
+In the optimization example we will use 7 parameters that are frequently used for model calibration with respect to simulated discharge. The `optim` function requires starting values (`par_init`) and in the case of `method = 'L-BFGS-B'` we can also define upper (`par_upr`) and lower (`par_lwr`) boundaries for the parameters to optimize. We name the parameter sets using the syntax for SWAT model parameters that is required for the `run_swat*()` functions (see the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration) section on 'Model parameter alteration' to learn more on parameter names):
 
 ```{r, eval=FALSE}
 par_names <- c("cn2.hru | change = abschg",
@@ -111,9 +111,11 @@ par_names <- c("cn2.hru | change = abschg",
                "z.sol | change = pctchg",
                "epco.hru | change = absval",
                "esco.hru | change = absval")
+
 par_init <- c(0, 3, 50, 0 , 0, 0.5, 0.5)
 par_lwr  <- c(-15, 0.5,  10, -50, -50, 0, 0)
 par_upr  <- c( 10,  50, 100,  50,  50, 1, 1)
+
 names(par_init) <- par_names
 names(par_lwr) <- par_names
 names(par_upr) <- par_names
@@ -232,7 +234,7 @@ par_plot <- q_sce$parameter$values %>%
 
 ggplot(par_plot) +
   geom_point(aes(x = val, y = abs(nse), col = run)) +
-  facet_wrap(.~par, scales = "free") + 
+  facet_wrap(.~par, scales = "free") +
   theme_bw()
 ```
 

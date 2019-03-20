@@ -59,7 +59,7 @@
       <a href="../articles/par_optim.html">Parameter optimization</a>
     </li>
     <li>
-      <a href="../articles/par_sampl_calib.html">Parameter optimization</a>
+      <a href="../articles/par_sampl_calib.html">Parameter sampling and model calibration</a>
     </li>
     <li>
       <a href="../articles/par_sensitivity.html">Parameter optimization</a>
@@ -142,7 +142,7 @@ path_plus &lt;-<span class="st"> </span><span class="kw"><a href="../reference/l
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_obs &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"observation"</span>)
 
 q_obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2003-01-01"</span>),
-                       date <span class="op">&lt;=</span><span class="st"> "2012-12-31"</span>)</code></pre></div>
+                       date <span class="op">&lt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2012-12-31"</span>))</code></pre></div>
 </div>
 <div id="definition-of-the-function-to-optimize" class="section level2">
 <h2 class="hasAnchor">
@@ -172,7 +172,7 @@ swat_optim &lt;-<span class="st"> </span><span class="cf">function</span>(par, o
 <a href="#parameter-optimization-with-optim" class="anchor"></a>Parameter optimization with <code>optim</code>
 </h2>
 <p>The <code><a href="https://www.rdocumentation.org/packages/stats/topics/optim">optim()</a></code> function provides several optimization routines (see the ‘Details’ section in the R help file). Most of the offered algorithms, however, do not provide the option to define parameter boundaries. Though, constraining SWAT model parameters is essential as these are bound in the model. The <code>method = 'L-BFGS-B'</code> implements a ‘quasi-Newton’ method according to <span class="citation">Byrd et al. (<a href="#ref-Byrd1995">1995</a>)</span> and allows to define parameter boundaries.</p>
-<p>In the optimization example we will use 7 parameters that are frequently used for model calibration with respect to simulated discharge. The <code>optim</code> function requires starting values (<code>par_init</code>) and in the case of <code>method = 'L-BFGS-B'</code> we can also define upper (<code>par_upr</code>) and lower (<code>par_lwr</code>) boundaries for the parameters to optimize. We name the parameter sets using the syntax for SWAT model parameters that is required for the <code>run_swat*()</code> functions (see the <a href="https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration">Get started</a> section on ‘Model parameter optimization’ to learn more on parameter names):</p>
+<p>In the optimization example we will use 7 parameters that are frequently used for model calibration with respect to simulated discharge. The <code>optim</code> function requires starting values (<code>par_init</code>) and in the case of <code>method = 'L-BFGS-B'</code> we can also define upper (<code>par_upr</code>) and lower (<code>par_lwr</code>) boundaries for the parameters to optimize. We name the parameter sets using the syntax for SWAT model parameters that is required for the <code>run_swat*()</code> functions (see the <a href="https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration">Get started</a> section on ‘Model parameter alteration’ to learn more on parameter names):</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_names &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"cn2.hru | change = abschg"</span>,
                <span class="st">"lat_ttime.hru | change = absval"</span>,
                <span class="st">"lat_len.hru | change = absval"</span>,
@@ -180,9 +180,11 @@ swat_optim &lt;-<span class="st"> </span><span class="cf">function</span>(par, o
                <span class="st">"z.sol | change = pctchg"</span>,
                <span class="st">"epco.hru | change = absval"</span>,
                <span class="st">"esco.hru | change = absval"</span>)
+
 par_init &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">50</span>, <span class="dv">0</span> , <span class="dv">0</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span>)
 par_lwr  &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">15</span>, <span class="fl">0.5</span>,  <span class="dv">10</span>, <span class="op">-</span><span class="dv">50</span>, <span class="op">-</span><span class="dv">50</span>, <span class="dv">0</span>, <span class="dv">0</span>)
 par_upr  &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>( <span class="dv">10</span>,  <span class="dv">50</span>, <span class="dv">100</span>,  <span class="dv">50</span>,  <span class="dv">50</span>, <span class="dv">1</span>, <span class="dv">1</span>)
+
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_init) &lt;-<span class="st"> </span>par_names
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_lwr) &lt;-<span class="st"> </span>par_names
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_upr) &lt;-<span class="st"> </span>par_names</code></pre></div>
@@ -263,7 +265,7 @@ q_sce &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_s
 
 <span class="kw">ggplot</span>(par_plot) <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">x =</span> val, <span class="dt">y =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/MathFun">abs</a></span>(nse), <span class="dt">col =</span> run)) <span class="op">+</span>
-<span class="st">  </span><span class="kw">facet_wrap</span>(.<span class="op">~</span>par, <span class="dt">scales =</span> <span class="st">"free"</span>) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">facet_wrap</span>(.<span class="op">~</span>par, <span class="dt">scales =</span> <span class="st">"free"</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
 <p><img src="par_optim_files/figure-html/unnamed-chunk-18-1.png" width="700"></p>
 <p>The time series of the simulated discharges are plotted similarly to the plot for the results of <code>otim()</code>. Though, some modifications were necessary in the data preparation and the plot command itself to plot all ten simulations:</p>

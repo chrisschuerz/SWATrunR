@@ -946,4 +946,38 @@
   urldate = {2019-03-19},
 }
 
+@Manual{Andrews2018,
+  title   = {hydromad: Hydrological Model Assessment and Development},
+  author  = {Felix Andrews and Joseph Guillaume},
+  year    = {2018},
+  note    = {R package version 0.9-26},
+  url     = {http://hydromad.catchment.org/},
+  urldate = {2019-03-05},
+}
+
+@Article{Cukier1973,
+  author    = {R. I. Cukier and C. M. Fortuin and K. E. Shuler and A. G. Petschek and J. H. Schaibly},
+  title     = {Study of the sensitivity of coupled reaction systems to uncertainties in rate coefficients. I Theory},
+  journal   = {The Journal of Chemical Physics},
+  year      = {1973},
+  volume    = {59},
+  number    = {8},
+  pages     = {3873--3878},
+  month     = {oct},
+  doi       = {10.1063/1.1680571},
+  publisher = {{AIP} Publishing},
+}
+
+@Manual{,
+}
+
+@Manual{Dutang2018,
+  title   = {randtoolbox: Generating and Testing Random Numbers},
+  author  = {Dutang Christophe and Savicky Petr},
+  year    = {2018},
+  note    = {R package version 1.17.1},
+  url     = {https://CRAN.R-project.org/package=randtoolbox},
+  urldate = {2019-03-20},
+}
+
 @Comment{jabref-meta: databaseType:bibtex;}

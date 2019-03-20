@@ -59,7 +59,7 @@
       <a href="../articles/par_optim.html">Parameter optimization</a>
     </li>
     <li>
-      <a href="../articles/par_sampl_calib.html">Parameter optimization</a>
+      <a href="../articles/par_sampl_calib.html">Parameter sampling and model calibration</a>
     </li>
     <li>
       <a href="../articles/par_sensitivity.html">Parameter optimization</a>
@@ -102,7 +102,7 @@
 <div id="r-packages" class="section level2">
 <h2 class="hasAnchor">
 <a href="#r-packages" class="anchor"></a>R packages</h2>
-<p>Several R packages provide methods for sensitivity analysis. Two of the widely implemented packages are <code>sensitivity</code> <span class="citation">(Iooss et al., <a href="#ref-Iooss2018">2018</a>)</span> and <code>fast</code> <span class="citation">(Reusser, <a href="#ref-Reusser2015">2015</a>)</span>. <code>fast</code> provides the Fourier Amplitude Sensitivity Test (FAST) as single method for sensitivity analysis. The implementation of FAST, however, is very well suited to implement it in a workflow with <code>SWATplusR</code>. <code>sensitivity</code> is a very comprehensive collection of methods for sensitivity analysis (it actually includes the FAST method as well). The implementation in a workflow with <code>SWATplusR</code> is, however, less flexible. In this example we will use two frequently applied methods for sensitivity analysis that are provided by these two R packages, the method of Solbol <span class="citation">(<a href="#ref-Sobol1993">1993</a>)</span> provided by <code>sensitivity</code> and FAST <span class="citation">(<span class="citeproc-not-found" data-reference-id="Cukier1973"><strong>???</strong></span>)</span> provided by <code>fast</code>. Most methods for sensitivity analysis require a scalar model result to assess the sensitivity of that output variable to changes in the inputs. Multiple goodness-of-fit functions are available from literature to evaluate simulated time series with observed time series of that variable that result in scalar values. The <code>hydroGOF</code> package <span class="citation">(Mauricio Zambrano-Bigiarini, <a href="#ref-MZB2017">2017</a>)</span> summarizes frequently used functions for the evaluation of time series of hydrological variables.</p>
+<p>Several R packages provide methods for sensitivity analysis. Two of the widely implemented packages are <code>sensitivity</code> <span class="citation">(Iooss et al., <a href="#ref-Iooss2018">2018</a>)</span> and <code>fast</code> <span class="citation">(Reusser, <a href="#ref-Reusser2015">2015</a>)</span>. <code>fast</code> provides the Fourier Amplitude Sensitivity Test (FAST) as single method for sensitivity analysis. The implementation of FAST, however, is very well suited to implement it in a workflow with <code>SWATplusR</code>. <code>sensitivity</code> is a very comprehensive collection of methods for sensitivity analysis (it actually includes the FAST method as well). The implementation in a workflow with <code>SWATplusR</code> is, however, less flexible. In this example we will use two frequently applied methods for sensitivity analysis that are provided by these two R packages, the method of Solbol <span class="citation">(<a href="#ref-Sobol1993">1993</a>)</span> provided by <code>sensitivity</code> and FAST <span class="citation">(Cukier et al., <a href="#ref-Cukier1973">1973</a>)</span> provided by <code>fast</code>. Most methods for sensitivity analysis require a scalar model result to assess the sensitivity of that output variable to changes in the inputs. Multiple goodness-of-fit functions are available from literature to evaluate simulated time series with observed time series of that variable that result in scalar values. The <code>hydroGOF</code> package <span class="citation">(Mauricio Zambrano-Bigiarini, <a href="#ref-MZB2017">2017</a>)</span> summarizes frequently used functions for the evaluation of time series of hydrological variables.</p>
 <div id="package-installation" class="section level3">
 <h3 class="hasAnchor">
 <a href="#package-installation" class="anchor"></a>Package installation</h3>
@@ -185,6 +185,9 @@ swat_optim &lt;-<span class="st"> </span><span class="cf">function</span>(par, o
 <div id="refs" class="references">
 <div id="ref-Bosch2007">
 <p>Bosch, D. D., Sheridan, J. M., Lowrance, R. R., Hubbard, R. K., Strickland, T. C., Feyereisen, G. W. and Sullivan, D. G.: Little river experimental watershed database, Water Resources Research, 43(9), doi:<a href="https://doi.org/10.1029/2006wr005844">10.1029/2006wr005844</a>, 2007.</p>
+</div>
+<div id="ref-Cukier1973">
+<p>Cukier, R. I., Fortuin, C. M., Shuler, K. E., Petschek, A. G. and Schaibly, J. H.: Study of the sensitivity of coupled reaction systems to uncertainties in rate coefficients. i theory, The Journal of Chemical Physics, 59(8), 3873–3878, doi:<a href="https://doi.org/10.1063/1.1680571">10.1063/1.1680571</a>, 1973.</p>
 </div>
 <div id="ref-Iooss2018">
 <p>Iooss, B., Janon, A., Pujol, G., Khalid Boumhaout, Veiga, S. D., Delage, T., Fruth, J., Gilquin, L., Guillaume, J., Le Gratiet, L., Lemaitre, P., Nelson, B. L., Monari, F., Oomen, R., Rakovec, O., Ramos, B., Roustant, O., Song, E., Staum, J., Sueur, R., Touati, T. and Weber, F.: Sensitivity: Global sensitivity analysis of model outputs. [online] Available from: <a href="https://CRAN.R-project.org/package=sensitivity" class="uri">https://CRAN.R-project.org/package=sensitivity</a> (Accessed 5 March 2019), 2018.</p>

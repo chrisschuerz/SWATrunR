@@ -5,11 +5,11 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parameter optimization • SWATplusR</title>
+<title>Parameter sampling and model calibration • SWATplusR</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/sandstone/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Parameter optimization">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Parameter sampling and model calibration">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -59,7 +59,7 @@
       <a href="../articles/par_optim.html">Parameter optimization</a>
     </li>
     <li>
-      <a href="../articles/par_sampl_calib.html">Parameter optimization</a>
+      <a href="../articles/par_sampl_calib.html">Parameter sampling and model calibration</a>
     </li>
     <li>
       <a href="../articles/par_sensitivity.html">Parameter optimization</a>
@@ -89,7 +89,7 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>Parameter optimization</h1>
+      <h1>Parameter sampling and model calibration</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/chrisschuerz/SWATplusR/blob/master/vignettes/par_sampl_calib.Rmd"><code>vignettes/par_sampl_calib.Rmd</code></a></small>
@@ -102,27 +102,54 @@
 <div id="r-packages" class="section level2">
 <h2 class="hasAnchor">
 <a href="#r-packages" class="anchor"></a>R packages</h2>
-<p>There are many optimization routines available in R. The base R package <code>stats</code> <span class="citation">(R Core Team, <a href="#ref-Rcore2019">2019</a>)</span> provides the function <code><a href="https://www.rdocumentation.org/packages/stats/topics/optim">optim()</a></code> that offers several standard methods for model parameter optimization. The <code>hydromad</code> <span class="citation">(Andrews and Guillaume, <a href="#ref-Andrews2018">2018</a>)</span> package provides a complete environment for hydrological modeling in R. It also offers several optimization algorithms that are standard methods in hydrological modeling, such as the Shuffled Complex Evolution algorithm <span class="citation">(SCE; Duan et al., <a href="#ref-Duan1993">1993</a>)</span>, or the Dynamically Dimensioned Search algorithm <span class="citation">(DDS; Tolson and Shoemaker, <a href="#ref-Tolson2007">2007</a>)</span>. A flexible integration of the DDS algorithm for R can also be found on the following <a href="https://github.com/bdb67/Dynamically-Dimensioned-Search">github repository</a> <span class="citation">(Bass, <a href="#ref-Bass2019">2014</a>)</span>. Multiple goodness-of-fit functions are available from literature to evaluate simulated time series with observed time series of that variable. The <code>hydroGOF</code> package <span class="citation">(Mauricio Zambrano-Bigiarini, <a href="#ref-MZB2017">2017</a>)</span> summarizes frequently used functions for the evaluation of time series of hydrological variables.</p>
+<p>A common procedure in hydrological modeling is to draw random samples for a set of parameters, to execute the model with all drawn parameter combinations, evaluate the simulations based on one or several criteria, and select parameter sets that were able to reproduce the observation date sufficiently with the applied model setup. For R different routines are available to draw random samples. The simplest approach might be to use the function <code><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif()</a></code> from the base R package <code>stats</code> <span class="citation">(R Core Team, <a href="#ref-Rcore2019">2019</a>)</span> to draw uniform samples for each parameter. You can draw Latin Hypercube Samples [LHS] with the package <code>lhs</code> <span class="citation">(Carnell, <a href="#ref-Carnell2019">2019</a>)</span>. Other ‘pseudo’ and ‘quasi’ random numbers (that can be relevant for some methods for sensitivity analysis) can be drawn using the package <code>randtoolbox</code> <span class="citation">(Dutang C. and P., <a href="#ref-Dutang2018">2018</a>)</span>. In this example we will implement LHS sampling. To evaluate simulated time series of hydrological variables, multiple goodness-of-fit functions are available from literature. The <code>hydroGOF</code> package <span class="citation">(Mauricio Zambrano-Bigiarini, <a href="#ref-MZB2017">2017</a>)</span> summarizes frequently used functions for the evaluation of time series of hydrological variables.</p>
 <div id="package-installation" class="section level3">
 <h3 class="hasAnchor">
 <a href="#package-installation" class="anchor"></a>Package installation</h3>
-<p>If you do not have installed any of the required R package, follow the instructions for the respective R package.</p>
-<p>The <code>hydromad</code> package can be installed following the instructions on the <a href="http://hydromad.catchment.org/#installation">hydromad website</a>.</p>
-<p>The other R packages are available from CRAN and can be installed with the following commands:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"hydroGOF"</span>)
+<p>If you do not have installed any of the required R package, follow the instructions for the respective R package. All of the reuired R packages are available from CRAN and can be installed with the following commands:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"lhs"</span>)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"hydroGOF"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"dplyr"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"tidyr"</span>)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"lubridate"</span>)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"purrr"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"ggplot2"</span>)</code></pre></div>
 </div>
 <div id="loading-r-packages" class="section level3">
 <h3 class="hasAnchor">
 <a href="#loading-r-packages" class="anchor"></a>Loading R packages</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(SWATplusR)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(hydromad)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(lhs)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(hydroGOF)
+<span class="co">#&gt; Warning: package 'hydroGOF' was built under R version 3.5.3</span>
+<span class="co">#&gt; Loading required package: zoo</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Attaching package: 'zoo'</span>
+<span class="co">#&gt; The following objects are masked from 'package:base':</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;     as.Date, as.Date.numeric</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dplyr)
+<span class="co">#&gt; Warning: package 'dplyr' was built under R version 3.5.3</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Attaching package: 'dplyr'</span>
+<span class="co">#&gt; The following objects are masked from 'package:stats':</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;     filter, lag</span>
+<span class="co">#&gt; The following objects are masked from 'package:base':</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;     intersect, setdiff, setequal, union</span>
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(lubridate)
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Attaching package: 'lubridate'</span>
+<span class="co">#&gt; The following object is masked from 'package:base':</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;     date</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(tidyr)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)</code></pre></div>
+<span class="co">#&gt; Warning: package 'tidyr' was built under R version 3.5.3</span>
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(purrr)
+<span class="co">#&gt; Warning: package 'purrr' was built under R version 3.5.3</span>
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)
+<span class="co">#&gt; Warning: package 'ggplot2' was built under R version 3.5.3</span></code></pre></div>
 </div>
 </div>
 <div id="loading-demo-data" class="section level2">
@@ -136,71 +163,288 @@ demo_path &lt;-<span class="st"> "Define:/your/path"</span>
 path_plus &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"project"</span>,
                        <span class="dt">swat_version =</span> <span class="st">"plus"</span>,
                        <span class="dt">path =</span> demo_path)</code></pre></div>
-<p><code>SWATplusR</code> also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2012-12-31. Therefore, we load the demo data and limit it to this time period:</p>
+<p><code>SWATplusR</code> also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. For this example we define calibration and validation periods for our data set, where the calibration period is from 2003-01-01 to 2007-12-31 and the validation period ranges between 2008-01-01 and 2012-12-31. Therefore, we load the demo data and limit it to these time periods:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_obs &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"observation"</span>)
 
-q_obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2003-01-01"</span>),
-                       date <span class="op">&lt;=</span><span class="st"> "2012-12-31"</span>)</code></pre></div>
+q_obs_cal &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2003-01-01"</span>),
+                           date <span class="op">&lt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2007-12-31"</span>))
+
+q_obs_val &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2008-01-01"</span>),
+                           date <span class="op">&lt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2012-12-31"</span>))</code></pre></div>
 </div>
-<div id="definition-of-the-function-to-optimize" class="section level2">
+<div id="parameter-sampling" class="section level2">
 <h2 class="hasAnchor">
-<a href="#definition-of-the-function-to-optimize" class="anchor"></a>Definition of the function to optimize</h2>
-<p>Most optimizers require a function as an input argument that uses a parameter set as input and returns a scalar value as a result. To use the <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code> function in the optimization we wrap a function around the SWAT model execution that will be implemented in the optimizer to search the optimum parameter set that minimizes the return value (minimization is usually the default option in optimizers). Below you see how you can implement the model execution into a function that can be optimized:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">swat_optim &lt;-<span class="st"> </span><span class="cf">function</span>(par, obs) {
-  q_sim &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> <span class="st">"C:/swatplus_demo"</span>,
-                        <span class="dt">output =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
-                                              <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
-                                              <span class="dt">unit =</span> <span class="dv">1</span>),
-                        <span class="dt">parameter =</span> par,
+<a href="#parameter-sampling" class="anchor"></a>Parameter sampling</h2>
+<p>For the sampling example we will use 7 SWAT model parameters that are frequently calibrated for discharge. Below we create a <code>tibble</code> <span class="citation">(Müller and Wickham, <a href="#ref-Mueller2019">2019</a>)</span> that provides the parameter boundaries for the 7 parameters. We name the parameters using the specific syntax that is requested by the <code>run_swat*()</code> functions (see the <a href="https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration">Get started</a> section on ‘Model parameter alteration’ to learn more on parameter names):</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_bound &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="st">"cn2.hru | change = abschg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">15</span>, <span class="dv">10</span>),
+                    <span class="st">"lat_ttime.hru | change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="fl">0.5</span>, <span class="dv">50</span>),
+                    <span class="st">"lat_len.hru | change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">10</span>, <span class="dv">100</span>),
+                    <span class="st">"k.sol | change = pctchg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">50</span>, <span class="dv">50</span>),
+                    <span class="st">"z.sol | change = pctchg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">50</span>, <span class="dv">50</span>),
+                    <span class="st">"esco.hru | change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">0</span>, <span class="dv">1</span>),
+                    <span class="st">"epco.hru | change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">0</span>, <span class="dv">1</span>))</code></pre></div>
+<div id="random-sampling-with-runif" class="section level3">
+<h3 class="hasAnchor">
+<a href="#random-sampling-with-runif" class="anchor"></a>Random sampling with <code><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif()</a></code>
+</h3>
+<p>The most basic way to draw random parameter samples is to use the base R function <code><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif()</a></code>. With <code><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif()</a></code> you can create a uniformly distributed vector. To draw a specific number of parameter sets with <code><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif()</a></code> you have to create a vector with that number of random values for each parameter and transform them to their parameter ranges. Below you find a very efficient approach to create a table of parameter combinations using a <code>map*()</code> function from the functional programing package <code>purrr</code>:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">n_sample &lt;-<span class="st"> </span><span class="dv">250</span>
+par_runif &lt;-<span class="st"> </span><span class="kw">map_df</span>(par_bound, <span class="op">~</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif</a></span>(n_sample, .x[<span class="dv">1</span>], .x[<span class="dv">2</span>]))
+par_runif
+<span class="co">#&gt; # A tibble: 250 x 7</span>
+<span class="co">#&gt;    `cn2.hru | chan~ `lat_ttime.hru ~ `lat_len.hru | ~ `k.sol | change~</span>
+<span class="co">#&gt;               &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;</span>
+<span class="co">#&gt;  1           -5.63              5.26             46.2            23.1 </span>
+<span class="co">#&gt;  2            5.34             37.4              98.3           -15.1 </span>
+<span class="co">#&gt;  3            9.06             25.0              43.0            18.1 </span>
+<span class="co">#&gt;  4            7.23             28.1              78.1            -4.15</span>
+<span class="co">#&gt;  5            3.02             35.9              49.8           -36.0 </span>
+<span class="co">#&gt;  6           -0.441             6.41             73.9             6.16</span>
+<span class="co">#&gt;  7           -6.10             41.0              15.2            30.2 </span>
+<span class="co">#&gt;  8          -10.5              43.6              47.5            36.4 </span>
+<span class="co">#&gt;  9            9.99             19.9              16.4            36.7 </span>
+<span class="co">#&gt; 10            3.75             34.0              43.2            15.8 </span>
+<span class="co">#&gt; # ... with 240 more rows, and 3 more variables: `z.sol | change =</span>
+<span class="co">#&gt; #   pctchg` &lt;dbl&gt;, `esco.hru | change = absval` &lt;dbl&gt;, `epco.hru | change</span>
+<span class="co">#&gt; #   = absval` &lt;dbl&gt;</span></code></pre></div>
+</div>
+<div id="random-sampling-with-lhs" class="section level3">
+<h3 class="hasAnchor">
+<a href="#random-sampling-with-lhs" class="anchor"></a>Random sampling with <code>lhs</code>
+</h3>
+<p>In a very similar way you can draw LHS samples using the function <code>randomLHS()</code> from the <code>lhs</code> package. Below you find an efficient example to draw a <code>n_sample = 250</code> LHS sampled parameter combinations:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">n_sample &lt;-<span class="st"> </span><span class="dv">250</span>
+n_par &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">ncol</a></span>(par_bound)
+
+par_iter1 &lt;-<span class="st"> </span><span class="kw">randomLHS</span>(<span class="dt">n =</span> n_sample, <span class="dt">k =</span> n_par) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">as_tibble</span>(.) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">map2_df</span>(., par_bound, <span class="op">~</span><span class="st"> </span>(.x <span class="op">*</span><span class="st"> </span>(.y[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>.y[<span class="dv">1</span>]) <span class="op">+</span><span class="st"> </span>.y[<span class="dv">1</span>])) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">set_names</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_bound))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_iter1
+<span class="co">#&gt; # A tibble: 250 x 7</span>
+<span class="co">#&gt;    `cn2.hru | chan~ `lat_ttime.hru ~ `lat_len.hru | ~ `k.sol | change~</span>
+<span class="co">#&gt;               &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;</span>
+<span class="co">#&gt;  1            0.423            49.5              48.4          -45.6  </span>
+<span class="co">#&gt;  2            7.21             37.4              78.4          -44.8  </span>
+<span class="co">#&gt;  3            9.11             38.9              90.3           46.0  </span>
+<span class="co">#&gt;  4            0.582            21.6              86.8            0.268</span>
+<span class="co">#&gt;  5           -9.75              3.84             84.8          -11.7  </span>
+<span class="co">#&gt;  6           -4.20             28.7              80.3           19.4  </span>
+<span class="co">#&gt;  7            9.45             17.7              62.5          -23.9  </span>
+<span class="co">#&gt;  8           -8.93             21.8              74.3          -20.1  </span>
+<span class="co">#&gt;  9            7.95              2.29             86.5           -2.96 </span>
+<span class="co">#&gt; 10           -9.43             27.3              20.1          -42.6  </span>
+<span class="co">#&gt; # ... with 240 more rows, and 3 more variables: `z.sol | change =</span>
+<span class="co">#&gt; #   pctchg` &lt;dbl&gt;, `esco.hru | change = absval` &lt;dbl&gt;, `epco.hru | change</span>
+<span class="co">#&gt; #   = absval` &lt;dbl&gt;</span></code></pre></div>
+</div>
+</div>
+<div id="model-calibration" class="section level2">
+<h2 class="hasAnchor">
+<a href="#model-calibration" class="anchor"></a>Model calibration</h2>
+<div id="simulation-runs" class="section level3">
+<h3 class="hasAnchor">
+<a href="#simulation-runs" class="anchor"></a>Simulation runs</h3>
+<p>In a next step we implement all LHS sampled parameter combinations in the SWAT+ demo setup and simulate daily discharges for the calibration period 2003-01-01 until 2007-12-31 (with a warm-up period of 3 years fro 2000 to 2002). To perform the simulations we pass the entire <code>tibble</code> with the parameter combinations with the argument <code>parameter</code> in the function <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_iter1 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
+                        <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_out =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
+                                      <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
+                                      <span class="dt">unit =</span> <span class="dv">1</span>)),
+                        <span class="dt">parameter =</span> par_iter1,
                         <span class="dt">start_date =</span> <span class="st">"2000-01-01"</span>,
-                        <span class="dt">end_date =</span> <span class="st">"2012-12-31"</span>,
+                         <span class="dt">end_date =</span> <span class="st">"2007-12-31"</span>,
                         <span class="dt">years_skip =</span> <span class="dv">3</span>,
-                        <span class="dt">quiet =</span> <span class="ot">TRUE</span>)
+                        <span class="dt">n_thread =</span> <span class="dv">4</span>)
 
-  nse_q &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span><span class="kw">NSE</span>(q_sim<span class="op">$</span>simulation<span class="op">$</span>flo_out<span class="op">/</span><span class="fl">8.64</span>, obs)
-  <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/function">return</a></span>(nse_q)
-}
+<span class="co">#&gt; Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':</span>
+<span class="co">#&gt;  Completed 4 threads in 0S</span>
+<span class="co">#&gt; Performing 250 simulations on 4 cores:</span>
+<span class="co">#&gt;  Completed 250 simulations in 1M 54S</span></code></pre></div>
+</div>
+<div id="model-evaluation" class="section level3">
+<h3 class="hasAnchor">
+<a href="#model-evaluation" class="anchor"></a>Model evaluation</h3>
+<p>We use the Nash Sutcliffe Efficiency criterion <span class="citation">(NSE; Nash and Sutcliffe, <a href="#ref-Nash1970">1970</a>)</span> to evaluate the simulations for the calibration period. The NSE is implemented in <code>hydroGOF</code> with the function <code>NSE()</code>:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nse_iter1 &lt;-<span class="st"> </span>q_iter1<span class="op">$</span>simulation<span class="op">$</span>q_out <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">map_dbl</span>(., <span class="op">~</span><span class="kw">NSE</span>(.x<span class="op">/</span><span class="fl">8.64</span>, q_obs_cal<span class="op">$</span>q_out))</code></pre></div>
+<p>The first iteration of discharge simulations and their evaluation with the NSE should help us to identify the relevant parameter and/or constrain parameter boundaries of paramaters. Therefore we display the parameter samples with the resulting NSE vaues in dotty plots:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dotty_iter1 &lt;-<span class="st"> </span>q_iter1<span class="op">$</span>parameter<span class="op">$</span>values <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">nse =</span> nse_iter1) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(nse <span class="op">&gt;</span><span class="st"> </span><span class="op">-</span><span class="dv">5</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">gather</span>(<span class="dt">key =</span> <span class="st">"par"</span>, <span class="dt">value =</span> <span class="st">"val"</span>, <span class="op">-</span>nse)
 
-swat_optim &lt;-<span class="st"> </span><span class="cf">function</span>(par, obs) {
-  q_sim &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> <span class="st">"C:/swatplus_demo"</span>,
-                        <span class="dt">output =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
-                                              <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
-                                              <span class="dt">unit =</span> <span class="dv">1</span>),
-                        <span class="dt">parameter =</span> par,
+<span class="kw">ggplot</span>(<span class="dt">data =</span> dotty_iter1) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">x =</span> val, <span class="dt">y =</span> nse)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">facet_wrap</span>(.<span class="op">~</span>par, <span class="dt">ncol =</span> <span class="dv">3</span>, <span class="dt">scales =</span> <span class="st">"free"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
+<p><img src="par_sampl_calib_files/figure-html/unnamed-chunk-13-1.png" width="700"></p>
+<p>The only parameter that showed a clear parameter front in dotty plot is the “lat_ttime”. For the next iteration we will constrain the “lat_ttime” to the interval [0.5,5].</p>
+</div>
+<div id="parameter-update-and-re-evaluation-of-the-model" class="section level3">
+<h3 class="hasAnchor">
+<a href="#parameter-update-and-re-evaluation-of-the-model" class="anchor"></a>Parameter update and re-evaluation of the model</h3>
+<p>To constrain the parameter “lat_ttime” we update the parameter boundaries table. As we only modify the boundaries of one parameter an efficient way is to do the following. In a next step we draw a new set of LHS sampled model parameter combinations and re-run the model:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_bound<span class="op">$</span><span class="st">`</span><span class="dt">lat_ttime.hru | change = absval</span><span class="st">`</span> &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">0</span>, <span class="dv">5</span>)
+
+par_iter2 &lt;-<span class="st"> </span><span class="kw">randomLHS</span>(<span class="dt">n =</span> n_sample, <span class="dt">k =</span> n_par) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">as_tibble</span>(.) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">map2_df</span>(., par_bound, <span class="op">~</span><span class="st"> </span>(.x <span class="op">*</span><span class="st"> </span>(.y[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>.y[<span class="dv">1</span>]) <span class="op">+</span><span class="st"> </span>.y[<span class="dv">1</span>])) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">set_names</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_bound))
+
+q_iter2 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
+                        <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_out =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
+                                      <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
+                                      <span class="dt">unit =</span> <span class="dv">1</span>)),
+                        <span class="dt">parameter =</span> par_iter2,
                         <span class="dt">start_date =</span> <span class="st">"2000-01-01"</span>,
-                        <span class="dt">end_date =</span> <span class="st">"2012-12-31"</span>,
+                         <span class="dt">end_date =</span> <span class="st">"2007-12-31"</span>,
                         <span class="dt">years_skip =</span> <span class="dv">3</span>,
-                        <span class="dt">quiet =</span> <span class="ot">TRUE</span>)
+                        <span class="dt">n_thread =</span> <span class="dv">4</span>)
 
-  nse_q &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span><span class="kw">NSE</span>(q_sim<span class="op">$</span>simulation<span class="op">$</span>flo_out<span class="op">/</span><span class="fl">8.64</span>, obs)
-  <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/function">return</a></span>(nse_q)
-  }</code></pre></div>
-<p>We defined a function that has one input argument <code>par</code> that is the named parameter vector that will be passed to <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code>. The simulation will return the discharge at the main outlet (<code>unit = 1</code>) for the time period 2003-01-01 to 2012-12-31 (considering the <code>years_skip = 3</code> as warm up period). In this case we set the function to be <code>quiet = TRUE</code>. In a next step the function uses the observed discharge values from <code>q_obs$q_out</code> for the same period and evaluate the simulated discharges using the <code>NSE()</code> from the package <code>hydroGOF</code> that is then returned as a single value. You can see that we implemented the negative NSE as we will minimize with <code><a href="https://www.rdocumentation.org/packages/stats/topics/optim">optim()</a></code></p>
+<span class="co">#&gt; Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':</span>
+<span class="co">#&gt;  Completed 4 threads in 0S</span>
+<span class="co">#&gt; Performing 250 simulations on 4 cores:</span>
+<span class="co">#&gt;  Completed 250 simulations in 1M 56S</span></code></pre></div>
+<p>The updated simulations are again evaluated:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nse_iter2 &lt;-<span class="st"> </span>q_iter2<span class="op">$</span>simulation<span class="op">$</span>q_out <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">map_dbl</span>(., <span class="op">~</span><span class="kw">NSE</span>(.x<span class="op">/</span><span class="fl">8.64</span>, q_obs_cal<span class="op">$</span>q_out))</code></pre></div>
+<p>In our example we consider all simulations that resulted in an NSE &gt; 0.7 as acceptable simulation results. Therefore we select the acceptable simulations and their respective parameter combinations from our simulation outputs:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">run_sel &lt;-<span class="st"> </span>nse_iter2 <span class="op">&gt;=</span><span class="st"> </span><span class="fl">0.7</span>
+
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sum">sum</a></span>(run_sel)
+<span class="co">#&gt; [1] 44</span></code></pre></div>
+<p>In total 44 simulations resulted in acceptable representations of the observed discharge.</p>
+</div>
+</div>
+<div id="model-validation" class="section level2">
+<h2 class="hasAnchor">
+<a href="#model-validation" class="anchor"></a>Model validation</h2>
+<div id="parameter-sampling-and-simulation" class="section level3">
+<h3 class="hasAnchor">
+<a href="#parameter-sampling-and-simulation" class="anchor"></a>Parameter sampling and simulation</h3>
+<p>We will validate the selected 44 parameter combinations in the validation period 2008-01-01 to 2012-12-31. Therefore, we select the acceptable parameter combinations and perform the simulations with these parametrizations in the valdation period:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_val &lt;-<span class="st"> </span>q_iter2<span class="op">$</span>parameter<span class="op">$</span>values[run_sel,] <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">set_names</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_bound))
+
+par_val
+<span class="co">#&gt; # A tibble: 44 x 7</span>
+<span class="co">#&gt;    `cn2.hru | chan~ `lat_ttime.hru ~ `lat_len.hru | ~ `k.sol | change~</span>
+<span class="co">#&gt;               &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;</span>
+<span class="co">#&gt;  1           -4.56             1.64              95.2           -45.0 </span>
+<span class="co">#&gt;  2            0.482            0.979             35.0           -21.2 </span>
+<span class="co">#&gt;  3            2.54             1.54              50.0           -24.0 </span>
+<span class="co">#&gt;  4          -13.8              1.13              39.7           -35.2 </span>
+<span class="co">#&gt;  5            8.44             0.169             87.7            35.7 </span>
+<span class="co">#&gt;  6           -9.54             0.801             66.6             8.99</span>
+<span class="co">#&gt;  7           -1.89             0.910             63.4            42.6 </span>
+<span class="co">#&gt;  8            1.86             1.01              52.5             3.85</span>
+<span class="co">#&gt;  9            6.28             2.14              70.4           -10.1 </span>
+<span class="co">#&gt; 10            4.00             0.230             74.1            -7.25</span>
+<span class="co">#&gt; # ... with 34 more rows, and 3 more variables: `z.sol | change =</span>
+<span class="co">#&gt; #   pctchg` &lt;dbl&gt;, `esco.hru | change = absval` &lt;dbl&gt;, `epco.hru | change</span>
+<span class="co">#&gt; #   = absval` &lt;dbl&gt;</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_val &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
+                      <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_out =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
+                                    <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
+                                    <span class="dt">unit =</span> <span class="dv">1</span>)),
+                      <span class="dt">parameter =</span> par_val,
+                      <span class="dt">start_date =</span> <span class="st">"2005-01-01"</span>,
+                       <span class="dt">end_date =</span> <span class="st">"2012-12-31"</span>,
+                      <span class="dt">years_skip =</span> <span class="dv">3</span>,
+                      <span class="dt">n_thread =</span> <span class="dv">4</span>)
+
+<span class="co">#&gt; Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run': </span>
+<span class="co">#&gt;  Completed 4 threads in 0S</span>
+<span class="co">#&gt; Performing 44 simulations on 4 cores: </span>
+<span class="co">#&gt;  Completed 44 simulations in 20S</span></code></pre></div>
+</div>
+<div id="evaluation-of-the-calibration-period" class="section level3">
+<h3 class="hasAnchor">
+<a href="#evaluation-of-the-calibration-period" class="anchor"></a>Evaluation of the calibration period</h3>
+<p>The evaluation of the validation period is identical to the evaluation of the iterations of the calibration period. To get an overview of the model performance in the validation period we visualize a summary statistics:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nse_val &lt;-<span class="st"> </span>q_val<span class="op">$</span>simulation<span class="op">$</span>q_out <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">map_dbl</span>(., <span class="op">~</span><span class="kw">NSE</span>(.x<span class="op">/</span><span class="fl">8.64</span>, q_obs_val<span class="op">$</span>q_out))
+
+nse_comp &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">calibration =</span> nse_iter2[run_sel],
+                   <span class="dt">validation =</span> nse_val) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">gather</span>(<span class="dt">key =</span> <span class="st">"period"</span>, <span class="dt">value =</span> <span class="st">"nse"</span>)
+  
+
+<span class="kw">ggplot</span>(<span class="dt">data =</span> nse_comp) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">geom_boxplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> period, <span class="dt">y =</span> nse), <span class="dt">fill =</span> <span class="st">"grey"</span>) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
+<p><img src="par_sampl_calib_files/figure-html/unnamed-chunk-21-1.png" width="700"></p>
+</div>
+</div>
+<div id="visualization-of-discharge-simulation" class="section level2">
+<h2 class="hasAnchor">
+<a href="#visualization-of-discharge-simulation" class="anchor"></a>Visualization of discharge simulation</h2>
+<p>We will plot the ensemble of simulations as a band of minimum and maximum values for each time step and compare it to the observations.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">run_cal_best &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which.min">which.max</a></span>(nse_iter2))
+run_val &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(nse_val)[<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which">which</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which">which</a></span>(run_sel)) <span class="op">==</span><span class="st"> </span>run_cal_best)]
+  
+cal_stat &lt;-<span class="st"> </span>q_iter2<span class="op">$</span>simulation<span class="op">$</span>q_out <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(<span class="kw">one_of</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which">which</a></span>(run_sel)))) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">q_max =</span> <span class="kw">pmap_dbl</span>(., max),
+         <span class="dt">q_min =</span> <span class="kw">pmap_dbl</span>(., min)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(<span class="kw">matches</span>(run_cal_best), q_min, q_max) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate_all</span>(., <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="op">~</span>.<span class="op">/</span><span class="fl">8.64</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">set_names</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"q_sim"</span>, <span class="st">"q_min"</span>, <span class="st">"q_max"</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">date =</span> q_obs_cal<span class="op">$</span>date) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">period =</span> <span class="st">"calibration"</span>)
+
+val_stat &lt;-<span class="st">  </span>q_val<span class="op">$</span>simulation<span class="op">$</span>q_out <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>date) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">q_max =</span> <span class="kw">pmap_dbl</span>(., max),
+         <span class="dt">q_min =</span> <span class="kw">pmap_dbl</span>(., min)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(<span class="kw">matches</span>(run_val), q_min, q_max) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate_all</span>(., <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="op">~</span>.<span class="op">/</span><span class="fl">8.64</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">set_names</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"q_sim"</span>, <span class="st">"q_min"</span>, <span class="st">"q_max"</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">date =</span> q_obs_val<span class="op">$</span>date) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">period =</span> <span class="st">"validation"</span>)
+
+sim_stat &lt;-<span class="st"> </span><span class="kw">bind_rows</span>(cal_stat, val_stat) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">left_join</span>(., q_obs, <span class="dt">by =</span> <span class="st">"date"</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">rename</span>( <span class="dt">q_obs =</span> q_out) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">gather</span>(<span class="dt">key =</span> <span class="st">"variable"</span>, <span class="dt">value =</span> <span class="st">"q"</span>, <span class="op">-</span>date, <span class="op">-</span>q_min, <span class="op">-</span><span class="st"> </span>q_max, <span class="op">-</span>period)
+
+<span class="kw">ggplot</span>(<span class="dt">data =</span> sim_stat) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_ribbon</span>(<span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">ymin =</span> q_min, <span class="dt">ymax =</span> q_max, <span class="dt">fill =</span> period)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> q, <span class="dt">col =</span> variable, <span class="dt">linetype =</span> period), <span class="dt">lwd =</span> <span class="fl">0.25</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_color_manual</span>(<span class="dt">values =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"black"</span>, <span class="st">"tomato3"</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_fill_manual</span>(<span class="dt">values =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"grey30"</span>, <span class="st">"grey70"</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">xlab</span>(<span class="st">"Date (yyyy)"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ylab</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/expression">expression</a></span> (Discharge<span class="op">~</span>(m<span class="op">^</span><span class="dv">3</span><span class="op">~</span>s<span class="op">^</span>{<span class="op">-</span><span class="dv">1</span>}))) <span class="op">+</span>
+<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
+<p><img src="par_sampl_calib_files/figure-html/unnamed-chunk-22-1.png" width="700"></p>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="hasAnchor">
 <a href="#references" class="anchor"></a>References</h2>
 <div id="refs" class="references">
-<div id="ref-Andrews2018">
-<p>Andrews, F. and Guillaume, J.: Hydromad: Hydrological model assessment and development. [online] Available from: <a href="http://hydromad.catchment.org/" class="uri">http://hydromad.catchment.org/</a> (Accessed 5 March 2019), 2018.</p>
-</div>
-<div id="ref-Bass2019">
-<p>Bass, B.: Tolson &amp; Shoemaker’s DDS Algorithm implementation in R. [online] Available from: <a href="https://github.com/bdb67/Dynamically-Dimensioned-Search" class="uri">https://github.com/bdb67/Dynamically-Dimensioned-Search</a> (Accessed 19 March 2019), 2014.</p>
-</div>
 <div id="ref-Bosch2007">
 <p>Bosch, D. D., Sheridan, J. M., Lowrance, R. R., Hubbard, R. K., Strickland, T. C., Feyereisen, G. W. and Sullivan, D. G.: Little river experimental watershed database, Water Resources Research, 43(9), doi:<a href="https://doi.org/10.1029/2006wr005844">10.1029/2006wr005844</a>, 2007.</p>
 </div>
-<div id="ref-Duan1993">
-<p>Duan, Q. Y., Gupta, V. K. and Sorooshian, S.: Shuffled complex evolution approach for effective and efficient global minimization, Journal of Optimization Theory and Applications, 76(3), 501–521, doi:<a href="https://doi.org/10.1007/bf00939380">10.1007/bf00939380</a>, 1993.</p>
+<div id="ref-Carnell2019">
+<p>Carnell, R.: Lhs: Latin hypercube samples. [online] Available from: <a href="https://CRAN.R-project.org/package=lhs" class="uri">https://CRAN.R-project.org/package=lhs</a> (Accessed 5 March 2019), 2019.</p>
+</div>
+<div id="ref-Dutang2018">
+<p>Dutang C. and P., S.: Randtoolbox: Generating and testing random numbers. [online] Available from: <a href="https://CRAN.R-project.org/package=randtoolbox" class="uri">https://CRAN.R-project.org/package=randtoolbox</a> (Accessed 5 March 2019), 2018.</p>
 </div>
 <div id="ref-MZB2017">
 <p>Mauricio Zambrano-Bigiarini: HydroGOF: Goodness-of-fit functions for comparison of simulated and observed hydrological time series., 2017.</p>
 </div>
+<div id="ref-Mueller2019">
+<p>Müller, K. and Wickham, H.: Tibble: Simple data frames. [online] Available from: <a href="https://CRAN.R-project.org/package=tibble" class="uri">https://CRAN.R-project.org/package=tibble</a> (Accessed 5 March 2019), 2019.</p>
+</div>
+<div id="ref-Nash1970">
+<p>Nash, J. E. and Sutcliffe, J. V.: River flow forecasting through conceptual models part I - A discussion of principles, Journal of Hydrology, 10(3), 282–290, doi:<a href="https://doi.org/10.1016/0022-1694(70)90255-6">10.1016/0022-1694(70)90255-6</a>, 1970.</p>
+</div>
 <div id="ref-Rcore2019">
 <p>R Core Team: R: A language and environment for statistical computing., [online] Available from: <a href="https://www.r-project.org/" class="uri">https://www.r-project.org/</a> (Accessed 5 March 2019), 2019.</p>
-</div>
-<div id="ref-Tolson2007">
-<p>Tolson, B. A. and Shoemaker, C. A.: Dynamically dimensioned search algorithm for computationally efficient watershed model calibration, Water Resources Research, 43(1), doi:<a href="https://doi.org/10.1029/2005wr004723">10.1029/2005wr004723</a>, 2007.</p>
 </div>
 </div>
 </div>
@@ -213,7 +457,10 @@ swat_optim &lt;-<span class="st"> </span><span class="cf">function</span>(par, o
       <ul class="nav nav-pills nav-stacked">
 <li><a href="#r-packages">R packages</a></li>
       <li><a href="#loading-demo-data">Loading demo data</a></li>
-      <li><a href="#definition-of-the-function-to-optimize">Definition of the function to optimize</a></li>
+      <li><a href="#parameter-sampling">Parameter sampling</a></li>
+      <li><a href="#model-calibration">Model calibration</a></li>
+      <li><a href="#model-validation">Model validation</a></li>
+      <li><a href="#visualization-of-discharge-simulation">Visualization of discharge simulation</a></li>
       <li><a href="#references">References</a></li>
       </ul>
 </div>

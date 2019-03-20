@@ -1,5 +1,5 @@
 ---
-title: "Parameter optimization"
+title: "Parameter sampling and model calibration"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Exploring SWATplusR}
@@ -19,30 +19,31 @@ knitr::opts_chunk$set(
 
 ## R packages
 
-There are many optimization routines available in R. The base R package `stats` [@Rcore2019] provides the function `optim()` that offers several standard methods for model parameter optimization. The `hydromad` [@Andrews2018] package provides a complete environment for hydrological modeling in R. It also offers several optimization algorithms that are standard methods in hydrological modeling, such as the Shuffled Complex Evolution algorithm [SCE; @Duan1993], or the Dynamically Dimensioned Search algorithm [DDS; @Tolson2007]. A flexible integration of the DDS algorithm for R can also be found on the following [github repository](https://github.com/bdb67/Dynamically-Dimensioned-Search) [@Bass2019].
-Multiple goodness-of-fit functions are available from literature to evaluate simulated time series with observed time series of that variable. The `hydroGOF` package [@MZB2017] summarizes frequently used functions for the evaluation of time series of hydrological variables.
+A common procedure in hydrological modeling is to draw random samples for a set of parameters, to execute the model with all drawn parameter combinations, evaluate the simulations based on one or several criteria, and select parameter sets that were able to reproduce the observation date sufficiently with the applied model setup. For R different routines are available to draw random samples. The simplest approach might be to use the function `runif()` from the base R package `stats` [@Rcore2019] to draw uniform samples for each parameter. You can draw Latin Hypercube Samples [LHS] with the package `lhs` [@Carnell2019]. Other 'pseudo' and 'quasi' random numbers (that can be relevant for some methods for sensitivity analysis) can be drawn using the package `randtoolbox` [@Dutang2018]. In this example we will implement LHS sampling.
+To evaluate simulated time series of hydrological variables, multiple goodness-of-fit functions are available from literature. The `hydroGOF` package [@MZB2017] summarizes frequently used functions for the evaluation of time series of hydrological variables.
 
 ### Package installation
 
-If you do not have installed any of the required R package, follow the instructions for the respective R package.
-
-The `hydromad` package can be installed following the instructions on the [hydromad website](http://hydromad.catchment.org/#installation).
-
-The other R packages are available from CRAN and can be installed with the following commands:
+If you do not have installed any of the required R package, follow the instructions for the respective R package. All of the reuired R packages are available from CRAN and can be installed with the following commands:
 ```{r, eval=FALSE}
+install.packages("lhs")
 install.packages("hydroGOF")
 install.packages("dplyr")
 install.packages("tidyr")
+install.packages("lubridate")
+install.packages("purrr")
 install.packages("ggplot2")
 ```
 
 ### Loading R packages
-```{r, eval=FALSE}
+```{r}
 library(SWATplusR)
-library(hydromad)
+library(lhs)
 library(hydroGOF)
 library(dplyr)
+library(lubridate)
 library(tidyr)
+library(purrr)
 library(ggplot2)
 ```
 
@@ -60,52 +61,260 @@ path_plus <- load_demo(dataset = "project",
                        path = demo_path)
 ```
 
-`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2012-12-31. Therefore, we load the demo data and limit it to this time period:
+`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. For this example we define calibration and validation periods for our data set, where the calibration period is from 2003-01-01 to 2007-12-31 and the validation period ranges between 2008-01-01 and 2012-12-31. Therefore, we load the demo data and limit it to these time periods:
 
-```{r, eval=FALSE}
+```{r}
 q_obs <- load_demo(dataset = "observation")
 
-q_obs <- filter(q_obs, date >= ymd("2003-01-01"),
-                       date <= "2012-12-31")
+q_obs_cal <- filter(q_obs, date >= ymd("2003-01-01"),
+                           date <= ymd("2007-12-31"))
+
+q_obs_val <- filter(q_obs, date >= ymd("2008-01-01"),
+                           date <= ymd("2012-12-31"))
 ```
 
-## Definition of the function to optimize
+## Parameter sampling
+For the sampling example we will use 7 SWAT model parameters that are frequently calibrated for discharge. Below we create a `tibble` [@Mueller2019] that provides the parameter boundaries for the 7 parameters. We name the parameters using the specific syntax that is requested by the `run_swat*()` functions (see the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration) section on 'Model parameter alteration' to learn more on parameter names):
 
-Most optimizers require a function as an input argument that uses a parameter set as input and returns a scalar value as a result. To use the `run_swatplus()` function in the optimization we wrap a function around the SWAT model execution that will be implemented in the optimizer to search the optimum parameter set that minimizes the return value (minimization is usually the default option in optimizers). Below you see how you can implement the model execution into a function that can be optimized:
+```{r}
+par_bound <- tibble("cn2.hru | change = abschg" = c(-15, 10),
+                    "lat_ttime.hru | change = absval" = c(0.5, 50),
+                    "lat_len.hru | change = absval" = c(10, 100),
+                    "k.sol | change = pctchg" = c(-50, 50),
+                    "z.sol | change = pctchg" = c(-50, 50),
+                    "esco.hru | change = absval" = c(0, 1),
+                    "epco.hru | change = absval" = c(0, 1))
+```
+
+### Random sampling with `runif()`
+The most basic way to draw random parameter samples is to use the base R function `runif()`. With `runif()` you can create a uniformly distributed vector. To draw a specific number of parameter sets with `runif()` you have to create a vector with that number of random values for each parameter and transform them to their parameter ranges. Below you find a very efficient approach to create a table of parameter combinations using a `map*()` function from the functional programing package `purrr`:
+
+```{r}
+n_sample <- 250
+par_runif <- map_df(par_bound, ~ runif(n_sample, .x[1], .x[2]))
+par_runif
+```
+
+
+### Random sampling with `lhs`
+
+In a very similar way you can draw LHS samples using the function `randomLHS()` from the `lhs` package. Below you find an efficient example to draw a `n_sample = 250` LHS sampled parameter combinations:  
+
+```{r, eval = F}
+n_sample <- 250
+n_par <- ncol(par_bound)
+
+par_iter1 <- randomLHS(n = n_sample, k = n_par) %>%
+  as_tibble(.) %>%
+  map2_df(., par_bound, ~ (.x * (.y[2] - .y[1]) + .y[1])) %>%
+  set_names(names(par_bound))
+```
+
+```{r, echo=FALSE}
+par_iter1 <- readRDS(here::here("vignettes/datasets/par_iter1.rds"))
+```
+
+```{r}
+par_iter1
+```
+
+## Model calibration
+
+### Simulation runs
+
+In a next step we implement all LHS sampled parameter combinations in the SWAT+ demo setup and simulate daily discharges for the calibration period 2003-01-01 until 2007-12-31 (with a warm-up period of 3 years fro 2000 to 2002). To perform the simulations we pass the entire `tibble` with the parameter combinations with the argument `parameter` in the function `run_swatplus()`.
 
 ```{r, eval=FALSE}
-swat_optim <- function(par, obs) {
-  q_sim <- run_swatplus(project_path = "C:/swatplus_demo",
-                        output = define_output(file = "channel",
-                                              variable = "flo_out",
-                                              unit = 1),
-                        parameter = par,
+q_iter1 <- run_swatplus(project_path = path_plus,
+                        output = list(q_out = define_output(file = "channel",
+                                      variable = "flo_out",
+                                      unit = 1)),
+                        parameter = par_iter1,
                         start_date = "2000-01-01",
-                        end_date = "2012-12-31",
+                         end_date = "2007-12-31",
                         years_skip = 3,
-                        quiet = TRUE)
+                        n_thread = 4)
 
-  nse_q <- - NSE(q_sim$simulation$flo_out/8.64, obs)
-  return(nse_q)
-}
-
-swat_optim <- function(par, obs) {
-  q_sim <- run_swatplus(project_path = "C:/swatplus_demo",
-                        output = define_output(file = "channel",
-                                              variable = "flo_out",
-                                              unit = 1),
-                        parameter = par,
-                        start_date = "2000-01-01",
-                        end_date = "2012-12-31",
-                        years_skip = 3,
-                        quiet = TRUE)
-
-  nse_q <- - NSE(q_sim$simulation$flo_out/8.64, obs)
-  return(nse_q)
-  }
+#> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
+#>  Completed 4 threads in 0S
+#> Performing 250 simulations on 4 cores:
+#>  Completed 250 simulations in 1M 54S
 ```
 
-We defined a function that has one input argument `par` that is the named parameter vector that will be passed to `run_swatplus()`. The simulation will return the discharge at the main outlet (`unit = 1`) for the time period 2003-01-01 to 2012-12-31 (considering the `years_skip = 3` as warm up period). In this case we set the function to be `quiet = TRUE`. In a next step the function uses the observed discharge values from `q_obs$q_out` for the same period and evaluate the simulated discharges using the `NSE()` from the package `hydroGOF` that is then returned as a single value. You can see that we implemented the negative NSE as we will minimize with `optim()`
+```{r, echo=FALSE}
+q_iter1 <- readRDS(here::here("vignettes/datasets/q_iter1.rds"))
+```
 
+### Model evaluation
+
+We use the Nash Sutcliffe Efficiency criterion [NSE; @Nash1970] to evaluate the simulations for the calibration period. The NSE is implemented in `hydroGOF` with the function `NSE()`:
+
+```{r}
+nse_iter1 <- q_iter1$simulation$q_out %>%
+  select(-date) %>%
+  map_dbl(., ~NSE(.x/8.64, q_obs_cal$q_out))
+```
+
+The first iteration of discharge simulations and their evaluation with the NSE should help us to identify the relevant parameter and/or constrain parameter boundaries of paramaters. Therefore we display the parameter samples with the resulting NSE vaues in dotty plots:
+
+```{r}
+dotty_iter1 <- q_iter1$parameter$values %>%
+  mutate(nse = nse_iter1) %>%
+  filter(nse > -5) %>%
+  gather(key = "par", value = "val", -nse)
+
+ggplot(data = dotty_iter1) +
+  geom_point(aes(x = val, y = nse)) +
+  facet_wrap(.~par, ncol = 3, scales = "free") +
+  theme_bw()
+```
+
+The only parameter that showed a clear parameter front in dotty plot is the "lat_ttime". For the next iteration we will constrain the "lat_ttime" to the interval [0.5,5].
+
+### Parameter update and re-evaluation of the model
+
+To constrain the parameter "lat_ttime" we update the parameter boundaries table. As we only modify the boundaries of one parameter an efficient way is to do the following. In a next step we draw a new set of LHS sampled model parameter combinations and re-run the model:
+
+```{r, eval=FALSE}
+par_bound$`lat_ttime.hru | change = absval` <- c(0, 5)
+
+par_iter2 <- randomLHS(n = n_sample, k = n_par) %>%
+  as_tibble(.) %>%
+  map2_df(., par_bound, ~ (.x * (.y[2] - .y[1]) + .y[1])) %>%
+  set_names(names(par_bound))
+
+q_iter2 <- run_swatplus(project_path = path_plus,
+                        output = list(q_out = define_output(file = "channel",
+                                      variable = "flo_out",
+                                      unit = 1)),
+                        parameter = par_iter2,
+                        start_date = "2000-01-01",
+                         end_date = "2007-12-31",
+                        years_skip = 3,
+                        n_thread = 4)
+
+#> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
+#>  Completed 4 threads in 0S
+#> Performing 250 simulations on 4 cores:
+#>  Completed 250 simulations in 1M 56S
+
+```
+
+```{r, echo=FALSE}
+q_iter2 <- readRDS(here::here("vignettes/datasets/q_iter2.rds"))
+```
+
+The updated simulations are again evaluated:
+```{r}
+nse_iter2 <- q_iter2$simulation$q_out %>%
+  select(-date) %>%
+  map_dbl(., ~NSE(.x/8.64, q_obs_cal$q_out))
+```
+
+In our example we consider all simulations that resulted in an NSE > 0.7 as acceptable simulation results. Therefore we select the acceptable simulations and their respective parameter combinations from our simulation outputs:
+
+```{r}
+run_sel <- nse_iter2 >= 0.7
+
+sum(run_sel)
+```
+
+In total `r sum(run_sel)` simulations resulted in acceptable representations of the observed discharge.
+
+## Model validation
+
+### Parameter sampling and simulation
+
+We will validate the selected `r sum(run_sel)` parameter combinations in the validation period 2008-01-01 to 2012-12-31. Therefore, we select the acceptable parameter combinations and perform the simulations with these parametrizations in the valdation period:
+
+```{r}
+par_val <- q_iter2$parameter$values[run_sel,] %>% 
+  set_names(names(par_bound))
+
+par_val
+```
+
+```{r, eval=FALSE}
+q_val <- run_swatplus(project_path = path_plus,
+                      output = list(q_out = define_output(file = "channel",
+                                    variable = "flo_out",
+                                    unit = 1)),
+                      parameter = par_val,
+                      start_date = "2005-01-01",
+                       end_date = "2012-12-31",
+                      years_skip = 3,
+                      n_thread = 4)
+
+#> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run': 
+#>  Completed 4 threads in 0S
+#> Performing 44 simulations on 4 cores: 
+#>  Completed 44 simulations in 20S
+```
+
+```{r, echo=FALSE}
+q_val <- readRDS(here::here("vignettes/datasets/q_val.rds"))
+```
+
+### Evaluation of the calibration period
+The evaluation of the validation period is identical to the evaluation of the iterations of the calibration period. To get an overview of the model performance in the validation period we visualize a summary statistics:
+
+```{r}
+nse_val <- q_val$simulation$q_out %>%
+  select(-date) %>%
+  map_dbl(., ~NSE(.x/8.64, q_obs_val$q_out))
+
+nse_comp <- tibble(calibration = nse_iter2[run_sel],
+                   validation = nse_val) %>% 
+  gather(key = "period", value = "nse")
+  
+
+ggplot(data = nse_comp) + 
+  geom_boxplot(aes(x = period, y = nse), fill = "grey") + 
+  theme_bw()
+```
+
+
+## Visualization of discharge simulation
+
+We will plot the ensemble of simulations as a band of minimum and maximum values for each time step and compare it to the observations.
+
+```{r}
+run_cal_best <- names(which.max(nse_iter2))
+run_val <- names(nse_val)[which(names(which(run_sel)) == run_cal_best)]
+  
+cal_stat <- q_iter2$simulation$q_out %>% 
+  select(one_of(names(which(run_sel)))) %>% 
+  mutate(q_max = pmap_dbl(., max),
+         q_min = pmap_dbl(., min)) %>% 
+  select(matches(run_cal_best), q_min, q_max) %>% 
+  mutate_all(., list(~./8.64)) %>% 
+  set_names(c("q_sim", "q_min", "q_max")) %>% 
+  mutate(date = q_obs_cal$date) %>% 
+  mutate(period = "calibration")
+
+val_stat <-  q_val$simulation$q_out %>% 
+  select(-date) %>% 
+  mutate(q_max = pmap_dbl(., max),
+         q_min = pmap_dbl(., min)) %>% 
+  select(matches(run_val), q_min, q_max) %>% 
+  mutate_all(., list(~./8.64)) %>% 
+  set_names(c("q_sim", "q_min", "q_max")) %>% 
+  mutate(date = q_obs_val$date) %>% 
+  mutate(period = "validation")
+
+sim_stat <- bind_rows(cal_stat, val_stat) %>% 
+  left_join(., q_obs, by = "date") %>% 
+  rename( q_obs = q_out) %>% 
+  gather(key = "variable", value = "q", -date, -q_min, - q_max, -period)
+
+ggplot(data = sim_stat) +
+  geom_ribbon(aes(x = date, ymin = q_min, ymax = q_max, fill = period)) +
+  geom_line(aes(x = date, y = q, col = variable, linetype = period), lwd = 0.25) +
+  scale_color_manual(values = c("black", "tomato3")) +
+  scale_fill_manual(values = c("grey30", "grey70")) +
+  xlab("Date (yyyy)") +
+  ylab(expression (Discharge~(m^3~s^{-1}))) +
+  theme_bw()
+```
 
 ## References

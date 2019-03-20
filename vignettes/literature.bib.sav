@@ -968,4 +968,16 @@
   publisher = {{AIP} Publishing},
 }
 
+@Manual{,
+}
+
+@Manual{Dutang2018,
+  title   = {{randtoolbox: Generating and Testing Random Numbers}},
+  author  = {Dutang Christophe and Savicky Petr},
+  year    = {2018},
+  note    = {R package version 1.17.1},
+  url     = {https://CRAN.R-project.org/package=randtoolbox},
+  urldate = {2019-03-20},
+}
+
 @Comment{jabref-meta: databaseType:bibtex;}
