@@ -1,16 +1,18 @@
 Package: SWATplusR
 Type: Package
 Title: Running SWAT2012 and SWAT+ Projects in R
-Version: 0.2.3.9001
+Version: 0.2.4
 Authors@R: person("Christoph", "Schuerz",
                 email = "c.schuerz@posteo.org",
                 role = c("aut", "cre"),
                 comment = c(ORCID = '0000-0002-7204-5828'))
 Maintainer: Christoph Schuerz <c.schuerz@posteo.org>
-Description: SWATplusR provides a link to existing SWAT2012 and SWAT+ projects. 
-        It provides modification of model paramaters, parallel computing of SWAT 
-        simulations, incremental saving of defined simulation outputs and further 
-        functionality.
+Description: SWATplusR links your SWAT2012 and SWAT+ projects on the local hard 
+        drive with your modeling work flows in R. You can specify simulation 
+        outputs, alter model paramaters, and control many SWAT simulation 
+        parameters from R. SWATplusR returns simulations in a tidy format, 
+        offers parallel computing, and incremental saving of simulations in data
+        bases.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

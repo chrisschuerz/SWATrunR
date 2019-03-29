@@ -202,7 +202,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   }
 
   sim_result <- foreach(i_run = 1:n_run,
-    .packages = c("dplyr", "pasta", "lubridate"), .options.snow = opts) %dopar% {
+    .packages = c("dplyr", "lubridate"), .options.snow = opts) %dopar% {
     # for(i_run in 1:max(nrow(parameter), 1)) {
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
