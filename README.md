@@ -1,6 +1,3 @@
----
-output: github_document
----
 <!-- rmarkdown v1 -->
 
 # SWATplusR <img src="man/figures/swatr_hex.svg" align="right" />
