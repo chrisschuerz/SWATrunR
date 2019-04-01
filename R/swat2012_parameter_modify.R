@@ -192,7 +192,7 @@ update_par <- function(par, par_up, change, to_chg){
 #'
 filter_spec_expr <- function(par_table, expr) {
   if(nchar(expr) > 0) {
-    table <- evaluate_expression(par_table, expr)
+    par_table <- evaluate_expression(par_table, expr)
   }
   return(par_table)
 }

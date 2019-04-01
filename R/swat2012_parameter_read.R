@@ -7,7 +7,8 @@
 #' @keywords internal
 #'
 format_swat2012_parameter <- function(parameter) {
-  par_constrain <- suppressWarnings(translate_parameter_constraints(names(parameter)))
+  par_constrain <- suppressWarnings(
+    translate_parameter_constraints(names(parameter)))
   names(parameter) <- par_constrain$par_name
   if(!is.data.frame(parameter)) parameter <- map_dfc(parameter, ~.x)
   return(list(values = parameter, definition = par_constrain))
@@ -195,7 +196,6 @@ read_sol <- function(file_meta, project_path) {
 
   table_pos <-  8:21
   col_pos   <-  c(28 + (0:10)*rep(12))
-  col_pos   <- col_pos[(col_pos - 1) <= nchar(files[[1]][8])]
   par_name  <-  c("SOL_Z","SOL_BD", "SOL_AWC", "SOL_K", "SOL_CBN",
                   "CLAY", "SILT", "SAND", "ROCK", "SOL_ALB", "USLE_K",
                   "SOL_EC", "SOL_PH", "SOL_CACO3")
@@ -206,6 +206,7 @@ read_sol <- function(file_meta, project_path) {
     map2(., file_sel$file_code, ~ mutate(.x, file_code = .y)) %>%
     bind_rows(.) %>%
     left_join(., par_list, by = "file_code") %>%
+    filter(., !is.na(SOL_Z)) %>%
     mutate(idx = 1:nrow(.))
 
   return(list(file = files, value = par_table))

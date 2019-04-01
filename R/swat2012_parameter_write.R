@@ -43,7 +43,7 @@ write_parameter <- function(file_meta, thread_parameter, thread_path) {
 write_par_list <- function(file_meta, file_suffix,
                            thread_parameter, thread_path) {
   file_sel <- filter(file_meta, file_name == file_suffix)
-  par_pos <- is_par(thread_parameter[[file_suffix]]$file[[1]])
+  par_pos <- which(is_par(thread_parameter[[file_suffix]]$file[[1]]))
 
   par_files <- thread_parameter[[file_suffix]]$value %>%
     select(-idx, -file_code) %>%
