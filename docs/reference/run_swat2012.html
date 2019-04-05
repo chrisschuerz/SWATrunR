@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Run SWAT2012 — run_swat2012 • SWATplusR</title>
+<title>Run a SWAT2012 project — run_swat2012 • SWATplusR</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,12 +30,14 @@
 
 
 
-<meta property="og:title" content="Run SWAT2012 — run_swat2012" />
+<meta property="og:title" content="Run a SWAT2012 project — run_swat2012" />
 
-<meta property="og:description" content="This function allows to run a SWAT2012 project in parallel from within R.
+<meta property="og:description" content="This function allows to run a SWAT2012 project in R.
 Basic settings for the SWAT run such as the simulation period or the time
 interval for the outputs can be done directly. SWAT simulation outputs can be
-defined that are returned for defined parameter sets." />
+defined that are returned in a 'tidy' format in R. Functionality such as model
+parametrization, parallel execution of simulations, or incremental saving of
+simulation runs is provided." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -66,7 +68,7 @@ defined that are returned for defined parameter sets." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SWATplusR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.3.9002</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4</span>
       </span>
     </div>
 
@@ -126,17 +128,19 @@ defined that are returned for defined parameter sets." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Run SWAT2012</h1>
+    <h1>Run a SWAT2012 project</h1>
     <small class="dont-index">Source: <a href='https://github.com/chrisschuerz/SWATplusR/blob/master/R/swat2012_run_swat.R'><code>R/swat2012_run_swat.R</code></a></small>
     <div class="hidden name"><code>run_swat2012.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>This function allows to run a SWAT2012 project in parallel from within R.
+    <p>This function allows to run a SWAT2012 project in R.
 Basic settings for the SWAT run such as the simulation period or the time
 interval for the outputs can be done directly. SWAT simulation outputs can be
-defined that are returned for defined parameter sets.</p>
+defined that are returned in a 'tidy' format in R. Functionality such as model
+parametrization, parallel execution of simulations, or incremental saving of
+simulation runs is provided.</p>
     
     </div>
 
@@ -153,31 +157,31 @@ defined that are returned for defined parameter sets.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>project_path</th>
-      <td><p>Path to the SWAT project folder (i.e. TxtInOut)</p></td>
+      <td><p>Character string that provides the path to the SWAT project
+folder (i.e. TxtInOut).</p></td>
     </tr>
     <tr>
       <th>output</th>
       <td><p>Define the output variables to extract from the SWAT model
 runs. See function <code><a href='define_output.html'>define_output</a></code> help file to see how to
-define an output.</p></td>
+define simulation outputs.</p></td>
     </tr>
     <tr>
       <th>parameter</th>
       <td><p>(optional) SWAT model parameters either provided as named
-vector or data.frame. If <code>parameter</code> is provided respective parameters
-are modified accordingly.</p></td>
+vector or a tibble. The parameter changes provided with <code>parameter</code>
+are performed during the model execution accordingly. To learn how to
+modify parameters see the <a href='https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html'>Get started</a> page of <code>SWATplusR</code>.</p></td>
     </tr>
     <tr>
       <th>start_date</th>
       <td><p>(optional) Start date of the SWAT simulation. Provided as
-character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
-project are located.</p></td>
+character string in a ymd format (e.g. 'yyyy-mm-dd') or in Date format.</p></td>
     </tr>
     <tr>
       <th>end_date</th>
       <td><p>(optional) End date of the SWAT simulation. Provided as
-character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
-project are located</p></td>
+character string in a ymd format (e.g. 'yyyy-mm-dd') or in Date format.</p></td>
     </tr>
     <tr>
       <th>output_interval</th>
@@ -188,33 +192,33 @@ outputs are written. Provided either as character string ("d" for daily,
     </tr>
     <tr>
       <th>years_skip</th>
-      <td><p>(optional) Integer value that provides the numbe of years
-to be skipped during writing the SWAT model outputs</p></td>
+      <td><p>(optional) Integer value to define the number of simulation
+years that are skipped before writing SWAT model outputs.</p></td>
     </tr>
     <tr>
       <th>rch_out_var</th>
-      <td><p>(optional) Numeric vector of maximum length = 20 for
-customized output of reach variables.For output codes see
+      <td><p>(optional) Numeric vector of maximum <code>length = 20</code> for
+customized output of reach variables. For output codes see the
 <a href='https://swat.tamu.edu/media/69308/ch03_input_cio.pdf'>SWAT I/O
 Documentation</a> p.77ff.</p></td>
     </tr>
     <tr>
       <th>sub_out_var</th>
-      <td><p>(optional) Numeric vector of maximum length = 15 for
-customized output of subbasin variables.For output codes see
+      <td><p>(optional) Numeric vector of maximum <code>length = 15</code> for
+customized output of subbasin variables.For output codes see the
 <a href='https://swat.tamu.edu/media/69308/ch03_input_cio.pdf'>SWAT I/O
 Documentation</a> p.78ff.</p></td>
     </tr>
     <tr>
       <th>hru_out_var</th>
-      <td><p>(optional) Numeric vector of maximum length = 20 for
-customized output of HRU variables.For output codes see
+      <td><p>(optional) Numeric vector of maximum <code>length = 20</code> for
+customized output of HRU variables.For output codes see the
 <a href='https://swat.tamu.edu/media/69308/ch03_input_cio.pdf'>SWAT I/O
 Documentation</a> p.79ff.</p></td>
     </tr>
     <tr>
       <th>hru_out_nr</th>
-      <td><p>(optional) Numeric vector of maximum length = 20 for
+      <td><p>(optional) Numeric vector of maximum <code>length = 20</code> for
 providing the HRU numbers for which the HRU variables are written. Optional
 if <code>hru_out_nr = 'all'</code>, HRU variables are written for all HRU
 (caution, very large output files possible!)</p></td>
@@ -223,7 +227,7 @@ if <code>hru_out_nr = 'all'</code>, HRU variables are written for all HRU
       <th>run_index</th>
       <td><p>(optional) Numeric vector (e.g.<code>run_index = c(1:100,
   110, 115)</code>) to run a subset of the provided <code>parameter</code> sets. If NULL
-all provided parameter sets are used.</p></td>
+all provided parameter sets are used in the simulation.</p></td>
     </tr>
     <tr>
       <th>run_path</th>
@@ -234,35 +238,37 @@ all provided parameter sets are used.</p></td>
     <tr>
       <th>n_thread</th>
       <td><p>(optional) Number of threads to be used for the parallel
-model run. If not provided models are run on single core</p></td>
+model run. If not provided models are run on single core. The parameter is
+ineffective for single simulations.</p></td>
     </tr>
     <tr>
       <th>save_path</th>
       <td><p>(optional) Character string to define the path where the
-model runs are saved if save_file is defined. If <code>save_path = NULL</code>
-the <code>save_file</code> is saved in the project_path.</p></td>
+model runs are saved if <code>save_file</code> is defined. If <code>save_path = NULL</code>
+the folder <code>save_file</code> is saved in the project_path.</p></td>
     </tr>
     <tr>
       <th>save_file</th>
-      <td><p>(optional) Character string to define the name of the file
-where the simulations are saved.</p></td>
+      <td><p>(optional) Character string to define the name of the folder
+where data bases are generated that store the simulations incrementally.</p></td>
     </tr>
     <tr>
       <th>return_output</th>
       <td><p>(optional) Logical. Whether outputs should be returned
 or not. Set <code>return_out = FALSE</code> and provide <code>save_file</code> if
-outputs should only be saved on hard drive.  <code>Default = TRUE</code></p></td>
+outputs should only be saved on the hard drive and not be returned in R.
+'<code>Default = TRUE</code></p></td>
     </tr>
     <tr>
       <th>add_parameter</th>
-      <td><p>(optional) Logical. If <code>add_parameter = TRUE</code>
-used parameter sets are saved and/or returned together with the model
-outputs.  <code>Default = TRUE</code></p></td>
+      <td><p>(optional) Logical. If <code>add_parameter = TRUE</code>, the
+values of the parameter changes and information on the changes are saved
+and/or returned together with the model outputs. <code>Default = TRUE</code></p></td>
     </tr>
     <tr>
       <th>add_date</th>
       <td><p>(optional) Logical. If <code>add_date = TRUE</code> a date column
-is added to every simulatiuon output table.  <code>Default = TRUE</code></p></td>
+is added to every simulation output table.  <code>Default = TRUE</code></p></td>
     </tr>
     <tr>
       <th>refresh</th>
@@ -287,7 +293,7 @@ written.  <code>Default = FALSE</code></p></td>
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>Returns the simulation results for the defined output variables as a
-tibble. If more than one parameter set was provided the list of tibbles is
+tibble. If more than one parameter set was provided a list of tibbles is
 returned where each column is a model run and each list entry is an output
 variable.</p>
     
@@ -295,7 +301,7 @@ variable.</p>
 
     
     <p>To learn the basics on how to use <code>SWATplusR</code> see the
-<a href='https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html'>Get started</a>
+<a href='https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#first-swat-model-runs'>Get started</a>
 page on the package's github page.</p>
     
 

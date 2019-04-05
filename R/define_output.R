@@ -1,33 +1,36 @@
-#' Define output variables
+#' Define SWAT output variables
 #'
 #' Define the SWAT output variables that should be extracted after the SWAT
-#' model execution and be returned to R. The function works with
-#' \code{\link{run_swat2012}} as well as with \code{\link{run_swatplus}}. See
+#' model execution and be returned to R. It is required to use this function to
+#' pass the desired outputs with the variable \code{output} in the function calls
+#' \code{\link{run_swat2012}} and \code{\link{run_swatplus}}. See
 #' the examples how to use the \code{output} definition together with
-#' \code{\link{run_swat2012}} or \code{\link{run_swatplus}}.
+#' \code{\link{run_swat2012}} or \code{\link{run_swatplus}}. Further, more comprehensive
+#' examples are provided on the package's 'Get Started' page in the section
+#' '\href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#first-swat-model-runs}{First SWAT model runs}.
 #'
-#' @param file Character string. The SWAT output output_file where the output
-#'   variable is located (Valid inputs are 'rch', 'sub', 'hru', and 'sed' for
+#' @param file Character string. The SWAT output file to read.
+#' (Valid inputs are \code{'rch'}, \code{'sub'}, \code{'hru'}, and \code{'sed'} for
 #'   the respective SWAT2012 output files 'output.rch', 'output.sub',
 #'   output.hru', and 'output.sed'. For the respective SWAT+ output files see
 #'   the available options in the 'print.prt' file of your SWAT+ project).
-#' @param variable Character string. Output variable available from the
-#'   respective SWAT output file defined with \code{file}. For the correct
-#'   definition of the output variables of a SWAT2012 project please use the
-#'   variable names as defined in the
+#' @param variable Character string. Output variable that is extracted from the
+#'   respective SWAT output file defined with \code{file}. For a correct
+#'   definition of SWAT2012 output variables please use the
+#'   variable documented in the
 #'   \href{https://swat.tamu.edu/media/69395/ch32_output.pdf}{SWAT Output Data
 #'   Documentation}. For SWAT+ output variables please use the header names from
-#'   the respective output table, \strong{without the units!} Optional, also the
-#'   number of the respective column in the output file can be provided.
+#'   the respective output table, \strong{without the units!} Optionally, the
+#'   column number of a variable in the respective output file can be provided.
 #'   \strong{CAUTION:} spaces (e.g. in P TOT) must be replaced with underscores
 #'   (P_TOT).
 #' @param unit Numeric vector. The spatial unit (e.g. the reach, subbasin, or
 #'   HRU) defined by the columns 'RCH', 'SUB', 'HRU' in the respective SWAT2012
 #'   output file or the 'unit' column in the SWAT+ output file for which the
 #'   outputs should be extracted.
-#' @param expression Alternatively to \code{variable} and \code{unit} an
-#'   expression can be defined to extract outputs directly as a text string. See
-#'   the examples to learn how to use \code{expr}.
+#' @param expression As an alternative to \code{variable} and \code{unit} an
+#'   expression can be defined as a string to perform an individual extraction of outputs.
+#'   This is still experimental and is not necessary in most cases!
 #' @importFrom tibble tibble
 #' @export
 #' @examples

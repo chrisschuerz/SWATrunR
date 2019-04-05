@@ -1,17 +1,21 @@
 #' Run SWAT+
 #'
-#' This function allows to run a SWAT+ project in parallel from within R. Basic
+#' This function allows to run a SWAT+ project in R. Basic
 #' settings for the SWAT run such as the simulation period or the time interval
-#' for the outputs can be done directly. SWAT simulation outputs can be defined
-#' that are returned for defined parameter sets.
+#' for the outputs can be done directly. SWAT simulation outputs can be
+#' defined that are returned in a 'tidy' format in R. Functionality such as model
+#' parametrization, parallel execution of simulations, or incremental saving of
+#' simulation runs is provided.
 #'
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path  Character string that provides the path to the SWAT project
+#'   folder (i.e. TxtInOut).
 #' @param output Define the output variables to extract from the SWAT model
 #'   runs. See function \code{\link{define_output}} help file to see how to
-#'   define an output.
+#'   define simulation outputs.
 #' @param parameter (optional) SWAT model parameters either provided as named
-#'   vector or data.frame. If \code{parameter} is provided respective parameters
-#'   are modified accordingly.
+#'   vector or a tibble. The parameter changes provided with \code{parameter}
+#'   are performed during the model execution accordingly. To learn how to
+#'   modify parameters see the \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html}{Get started} page of \code{SWATplusR}.
 #' @param start_date (optional) Start date of the SWAT simulation. Provided as
 #'   character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
 #'   project are located.
@@ -22,29 +26,31 @@
 #'   outputs are written. Provided either as character string ("d" for daily,
 #'   "m" for monthly, or "y" for yearly) or as SWAT input values (0 for monthly,
 #'   1 for daily, 2 for yearly).
-#' @param years_skip (optional) Integer value that provides the numbe of years
-#'   to be skipped during writing the SWAT model outputs
+#' @param years_skip (optional) Integer value to define the number of simulation
+#'   years that are skipped before writing SWAT model outputs.
 #' @param run_index (optional) Numeric vector (e.g.\code{run_index = c(1:100,
 #'   110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL
-#'   all provided parameter sets are used.
+#'   all provided parameter sets are used in the simulation.
 #' @param run_path (optional) Character string that provides the path where the
 #'   '.model_run' folder is written and the SWAT models are executed. If NULL
 #'   '.model_run' is built in the project folder.
 #' @param n_thread (optional) Number of threads to be used for the parallel
-#'   model run. If not provided models are run on single core
+#'   model run. If not provided models are run on single core. The parameter is
+#'   ineffective for single simulations.
 #' @param save_path (optional) Character string to define the path where the
-#'   model runs are saved if save_file is defined. If \code{save_path = NULL}
+#'   model runs are saved if \code{save_file} is defined. If \code{save_path = NULL}
 #'   the \code{save_file} is saved in the project_path.
-#' @param save_file (optional) Character string to define the name of the file
-#'   where the simulations are saved.
+#' @param save_file (optional) Character string to define the name of the folder
+#'   where data bases are generated that store the simulations incrementally.
 #' @param return_output (optional) Logical. Whether outputs should be returned
 #'   or not. Set \code{return_out = FALSE} and provide \code{save_file} if
-#'   outputs should only be saved on hard drive.  \code{Default = TRUE}
+#'   outputs should only be saved on the hard drive and not be returned in R.
+#'   '\code{Default = TRUE}
 #' @param add_date (optional) Logical. If \code{add_date = TRUE} a date column
-#'   is added to every simulatiuon output table.  \code{Default = TRUE}
-#' @param add_parameter (optional) Logical. If \code{add_parameter = TRUE} used
-#'   parameter sets are saved and/or returned together with the model outputs.
-#'   \code{Default = TRUE}
+#'   is added to every simulation output table.  \code{Default = TRUE}
+#' @param add_parameter (optional) Logical. If \code{add_parameter = TRUE}, the
+#'   values of the parameter changes and information on the changes are saved
+#'   and/or returned together with the model outputs. \code{Default = TRUE}
 #' @param refresh (optional) Logical. \code{refresh = TRUE} always forces that
 #'   '.model_run' is newly written when SWAT run ins started. \code{Default =
 #'   TRUE}
@@ -57,10 +63,10 @@
 #'
 #' @section Examples:
 #'   To learn the basics on how to use \code{SWATplusR} see the
-#'   \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html}{Get started}
+#'   \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#first-swat-model-runs}{Get started}
 #'   page on the package's github page.
 #' @return Returns the simulation results for the defined output variables as a
-#'   tibble. If more than one parameter set was provided the list of tibbles is
+#'   tibble. If more than one parameter set was provided a list of tibbles is
 #'   returned where each column is a model run and each list entry is an output
 #'   variable.
 #'

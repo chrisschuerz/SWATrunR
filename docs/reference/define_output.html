@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Define output variables — define_output • SWATplusR</title>
+<title>Define SWAT output variables — define_output • SWATplusR</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,13 +30,16 @@
 
 
 
-<meta property="og:title" content="Define output variables — define_output" />
+<meta property="og:title" content="Define SWAT output variables — define_output" />
 
 <meta property="og:description" content="Define the SWAT output variables that should be extracted after the SWAT
-model execution and be returned to R. The function works with
-run_swat2012 as well as with run_swatplus. See
+model execution and be returned to R. It is required to use this function to
+pass the desired outputs with the variable output in the function calls
+run_swat2012 and run_swatplus. See
 the examples how to use the output definition together with
-run_swat2012 or run_swatplus." />
+run_swat2012 or run_swatplus. Further, more comprehensive
+examples are provided on the package's 'Get Started' page in the section
+'First SWAT model runs." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -67,7 +70,7 @@ run_swat2012 or run_swatplus." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SWATplusR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.3.9002</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4</span>
       </span>
     </div>
 
@@ -127,7 +130,7 @@ run_swat2012 or run_swatplus." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Define output variables</h1>
+    <h1>Define SWAT output variables</h1>
     <small class="dont-index">Source: <a href='https://github.com/chrisschuerz/SWATplusR/blob/master/R/define_output.R'><code>R/define_output.R</code></a></small>
     <div class="hidden name"><code>define_output.Rd</code></div>
     </div>
@@ -135,10 +138,13 @@ run_swat2012 or run_swatplus." />
     <div class="ref-description">
     
     <p>Define the SWAT output variables that should be extracted after the SWAT
-model execution and be returned to R. The function works with
-<code><a href='run_swat2012.html'>run_swat2012</a></code> as well as with <code><a href='run_swatplus.html'>run_swatplus</a></code>. See
+model execution and be returned to R. It is required to use this function to
+pass the desired outputs with the variable <code>output</code> in the function calls
+<code><a href='run_swat2012.html'>run_swat2012</a></code> and <code><a href='run_swatplus.html'>run_swatplus</a></code>. See
 the examples how to use the <code>output</code> definition together with
-<code><a href='run_swat2012.html'>run_swat2012</a></code> or <code><a href='run_swatplus.html'>run_swatplus</a></code>.</p>
+<code><a href='run_swat2012.html'>run_swat2012</a></code> or <code><a href='run_swatplus.html'>run_swatplus</a></code>. Further, more comprehensive
+examples are provided on the package's 'Get Started' page in the section
+'<a href='https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#first-swat-model-runs'>First SWAT model runs</a>.</p>
     
     </div>
 
@@ -149,22 +155,22 @@ the examples how to use the <code>output</code> definition together with
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>file</th>
-      <td><p>Character string. The SWAT output output_file where the output
-variable is located (Valid inputs are 'rch', 'sub', 'hru', and 'sed' for
+      <td><p>Character string. The SWAT output file to read.
+(Valid inputs are <code>'rch'</code>, <code>'sub'</code>, <code>'hru'</code>, and <code>'sed'</code> for
 the respective SWAT2012 output files 'output.rch', 'output.sub',
 output.hru', and 'output.sed'. For the respective SWAT+ output files see
 the available options in the 'print.prt' file of your SWAT+ project).</p></td>
     </tr>
     <tr>
       <th>variable</th>
-      <td><p>Character string. Output variable available from the
-respective SWAT output file defined with <code>file</code>. For the correct
-definition of the output variables of a SWAT2012 project please use the
-variable names as defined in the
+      <td><p>Character string. Output variable that is extracted from the
+respective SWAT output file defined with <code>file</code>. For a correct
+definition of SWAT2012 output variables please use the
+variable documented in the
 <a href='https://swat.tamu.edu/media/69395/ch32_output.pdf'>SWAT Output Data
 Documentation</a>. For SWAT+ output variables please use the header names from
-the respective output table, <strong>without the units!</strong> Optional, also the
-number of the respective column in the output file can be provided.
+the respective output table, <strong>without the units!</strong> Optionally, the
+column number of a variable in the respective output file can be provided.
 <strong>CAUTION:</strong> spaces (e.g. in P TOT) must be replaced with underscores
 (P_TOT).</p></td>
     </tr>
@@ -177,9 +183,9 @@ outputs should be extracted.</p></td>
     </tr>
     <tr>
       <th>expression</th>
-      <td><p>Alternatively to <code>variable</code> and <code>unit</code> an
-expression can be defined to extract outputs directly as a text string. See
-the examples to learn how to use <code>expr</code>.</p></td>
+      <td><p>As an alternative to <code>variable</code> and <code>unit</code> an
+expression can be defined as a string to perform an individual extraction of outputs.
+This is still experimental and is not necessary in most cases!</p></td>
     </tr>
     </table>
     

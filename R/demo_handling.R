@@ -1,4 +1,9 @@
-#' Load SWAT demo data
+#' Loading SWAT demo data
+#'
+#' With this function you can load data sets for SWAT2012 and SWAT+ demo projects.
+#' The provided data includes demo projects, discharge observation data and spatial
+#' data such as the subbasin boundaries, the river networks, and the HRUs of the
+#' SWAT setups.
 #'
 #' @param dataset Character string to define data set to load. Valid inputs are
 #'   \code{dataset = c('project', 'observation', 'subbasin', 'river', 'hru')}.
@@ -21,8 +26,6 @@
 #'   To learn how to load the different demo data sets with \code{SWATplusR} see the
 #'   section \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#loading-demos}{Loading demos}
 #'   on the package's *Get Started* page.
-#'
-#' @importFrom dplyr case_when
 #'
 #' @export
 

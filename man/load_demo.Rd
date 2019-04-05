@@ -2,7 +2,7 @@
 % Please edit documentation in R/demo_handling.R
 \name{load_demo}
 \alias{load_demo}
-\title{Load SWAT demo data}
+\title{Loading SWAT demo data}
 \usage{
 load_demo(dataset, path = NULL, swat_version = NULL)
 }
@@ -27,7 +27,10 @@ are \code{swat_version = c('2012', 'plus')}. This argument is required to
 load SWAT projects and shape files.}
 }
 \description{
-Load SWAT demo data
+With this function you can load data sets for SWAT2012 and SWAT+ demo projects.
+The provided data includes demo projects, discharge observation data and spatial
+data such as the subbasin boundaries, the river networks, and the HRUs of the
+SWAT setups.
 }
 \section{Examples}{
 

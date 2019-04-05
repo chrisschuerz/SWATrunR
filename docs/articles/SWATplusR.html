@@ -30,7 +30,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SWATplusR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.3.9002</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4</span>
       </span>
     </div>
 
@@ -161,14 +161,12 @@ sub_path &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lo
 riv_path &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"river"</span>, <span class="dt">swat_version =</span> <span class="st">"plus"</span>)
 
 sub_path
-<span class="co">#&gt; [1] "C:/Program Files/R/R-3.5.2/library/SWATplusR/extdata/plus_shapes/sub.shp"</span></code></pre></div>
+<span class="co">#&gt; [1] "C:/Program Files/R/R-3.5.3/library/SWATplusR/extdata/plus_shapes/sub.shp"</span></code></pre></div>
 <p>These paths you can use to load the spatial data with your preferred method. The package <code>sf</code> <span class="citation">(Pebesma, <a href="#ref-Pebesma2018a">2018</a>; Pebesma et al., <a href="#ref-Pebesma2018b">2018</a>)</span> provides a very elegant way to work with spatial vector objects in R that have a direct integration for plotting in <code>ggplot2</code> <span class="citation">(Wickham, <a href="#ref-Wickham2016">2016</a>)</span>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Loading the sf and ggplot2 packages for the visualization</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(sf)
-<span class="co">#&gt; Warning: package 'sf' was built under R version 3.5.3</span>
 <span class="co">#&gt; Linking to GEOS 3.6.1, GDAL 2.2.3, PROJ 4.9.3</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)
-<span class="co">#&gt; Warning: package 'ggplot2' was built under R version 3.5.3</span>
 
 <span class="co"># Loading the spatial data as simple features</span>
 sub &lt;-<span class="st"> </span><span class="kw">read_sf</span>(sub_path)
@@ -276,9 +274,7 @@ riv &lt;-<span class="st"> </span><span class="kw">read_sf</span>(riv_path)
 <span class="co">#&gt; # ... with 3,643 more rows</span></code></pre></div>
 <p>The <em>tidy</em> writing of the simulation results allows an easy processing of the data in the analysis workflow in R. Here is a quick example how to ‘wrangle’ the simulated discharge data with <code>dplyr</code> <span class="citation">(Wickham et al., <a href="#ref-Wickham2019">2019</a>)</span> and <code>tidyr</code> <span class="citation">(Wickham and Henry, <a href="#ref-Wickham2018a">2018</a>)</span> and plotting it with <code>ggplot2</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(tidyr)
-<span class="co">#&gt; Warning: package 'tidyr' was built under R version 3.5.3</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dplyr)
-<span class="co">#&gt; Warning: package 'dplyr' was built under R version 3.5.3</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)
 
 q_plot &lt;-<span class="st"> </span>q_out_<span class="dv">2012</span> <span class="op">%&gt;%</span>
