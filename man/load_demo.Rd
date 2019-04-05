@@ -12,9 +12,9 @@ load_demo(dataset, path = NULL, swat_version = NULL)
 \code{dataset = 'project'} loads a SWAT demo project in the defined
 \code{path} location and returns the final project path as a text string in
 R. The definition of the \code{swat_version} is required.
-\code{dataset = 'observation'} returns a tibble with discharge observation
+\code{dataset = 'observation'} returns a \code{tibble} with discharge observation
 data at the main outlet of the demo watershed.
-The options \code{dataset = c('subbasin', 'river', 'hru')} return the paths
+The options \code{'subbasin'}, \code{'river'}, and \code{'hru'} return the paths
 of the respective subbasin, river network and HRU shape files. See examples
 how to load shapes unsing e.g. the \code{sf} package. These options require
 a definition of the \code{swat_version}.}
@@ -29,3 +29,10 @@ load SWAT projects and shape files.}
 \description{
 Load SWAT demo data
 }
+\section{Examples}{
+
+To learn how to load the different demo data sets with \code{SWATplusR} see the
+section \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#loading-demos}{Loading demos}
+on the package's \emph{Get Started} page.
+}
+

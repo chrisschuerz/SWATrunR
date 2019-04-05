@@ -146,9 +146,9 @@
 <code>dataset = 'project'</code> loads a SWAT demo project in the defined
 <code>path</code> location and returns the final project path as a text string in
 R. The definition of the <code>swat_version</code> is required.
-<code>dataset = 'observation'</code> returns a tibble with discharge observation
+<code>dataset = 'observation'</code> returns a <code>tibble</code> with discharge observation
 data at the main outlet of the demo watershed.
-The options <code>dataset = c('subbasin', 'river', 'hru')</code> return the paths
+The options <code>'subbasin'</code>, <code>'river'</code>, and <code>'hru'</code> return the paths
 of the respective subbasin, river network and HRU shape files. See examples
 how to load shapes unsing e.g. the <code>sf</code> package. These options require
 a definition of the <code>swat_version</code>.</p></td>
@@ -166,13 +166,22 @@ load SWAT projects and shape files.</p></td>
     </tr>
     </table>
     
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+
+    
+    <p>To learn how to load the different demo data sets with <code>SWATplusR</code> see the
+section <a href='https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#loading-demos'>Loading demos</a>
+on the package's <em>Get Started</em> page.</p>
+    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-                </ul>
+      
+      <li><a href="#examples">Examples</a></li>
+          </ul>
 
   </div>
 </div>

@@ -32,6 +32,7 @@ URL: https://github.com/chrisschuerz/SWATplusR
 BugReports: https://github.com/chrisschuerz/SWATplusR/issues
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
