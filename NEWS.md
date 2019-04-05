@@ -1,3 +1,11 @@
+# SWATplusR 0.2.4
+
+This is the first tested [release](https://zenodo.org/record/2630510#.XKdiMtjgpGE) version of SWATplusR. The major functionality of running SWAT2012 and SWAT+ is available on win and unix platforms. Some functionality is still under development and/or depends on future developments of SWAT+. Functionality that is not available but will be implemented in future releases are:
+
+-  A Linux SWAT+ demo data set
+-  Constraining parameter changes for SWAT+
+
+
 # SWATplusR 0.2.3.9002 
 
 * Still development version in test phase
