@@ -1,3 +1,6 @@
+---
+output: github_document
+---
 <!-- rmarkdown v1 -->
 
 # SWATplusR <img src="man/figures/swatr_hex.svg" align="right" />
@@ -5,6 +8,7 @@
 
 
 [![lifecycle](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
+[![DOI](https://zenodo.org/badge/145028284.svg)](https://zenodo.org/badge/latestdoi/145028284)
 
 
 The `SWATplusR` package provides tools to link existing SWAT2012 and SWAT+ models with your modeling workflows in R. `SWATplusR` enables you to execute SWAT simulations and to control all relevant parameters of a SWAT simulation, such as changes in model parameters, the simulation periods and time steps, or the simulated variables that should be returned to R. The central goal of `SWATplusR` is to return simulation results in a *tidy* format to facilitate an easy implementation of SWAT simulations, together with other R packages into clean and efficient R programming workflows. To efficiently handle large SWAT projects with large numbers of model evaluations and/or large simulation outputs, `SWATplusR` provides parallel computation and incremental saving and selective loading of simulation results into and from SQLite data bases.
