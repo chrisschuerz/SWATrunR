@@ -1,12 +1,7 @@
-citHeader("To cite SWATplusR in publications use:")
-
-citEntry(,
-  entry        = "Manual",
-  author       = "Christoph Schürz",
-  title        = "SWATplusR: Running SWAT2012 and SWAT+ Projects in R",
-  year         = "2019",
-  url          = "https://github.com/chrisschuerz/SWATplusR",
-  textVersion  = paste("Schürz, C. (2019).",
-      "SWATplusR: Running SWAT2012 and SWAT+ Projects in R.",
-      "R package version 0.2.4.","URL: https://github.com/chrisschuerz/SWATplusR")
+bibentry(
+  bibtype = "Manual",
+  author  = "Christoph Schürz",
+  title   = "SWATplusR: Running SWAT2012 and SWAT+ Projects in R",
+  year    = "2019",
+  url     = "https://github.com/chrisschuerz/SWATplusR",
 )
