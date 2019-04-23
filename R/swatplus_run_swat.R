@@ -168,6 +168,8 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## Manage the handling of the '.model_run' folder structure.
   swat_exe <- manage_model_run(project_path, run_path, n_thread, os,
                                "plus", refresh, quiet)
+
+  swat_rev <- check_revision(project_path, run_path, os, swat_exe)
 #-------------------------------------------------------------------------------
   # Write files
   ## Write model setup: Files that define the time range etc. of the SWAT
