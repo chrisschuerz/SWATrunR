@@ -1,3 +1,8 @@
+---
+output: github_document
+---
+<!-- rmarkdown v1 -->
+
 # SWATplusR <img src="man/figures/swatr_hex.svg" align="right" />
 
 
@@ -10,16 +15,23 @@ The `SWATplusR` package provides tools to link existing SWAT2012 and SWAT+ model
 
 ## Installation
 
-`SWATplusR` is currently under development. You can install an unreleased version of `SWATplusR` from the package's GitHub repository.
+`SWATplusR` is still under development and will be constantly updated (especially to keep up with the newest revisions of SWAT+). You can install the release version of `SWATplusR` (0.2.4) from the *master* branch of the package's GitHub repository:
 
-``` r
+
+```r
 # If you do not have the package devtools installed
 install.packages("devtools")
 
-# If access is denied, then the repository might be still set to private
-# In that case, please contact me (c.schuerz@posteo.org).
-devtools::install_github("chrisschuerz/SWATplusR")
+devtools::install_github("chrisschuerz/SWATplusR", ref = "master")
 ```
+
+**Caution**: `SWATplusR` 0.2.4 only supports the SWAT+ revision 57. The implementation of other revisions of SWAT+ (55 and 59) is currently in progress and can be tested soon. To test the most recent implementations you can install the development version of `SWATplusR` available from the *dev* branch:
+
+
+```r
+devtools::install_github("chrisschuerz/SWATplusR", ref = "dev")
+```
+
 
 
 <!---You can install the released version of SWATplusR from [CRAN](https://CRAN.R-project.org) with:
