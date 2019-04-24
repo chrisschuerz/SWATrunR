@@ -4,27 +4,32 @@
 \alias{load_demo}
 \title{Loading SWAT demo data}
 \usage{
-load_demo(dataset, path = NULL, swat_version = NULL)
+load_demo(dataset, path = NULL, version = NULL, revision = NULL)
 }
 \arguments{
 \item{dataset}{Character string to define data set to load. Valid inputs are
 \code{dataset = c('project', 'observation', 'subbasin', 'river', 'hru')}.
 \code{dataset = 'project'} loads a SWAT demo project in the defined
 \code{path} location and returns the final project path as a text string in
-R. The definition of the \code{swat_version} is required.
+R. The definition of the \code{version} is required.
 \code{dataset = 'observation'} returns a \code{tibble} with discharge observation
 data at the main outlet of the demo watershed.
 The options \code{'subbasin'}, \code{'river'}, and \code{'hru'} return the paths
 of the respective subbasin, river network and HRU shape files. See examples
 how to load shapes unsing e.g. the \code{sf} package. These options require
-a definition of the \code{swat_version}.}
+a definition of the \code{version}.}
 
 \item{path}{Character string that defines the path where copy the SWAT demo
 project.}
 
-\item{swat_version}{Character string that defines the SWAT version. Options
-are \code{swat_version = c('2012', 'plus')}. This argument is required to
+\item{version}{Character string that defines the SWAT version. Options
+are \code{version = c('2012', 'plus')}. This argument is required to
 load SWAT projects and shape files.}
+
+\item{revision}{Numeric value to define the model revision ofthe loaded SWAT
+project. See \code{\link[SWATdata]{SWATdata}} for valid revision numbers.
+When loading a SWAT project and leaving \code{revision = NULL}, then the
+most recent model revision is loaded by default.}
 }
 \description{
 With this function you can load data sets for SWAT2012 and SWAT+ demo projects.
