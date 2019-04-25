@@ -10,6 +10,11 @@ authors:
   Christoph Schürz:
     href: https://github.com/chrisschuerz
 
+home:
+  links:
+  - text: Demo data sets
+    href: http://github.com/chrisschuerz/SWATdata
+
 reference:
   - title: Demo data
     contents:
