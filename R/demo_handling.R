@@ -101,6 +101,9 @@ load_demo <- function(dataset, path = NULL, version = NULL, revision = NULL) {
             exdir = path%&%add_slash)
       unzip(zipfile = pkg_path%//%"extdata"%//%swat_exe,
             exdir = demo_path)
+      if(os == "unix"){
+        system("chmod -R 777"%&&%demo_path%//%"swat"%&%version%_%"rev"%&%revision)
+      }
       return(demo_path)
     }
   }
