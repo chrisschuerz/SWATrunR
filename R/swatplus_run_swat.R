@@ -151,7 +151,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                                 start_date, end_date,
                                 output_interval, years_skip, soft_cal)
 
-  output <- translate_outfile_names(output, model_setup$output_interval)
 #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
   ## Identify the required number of parallel threads to build.
@@ -168,8 +167,8 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## Manage the handling of the '.model_run' folder structure.
   swat_exe <- manage_model_run(project_path, run_path, n_thread, os,
                                "plus", refresh, quiet)
-
   swat_rev <- check_revision(project_path, run_path, os, swat_exe)
+  output <- translate_outfile_names(output, model_setup$output_interval, swat_rev)
 #-------------------------------------------------------------------------------
   # Write files
   ## Write model setup: Files that define the time range etc. of the SWAT
