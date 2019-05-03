@@ -161,9 +161,13 @@ get_os <- function() {
 #' @importFrom dplyr %>%
 #' @keywords internal
 #'
-check_revision <- function(project_path, run_path, os, swat_exe) {
+check_revision <- function(project_path, run_path, os, swat_exe, swat_vers) {
   dir.create(run_path%//%"tmp")
-  file.copy(project_path%//%swat_exe, run_path%//%"tmp")
+
+  swat_files <- dir(project_path, full.names = TRUE) %>%
+    .[!grepl(".txt$|.csv$|.db$",.)]
+
+  file.copy(swat_files, run_path%//%"tmp")
 
   if(os == "win") {
     # Batch file template required to run swat on Windows
@@ -181,7 +185,7 @@ check_revision <- function(project_path, run_path, os, swat_exe) {
     run_batch <- paste("cd", "cd"%&&%run_path%//%"tmp", "./"%&%swat_exe, sep = "; ")
   }
 
-  tmp_msg <- system(run_batch, intern = TRUE) %>%
+  tmp_msg <- suppressWarnings(system(run_batch, intern = TRUE, timeout = 1)) %>%
     .[grepl("Revision", .)] %>%
     gsub("Revision", "", .) %>%
     trimws(.) %>%

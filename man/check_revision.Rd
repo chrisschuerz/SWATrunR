@@ -4,7 +4,7 @@
 \alias{check_revision}
 \title{Check the Revision of used SWAT+ executable}
 \usage{
-check_revision(project_path, run_path, os, swat_exe)
+check_revision(project_path, run_path, os, swat_exe, swat_vers)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
