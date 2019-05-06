@@ -191,6 +191,9 @@ check_revision <- function(project_path, run_path, os, swat_exe, swat_vers) {
     trimws(.) %>%
     as.numeric(.)
 
+  Sys.sleep(1)
+
   unlink(run_path%//%"tmp",recursive = TRUE, force = TRUE)
+
   return(tmp_msg)
 }

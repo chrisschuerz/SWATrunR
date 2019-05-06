@@ -33,6 +33,7 @@ write_calibration <- function(thread_path, parameter, calibration, run_index,
                               i_run) {
   calibration$VAL <- parameter$values[run_index[i_run],] %>%
     map_dbl(., ~.x) %>%
+    set_names(., parameter$definition$parameter) %>%
     .[calibration$NAME] %>%
     sprintf("%.15s", .)
 

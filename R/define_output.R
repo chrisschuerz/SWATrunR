@@ -109,8 +109,9 @@ define_output <- function(file, variable = NULL, unit = NULL,
   }
 
   variable <- variable %>%
-    gsub("Mg/l$|mg\\/L$|mg\\/kg$|kg\\/ha$|kg\\/h$|t\\/ha$|mic\\/L$|\\(mm\\)$|kg$|cms$|tons$|ton$|mg$|mg\\/$|mm$|km2$|_tha$|_kgha$|\\_m$|\\_kgN\\/ha$|\\_kgP\\/ha$|\\_m\\^3$|ha\\-m$|_k$|mgps$| ", "", .) %>%
-    gsub("\\_$", "", .)
+    remove_units_2012(.) %>%
+    remove_units_plus(.)
+
 
   if((vers == "2012") & is.null(expression)){
     expression <- paste0("dplyr::filter(.[[2]] == ", unit, ") %>% ",

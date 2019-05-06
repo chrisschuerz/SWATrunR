@@ -238,7 +238,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     run_msg <- system(run_batch, intern = TRUE)
 
     ## Read defined model outputs
-    model_output <- read_swatplus_output(output, thread_path) %>%
+    model_output <- read_swatplus_output(output, thread_path, swat_rev) %>%
       extract_output(output, .)
 
     if(!is.null(save_path)) {

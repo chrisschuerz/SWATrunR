@@ -30,7 +30,8 @@ setup_swatplus <- function(project_path, parameter, output,
   model_setup$print.prt <- read_lines(project_path%//%"print.prt")
 
   print_table <- read_table(project_path%//%"print.prt", skip = 9,
-                            col_names = TRUE)
+                            col_names = TRUE) %>%
+    set_names(., tolower(colnames(.)))
 
   ## Define simulation period
   if(xor(is.null(start_date), is.null(end_date))) {
