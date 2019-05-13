@@ -125,3 +125,15 @@ find_first_space <- function(string) {
 cio_to_numeric <- function(cio_entry) {
   cio_entry %>% substr(., 1, 16) %>% as.numeric(.)
 }
+
+#' Remove the units from variable names in output files of SWAT2012 simulations
+#'
+#' @param col_nm Character vector with column names
+#'
+#' @keywords internal
+#'
+remove_units_2012 <- function(col_nm) {
+  unit <- "Mg/l$|mg\\/L$|mg\\/kg$|kg\\/ha$|kg\\/h$|t\\/ha$|mic\\/L$|\\(mm\\)$|kg$|cms$|tons$|ton$|mg$|mg\\/$|mm$|km2$|_tha$|_kgha$|\\_m$|\\_kgN\\/ha$|\\_kgP\\/ha$|\\_m\\^3$|ha\\-m$|_k$|mgps$| "
+  col_nm <- gsub(unit, "", col_nm) %>%
+    gsub("\\_$", "", .)
+}

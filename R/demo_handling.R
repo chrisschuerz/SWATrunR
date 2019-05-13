@@ -9,18 +9,22 @@
 #'   \code{dataset = c('project', 'observation', 'subbasin', 'river', 'hru')}.
 #'   \code{dataset = 'project'} loads a SWAT demo project in the defined
 #'   \code{path} location and returns the final project path as a text string in
-#'   R. The definition of the \code{swat_version} is required.
+#'   R. The definition of the \code{version} is required.
 #'   \code{dataset = 'observation'} returns a \code{tibble} with discharge observation
 #'   data at the main outlet of the demo watershed.
 #'   The options \code{'subbasin'}, \code{'river'}, and \code{'hru'} return the paths
 #'   of the respective subbasin, river network and HRU shape files. See examples
 #'   how to load shapes unsing e.g. the \code{sf} package. These options require
-#'   a definition of the \code{swat_version}.
+#'   a definition of the \code{version}.
 #' @param path Character string that defines the path where copy the SWAT demo
 #'   project.
-#' @param swat_version Character string that defines the SWAT version. Options
-#'   are \code{swat_version = c('2012', 'plus')}. This argument is required to
+#' @param version Character string that defines the SWAT version. Options
+#'   are \code{version = c('2012', 'plus')}. This argument is required to
 #'   load SWAT projects and shape files.
+#' @param revision Numeric value to define the model revision ofthe loaded SWAT
+#'   project. See \code{\link[SWATdata]{SWATdata}} for valid revision numbers.
+#'   When loading a SWAT project and leaving \code{revision = NULL}, then the
+#'   most recent model revision is loaded by default.
 #'
 #' @section Examples:
 #'   To learn how to load the different demo data sets with \code{SWATplusR} see the
@@ -29,58 +33,94 @@
 #'
 #' @export
 
-load_demo <- function(dataset, path = NULL, swat_version = NULL) {
-  pkg_path <- system.file(package = "SWATplusR")
+load_demo <- function(dataset, path = NULL, version = NULL, revision = NULL) {
+
+  if(!("SWATdata" %in% installed.packages()[,1])) {
+    choice <- select.list(choices = c("install", "cancel"),
+      title = paste("Loading demo data requires the R package 'SWATdata'.",
+                    "Should the package now be installed?",
+                    "Type '1' to install or '2' to cancel:"))
+    if(choice == "install") {
+      if(!("devtools" %in% installed.packages()[,1])){
+        install.packages("devtools")
+      }
+      suppressWarnings(devtools::install_github("chrisschuerz/SWATdata"))
+    }
+  }
+  pkg_path <- system.file(package = "SWATdata")
+
   dataset <- tolower(dataset) %>% substr(., 1, 3)
   if(!(dataset %in% c("pro", "obs", "sub", "riv", "hru"))) {
     stop("Invalid selection for dataset!")
   }
   if(dataset != "obs") {
-    if(is.null(swat_version)) {
-      stop("Loading a dataset = '"%&%dataset%&%"' requires a 'swat_version'.")
+    if(is.null(version)) {
+      stop("Loading a dataset = '"%&%dataset%&%"' requires a SWAT 'version'.")
     }
 
-    swat_version <- tolower(swat_version)
-    if(swat_version == "+")  swat_version <- "plus"
-    if(swat_version == 2012) swat_version <- "2012"
+    version <- tolower(version)
+    if(version == "+")  version <- "plus"
+    if(version == 2012) version <- "2012"
 
-    if(!(swat_version %in% c("2012", "plus"))) {
-      stop("Invalid value for 'swat_version'. Must be one of: '2012', 'plus', '+'.")
-    }
-    os <- get_os()
-    if(swat_version != "2012" & os == "unix") {
-      stop("The package does not yet provide a unix SWAT+ demo.")
+    if(!(version %in% c("2012", "plus"))) {
+      stop("Invalid value for 'version'. Must be one of: '2012', 'plus', '+'.")
     }
   }
 
   if(dataset == "pro") {
-      if(is.null(path)) {
-        stop("Loading a SWAT demo requires a 'path'.")
-      }
-      path <- gsub("\\/$", "", path)
-      demo_path <- path%//%"swat"%&%swat_version%_%"demo"
 
-      if(dir.exists(demo_path)) {
-        warning("Demo already exists in provided 'path'."%&&%
-                "To work with the existing demo project use the returned path.")
-        return(demo_path)
-      } else {
-        add_slash <- ifelse(grepl("\\:$", path), "/", "")
-        unzip(zipfile = pkg_path%//%"extdata"%//%swat_version%_%"project"%.%"zip",
-              exdir = path%&%add_slash)
-        unzip(zipfile = pkg_path%//%"extdata"%//%swat_version%_%os%.%"zip",
-              exdir = demo_path)
-        return(demo_path)
+    os <- get_os()
+    demo_files <- list.files(pkg_path%//%"extdata")
+
+    if(is.null(revision)) {
+      revision <- demo_files %>%
+        .[grepl(version, .)] %>%
+        .[grepl(os, .)] %>%
+        substr(., 6, nchar(.)) %>%
+        gsub("[^[:digit:]]", "",.) %>%
+        as.numeric(.) %>%
+        max(.)
+    }
+
+    swat_exe <- version%_%"rev"%&%revision%_%os%.%"zip"
+    swat_project <- version%_%"rev"%&%revision%_%"project"%.%"zip"
+
+    if(!(swat_exe %in% demo_files)) {
+      stop("There is no SWAT"%&%version%&&%"Rev."%&%revision%&&%
+           "project available for '"%&%os%&%"'.")
+    }
+
+    if(is.null(path)) {
+      stop("Loading a SWAT demo project requires a 'path'.")
+    }
+    path <- gsub("\\/$", "", path)
+    demo_path <- path%//%"swat"%&%version%_%"rev"%&%revision%_%"demo"
+
+
+
+    if(dir.exists(demo_path)) {
+      warning("Demo already exists in provided 'path'."%&&%
+              "To work with the existing demo project use the returned path.")
+      return(demo_path)
+    } else {
+      add_slash <- ifelse(grepl("\\:$", path), "/", "")
+      unzip(zipfile = pkg_path%//%"extdata"%//%swat_project,
+            exdir = path%&%add_slash)
+      unzip(zipfile = pkg_path%//%"extdata"%//%swat_exe,
+            exdir = demo_path)
+      if(os == "unix"){
+        system("chmod -R 777"%&&%demo_path%//%"swat"%&%version%_%"rev"%&%revision)
       }
+      return(demo_path)
+    }
   }
+
   if(dataset == "obs") {
       obs <- readRDS(pkg_path%//%"extdata"%//%dataset%.%"rds")
       return(obs)
   }
+
   if(dataset %in% c("sub", "riv", "hru")) {
-      if(is.null(swat_version)) {
-        stop("To retrive the shapefile path a 'swat_version' must be provided.")
-      }
-      return(pkg_path%//%"extdata"%//%swat_version%_%"shapes"%//%dataset%.%"shp")
+    return(pkg_path%//%"extdata"%//%version%_%"shapes"%//%dataset%.%"shp")
   }
 }
