@@ -143,7 +143,7 @@ path_plus &lt;-<span class="st"> </span><span class="kw"><a href="../reference/l
 <p><code>SWATplusR</code> also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2007-12-31. Therefore, we load the demo data and limit it to this time period:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_obs &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"observation"</span>)
 
-q_obs &lt;-<span class="st"> </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw"><a href="http://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span>(<span class="st">"2003-01-01"</span>),
+q_obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2003-01-01"</span>),
                        date <span class="op">&lt;=</span><span class="st"> "2007-12-31"</span>)</code></pre></div>
 </div>
 <div id="model-parameters" class="section level2">
@@ -166,16 +166,16 @@ q_obs &lt;-<span class="st"> </span><span class="kw"><a href="https://dplyr.tidy
 <h3 class="hasAnchor">
 <a href="#parameter-sampling" class="anchor"></a>Parameter sampling</h3>
 <p>The Fourier Amplitude Sensitivity Test (FAST) is a method to perform GSA with few model evaluations. It only requires a few simulations when the number of parameters is low and strongly increases to tenth of thousands of model evaluations for more than 20 parameters. To keep the number of model evaluations low we use the 7 selected parameters above.</p>
-<p>The FAST method requires a specific parameter sampling design, that is available in <code>fast</code> with the function <code><a href="https://www.rdocumentation.org/packages/fast/topics/fast_parameters">fast_parameters()</a></code>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_fast &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/fast/topics/fast_parameters">fast_parameters</a></span>(
+<p>The FAST method requires a specific parameter sampling design, that is available in <code>fast</code> with the function <code>fast_parameters()</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_fast &lt;-<span class="st"> </span><span class="kw">fast_parameters</span>(
   <span class="dt">minimum =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">15</span>, <span class="fl">0.5</span>,  <span class="dv">10</span>, <span class="op">-</span><span class="dv">50</span>, <span class="op">-</span><span class="dv">50</span>, <span class="dv">0</span>,  <span class="dv">0</span>),
   <span class="dt">maximum =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>( <span class="dv">10</span>,  <span class="dv">50</span>, <span class="dv">100</span>,  <span class="dv">50</span>,  <span class="dv">50</span>, <span class="dv">1</span>,  <span class="dv">1</span>),
     <span class="dt">names =</span> par_names) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/reexports.html">as_tibble</a></span>()
+<span class="st">  </span><span class="kw">as_tibble</span>()
 
 par_fast
 <span class="co">#&gt; # A tibble: 167 x 7</span>
-<span class="co">#&gt;    `cn2.hru | chan… `lat_ttime.hru … `lat_len.hru | … `k.sol | change…</span>
+<span class="co">#&gt;    `cn2.hru | chan~ `lat_ttime.hru ~ `lat_len.hru | ~ `k.sol | change~</span>
 <span class="co">#&gt;               &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;</span>
 <span class="co">#&gt;  1          -13.8              44.3              84.3           -29.5 </span>
 <span class="co">#&gt;  2          -11.2              32.7              52.3            12.0 </span>
@@ -187,7 +187,7 @@ par_fast
 <span class="co">#&gt;  8            4.13             37.8              41.4            40.4 </span>
 <span class="co">#&gt;  9            6.69             49.4              10              -1.20</span>
 <span class="co">#&gt; 10            9.25             39.3              42.0           -42.8 </span>
-<span class="co">#&gt; # … with 157 more rows, and 3 more variables: `z.sol | change =</span>
+<span class="co">#&gt; # ... with 157 more rows, and 3 more variables: `z.sol | change =</span>
 <span class="co">#&gt; #   pctchg` &lt;dbl&gt;, `esco.hru | change = absval` &lt;dbl&gt;, `epco.hru | change</span>
 <span class="co">#&gt; #   = absval` &lt;dbl&gt;</span></code></pre></div>
 </div>
@@ -210,26 +210,26 @@ par_fast
 <span class="co">#&gt; Performing 167 simulations on 4 cores:</span>
 <span class="co">#&gt;  Completed 167 simulations in 1M 18S</span></code></pre></div>
 <p>The model runs that used the parameter sets sampled with <code>fast</code> are evaluated using the NSE <span class="citation">(Nash and Sutcliffe, <a href="#ref-Nash1970">1970</a>)</span> criterion for daily discharge for the time period 2003 to 2012.</p>
-<p>The <code><a href="https://www.rdocumentation.org/packages/hydroGOF/topics/NSE">NSE()</a></code> function is available from the <code>hydroGOF</code> package. The simulations are evaluated with the daily observations of discharge for the period 2003 to 2007. The calculated NSE values can than be used to assess the sensitivity of the NSE to changes in parameter values with the function <code><a href="https://www.rdocumentation.org/packages/sensitivity/topics/sensitivity-package">sensitivity()</a></code> from the <code>fast</code> package:</p>
+<p>The <code>NSE()</code> function is available from the <code>hydroGOF</code> package. The simulations are evaluated with the daily observations of discharge for the period 2003 to 2007. The calculated NSE values can than be used to assess the sensitivity of the NSE to changes in parameter values with the function <code>sensitivity()</code> from the <code>fast</code> package:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nse_fast &lt;-<span class="st"> </span>q_fast<span class="op">$</span>simulation<span class="op">$</span>q_out <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">map_dbl</span>(., <span class="op">~</span><span class="kw"><a href="https://www.rdocumentation.org/packages/hydroGOF/topics/NSE">NSE</a></span>(.x, q_obs<span class="op">$</span>q_out))
+<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">map_dbl</span>(., <span class="op">~</span><span class="kw">NSE</span>(.x, q_obs<span class="op">$</span>q_out))
 
-sens_fast &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/sensitivity/topics/sensitivity-package">sensitivity</a></span>(nse_fast, <span class="dv">7</span>)</code></pre></div>
+sens_fast &lt;-<span class="st"> </span><span class="kw">sensitivity</span>(nse_fast, <span class="dv">7</span>)</code></pre></div>
 </div>
 <div id="visualization-of-the-fast-sensitivities" class="section level3">
 <h3 class="hasAnchor">
 <a href="#visualization-of-the-fast-sensitivities" class="anchor"></a>Visualization of the FAST sensitivities</h3>
 <p>To visualize the calculated sensitivities we first arrange the results in a <code>tibble</code> <span class="citation">(Müller and Wickham, <a href="#ref-Mueller2019">2019</a>)</span>. It is a good idea to rank the parameters in the plot of their sensitivities. Therefore, we convert the parameter names to factors and sort them according to their sensitivity results using the functionality of the <code>forcats</code> package <span class="citation">(Wickham, <a href="#ref-Wickham2019a">2019</a>)</span>. We plot the parameter ranking in a barplot using <code>ggplot2</code> <span class="citation">(Wickham, <a href="#ref-Wickham2016">2016</a>)</span>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">result_fast &lt;-<span class="st"> </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/reexports.html">tibble</a></span>(<span class="dt">parameter =</span> q_fast<span class="op">$</span>parameter<span class="op">$</span>definition<span class="op">$</span>par_name,
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">result_fast &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">parameter =</span> q_fast<span class="op">$</span>parameter<span class="op">$</span>definition<span class="op">$</span>par_name,
                       <span class="dt">fast      =</span> sens_fast) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="dt">parameter =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/factor">factor</a></span>(parameter) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw"><a href="https://forcats.tidyverse.org/reference/fct_reorder.html">fct_reorder</a></span>(., fast))</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/ggplot">ggplot</a></span>(<span class="dt">data =</span> result_fast) <span class="op">+</span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_bar">geom_bar</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> parameter, <span class="dt">y =</span> fast), <span class="dt">stat =</span> <span class="st">"identity"</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/labs">xlab</a></span>(<span class="st">"Parameter"</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/labs">ylab</a></span>(<span class="st">"Sensitivity"</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/coord_flip">coord_flip</a></span>() <span class="op">+</span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/ggtheme">theme_bw</a></span>()</code></pre></div>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">parameter =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/factor">factor</a></span>(parameter) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">fct_reorder</span>(., fast))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(<span class="dt">data =</span> result_fast) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_bar</span>(<span class="kw">aes</span>(<span class="dt">x =</span> parameter, <span class="dt">y =</span> fast), <span class="dt">stat =</span> <span class="st">"identity"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">xlab</span>(<span class="st">"Parameter"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ylab</span>(<span class="st">"Sensitivity"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">coord_flip</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
 <p><img src="01_par_sensitivity_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
 </div>
 </div>
@@ -247,11 +247,11 @@ sens_fast &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rd
                         <span class="dt">end_date =</span> <span class="st">"2007-12-31"</span>,
                         <span class="dt">years_skip =</span> <span class="dv">3</span>, <span class="dt">n_thread =</span> <span class="dv">4</span>,
                         <span class="dt">add_date =</span> <span class="ot">FALSE</span>)
-  nse_q &lt;-<span class="st"> </span><span class="kw">map_dbl</span>(q_sim<span class="op">$</span>simulation<span class="op">$</span>flo_out<span class="op">/</span><span class="fl">8.64</span>, <span class="op">~</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/hydroGOF/topics/NSE">NSE</a></span>(.x, obs))
+  nse_q &lt;-<span class="st"> </span><span class="kw">map_dbl</span>(q_sim<span class="op">$</span>simulation<span class="op">$</span>flo_out<span class="op">/</span><span class="fl">8.64</span>, <span class="op">~</span><span class="st"> </span><span class="kw">NSE</span>(.x, obs))
   <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/function">return</a></span>(nse_q)
 }</code></pre></div>
 <p>To perform GSA with the method of Sobol two random sets of samples with the same sample size for the parameters that should be analyzed are required.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_bound &lt;-<span class="st"> </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/reexports.html">tibble</a></span>(<span class="st">"cn2.hru | change = abschg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">15</span>, <span class="dv">10</span>),
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_bound &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="st">"cn2.hru | change = abschg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">15</span>, <span class="dv">10</span>),
                     <span class="st">"lat_ttime.hru | change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="fl">0.5</span>, <span class="dv">50</span>),
                     <span class="st">"lat_len.hru | change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">10</span>, <span class="dv">100</span>),
                     <span class="st">"k.sol | change = pctchg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">50</span>, <span class="dv">50</span>),
@@ -267,22 +267,22 @@ x2 &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocument
 <span class="st">  </span><span class="kw">set_names</span>(., <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_bound)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">map2_dfc</span>(., par_bound, <span class="op">~</span><span class="st"> </span>(.x <span class="op">*</span><span class="st"> </span>(.y[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>.y[<span class="dv">1</span>]) <span class="op">+</span><span class="st"> </span>.y[<span class="dv">1</span>]))</code></pre></div>
 <p>To perform the sensitivity analysis with using method of Sobol the following command has to be executed. In total 4000 model evaluations are necessary to analyze 7 parameters with 500 Sobol samples.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sens_sobol &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/sensitivity/topics/sobol">sobol</a></span>(<span class="dt">model =</span> swat_nse, <span class="dt">X1 =</span> x1, <span class="dt">X2 =</span> x2, 
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sens_sobol &lt;-<span class="st"> </span><span class="kw">sobol</span>(<span class="dt">model =</span> swat_nse, <span class="dt">X1 =</span> x1, <span class="dt">X2 =</span> x2, 
                     <span class="dt">obs =</span> q_obs<span class="op">$</span>q_out, <span class="dt">nboot =</span> <span class="dv">100</span>)</code></pre></div>
 <div id="visualization-of-the-sobol-analysis" class="section level3">
 <h3 class="hasAnchor">
 <a href="#visualization-of-the-sobol-analysis" class="anchor"></a>Visualization of the Sobol analysis</h3>
 <p>Similar to the visualization of the results with the FAST method the results of the GSA with the method of Solbol are plotted.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">plot_sobol &lt;-<span class="st"> </span>sens_sobol<span class="op">$</span>S <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="dt">parameter =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">rownames</a></span>(.)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="dt">parameter =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/factor">factor</a></span>(parameter) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw"><a href="https://forcats.tidyverse.org/reference/fct_reorder.html">fct_reorder</a></span>(., original))
-<span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/ggplot">ggplot</a></span>(<span class="dt">data =</span> plot_sobol) <span class="op">+</span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_linerange">geom_pointrange</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> parameter, <span class="dt">y =</span> original ,
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">parameter =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">rownames</a></span>(.)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">parameter =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/factor">factor</a></span>(parameter) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">fct_reorder</span>(., original))
+<span class="kw">ggplot</span>(<span class="dt">data =</span> plot_sobol) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_pointrange</span>(<span class="kw">aes</span>(<span class="dt">x =</span> parameter, <span class="dt">y =</span> original ,
                       <span class="dt">ymin =</span> <span class="st">`</span><span class="dt">min. c.i.</span><span class="st">`</span>, <span class="dt">ymax =</span> <span class="st">`</span><span class="dt">max. c.i.</span><span class="st">`</span>)) <span class="op">+</span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/coord_flip">coord_flip</a></span>() <span class="op">+</span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/labs">xlab</a></span>(<span class="st">"Parameter"</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/labs">ylab</a></span>(<span class="st">"Sensitivity"</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/ggtheme">theme_bw</a></span>()</code></pre></div>
+<span class="st">  </span><span class="kw">coord_flip</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">xlab</span>(<span class="st">"Parameter"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ylab</span>(<span class="st">"Sensitivity"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
 <p><img src="01_par_sensitivity_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
 </div>
 </div>
