@@ -35,9 +35,7 @@
 
 load_demo <- function(dataset, path = NULL, version = NULL, revision = NULL) {
 
-  if("SWATdata" %in% installed.packages()[,1]) {
-    pkg_path <- system.file(package = "SWATdata")
-  } else {
+  if(!("SWATdata" %in% installed.packages()[,1])) {
     choice <- select.list(choices = c("install", "cancel"),
       title = paste("Loading demo data requires the R package 'SWATdata'.",
                     "Should the package now be installed?",
@@ -46,9 +44,10 @@ load_demo <- function(dataset, path = NULL, version = NULL, revision = NULL) {
       if(!("devtools" %in% installed.packages()[,1])){
         install.packages("devtools")
       }
-      devtools::install_github("chrisschuerz/SWATdata")
+      suppressWarnings(devtools::install_github("chrisschuerz/SWATdata"))
     }
   }
+  pkg_path <- system.file(package = "SWATdata")
 
   dataset <- tolower(dataset) %>% substr(., 1, 3)
   if(!(dataset %in% c("pro", "obs", "sub", "riv", "hru"))) {
