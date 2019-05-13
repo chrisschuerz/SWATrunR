@@ -22,7 +22,7 @@ The `SWATplusR` package provides tools to link existing SWAT2012 and SWAT+ model
 
 ## Installation
 
-`SWATplusR` is still under development and will be constantly updated (especially to keep up with the newest revisions of SWAT+). You can install the release version of `SWATplusR` (0.2.4) from the *master* branch of the package's GitHub repository:
+`SWATplusR` is still under development and will be constantly updated (particularly to keep up with the newest revisions of SWAT+). You can install the release version of `SWATplusR` from the *master* branch of the package's GitHub repository:
 
 ``` {r, eval = FALSE}
 # If you do not have the package devtools installed
@@ -31,7 +31,7 @@ install.packages("devtools")
 devtools::install_github("chrisschuerz/SWATplusR", ref = "master")
 ```
 
-**Caution**: `SWATplusR` 0.2.4 only supports the SWAT+ revision 57. The implementation of other revisions of SWAT+ (55 and 59) is currently in progress and can be tested soon. To test the most recent implementations you can install the development version of `SWATplusR` available from the *dev* branch:
+The most recent develeopments of `SWATplusR` are available from the *development* branch of the package's GitHub repository. See the package's [Changelog](https://chrisschuerz.github.io/SWATplusR/news/index.html) for updates available in the development version. You can install the development version of `SWATplusR` available from the *dev* branch as follows:
 
 ``` {r, eval = FALSE}
 devtools::install_github("chrisschuerz/SWATplusR", ref = "dev")
