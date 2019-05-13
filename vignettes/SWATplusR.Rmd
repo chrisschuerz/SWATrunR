@@ -1,5 +1,5 @@
 ---
-title: "Exploring SWATplusR"
+title: "Getting started with SWATplusR"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Exploring SWATplusR}
@@ -25,12 +25,13 @@ Before exploring the package load `SWATplusR`:
 library(SWATplusR)
 ```
 
-
 ## Loading demos
+
+The R package `SWATdata` provides a set of fast running, lightweight SWAT2012 and SWAT+ model setups of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. Additionally, discharge observations at the outlet of the demo catchment (Gauge J of LREW) and spatial information of the SWAT model setups are available from `SWATdata`. An overview of the available data sets is available on the [`SWATdata`](https://github.com/chrisschuerz/SWATdata#swatdata-) GitHub page.
 
 ### SWAT projects
 
-`SWATplusR` provides very simple model setups of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. Demo model setups can be retrieved for SWAT2012 and for SWAT+. Currently a SWAT2012 demo is available for Windows and Linux, while for SWAT+ only a setup for Windows is currently available. A demo project can be loaded with the following command.
+The demo data that is available from `SWATdata` can be loaded with the function `load_demo()`. Loading an entire SWAT project to your hard drive requires the information that the loaded `dataset` is a `'project'`. As the project will be written to the hard drive a `path` is required. Further, the SWAT `version` must be provided, to either load a SWAT+ (`'plus'`), or a SWAT2012 (`'2012'`) project. Optionally, the `revision` number can be provided if a specific model revision (only for SWAT+) should be loaded. An overview of the different SWAT demo project setups (with their revision numbers) is available at the [`SWATdata`](https://github.com/chrisschuerz/SWATdata#swatdata-) GitHub page. If no revision number is provided, a project with the most recent revision number available fom `SWATdata` is loaded. A demo project can be loaded with the following command:
 
 ```{r, eval=FALSE}
 # The path where the SWAT demo project will be written
@@ -38,19 +39,20 @@ demo_path <- "Define:/your/path"
 
 # Loading a SWAT+ demo project
 path_plus <- load_demo(dataset = "project",
-                       swat_version = "plus",
-                       path = demo_path)
+                       version = "plus",
+                       path = demo_path,
+                       revision = 59)
 
 # Loading a SWAT2012 demo project
 path_2012 <- load_demo(dataset = "project",
-                       swat_version = "2012",
+                       version = "2012",
                        path = demo_path)
 ```
 
-Here `load_demo()` loads a demo project data set and saves it in the defined `demo_path`. Additionally, the function returns the final demo project path (`path_plus` and `path_2012`) as a character string back to R. This path is directly usable to run the SWAT model in that path.
+Here `load_demo()` loads a demo project data set and saves it in the defined `demo_path`. Additionally, the function returns the final demo project path (`path_plus` and `path_2012`) as a character string back to R. This path can be directly used to run the SWAT model located in that path.
 
 ### Observation data
-`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. The data set is useful for the model evaluation of a demo project. You can load the observation data as follows:
+`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo catchment (Gauge J of LREW) for the time period 1968-01-01 until 2012-12-31. The data set is useful for the model evaluation of a demo project. You can load the observation data as follows:
 
 ```{r}
 q_obs <- load_demo(dataset = "observation")
@@ -64,13 +66,13 @@ plot(q_obs, type = "l")
 ```
 
 ### Spatial data
-To visualize simulation results spatially, shape files of the subbasins, river network, and HRUs for the SWAT+ and the SWAT2012 demo setups are available from `SWATplusR`. For spatial data `load_demo()` only returns the paths to the shape files. As the spatial data for the two SWAT project setups looks different loading the data requires the definition of the `swat_version`.
+To visualize simulation results spatially, shape files of the subbasins, river network, and HRUs for the SWAT+ and the SWAT2012 demo setups are available from `SWATplusR`. For spatial data `load_demo()` only returns the paths to the shape files. As the spatial data for the two SWAT project setups looks different loading the data requires the definition of the SWAT `version`.
 
 ```{r}
 # Path to the subbasin shape file
-sub_path <- load_demo(dataset = "subbasin", swat_version = "plus")
+sub_path <- load_demo(dataset = "subbasin", version = "plus")
 # Path to the subbasin shape file
-riv_path <- load_demo(dataset = "river", swat_version = "plus")
+riv_path <- load_demo(dataset = "river", version = "plus")
 
 sub_path
 ```
@@ -109,7 +111,7 @@ path_2012 <- "C:/swat2012_demo"
 
 
 ```{r, eval=FALSE}
-q_out_plus <- run_swatplus(project_path = plus_path,
+q_out_plus <- run_swatplus(project_path = path_plus,
                            output = define_output(file = "channel",
                                                   variable = "flo_out",
                                                   unit = 1))
@@ -138,7 +140,7 @@ q_out_2012 <- run_swat2012(project_path = path_2012,
 #>  Completed 1 simulation in 4S
 ```
 
-```{r}
+```{r, echo=FALSE}
 q_out_2012 <- readRDS(here::here("vignettes/datasets/q_out.rds"))
 ```
 

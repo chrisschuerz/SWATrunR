@@ -6,9 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Translate the parameter inputs into a parameter input table and a separarate
-table providing the file constraints and the filter expressions for the
-respective parameter — format_swatplus_parameter • SWATplusR</title>
+<title>Check the Revision of used SWAT+ executable — check_revision • SWATplusR</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -32,13 +30,9 @@ respective parameter — format_swatplus_parameter • SWATplusR</title>
 
 
 
-<meta property="og:title" content="Translate the parameter inputs into a parameter input table and a separarate
-table providing the file constraints and the filter expressions for the
-respective parameter — format_swatplus_parameter" />
+<meta property="og:title" content="Check the Revision of used SWAT+ executable — check_revision" />
 
-<meta property="og:description" content="Translate the parameter inputs into a parameter input table and a separarate
-table providing the file constraints and the filter expressions for the
-respective parameter" />
+<meta property="og:description" content="Check the Revision of used SWAT+ executable" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -129,29 +123,38 @@ respective parameter" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Translate the parameter inputs into a parameter input table and a separarate
-table providing the file constraints and the filter expressions for the
-respective parameter</h1>
-    <small class="dont-index">Source: <a href='https://github.com/chrisschuerz/SWATplusR/blob/master/R/swatplus_parameter_write.R'><code>R/swatplus_parameter_write.R</code></a></small>
-    <div class="hidden name"><code>format_swatplus_parameter.Rd</code></div>
+    <h1>Check the Revision of used SWAT+ executable</h1>
+    <small class="dont-index">Source: <a href='https://github.com/chrisschuerz/SWATplusR/blob/master/R/build_model_run.R'><code>R/build_model_run.R</code></a></small>
+    <div class="hidden name"><code>check_revision.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Translate the parameter inputs into a parameter input table and a separarate
-table providing the file constraints and the filter expressions for the
-respective parameter</p>
+    <p>Check the Revision of used SWAT+ executable</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>format_swatplus_parameter</span>(<span class='no'>parameter</span>)</pre>
+    <pre class="usage"><span class='fu'>check_revision</span>(<span class='no'>project_path</span>, <span class='no'>run_path</span>, <span class='no'>os</span>, <span class='no'>swat_exe</span>, <span class='no'>swat_vers</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>parameter</th>
-      <td><p>Model parameters as named vector or tibble</p></td>
+      <th>project_path</th>
+      <td><p>Path to the SWAT project folder (i.e. TxtInOut)</p></td>
+    </tr>
+    <tr>
+      <th>run_path</th>
+      <td><p>Path where the '.model_run' folder is built. If NULL the
+executable model is built in the 'project_path'</p></td>
+    </tr>
+    <tr>
+      <th>os</th>
+      <td><p>Character string that gives the operationg system</p></td>
+    </tr>
+    <tr>
+      <th>swat_exe</th>
+      <td><p>Character string that gives the name of the SWAT executable.</p></td>
     </tr>
     </table>
     

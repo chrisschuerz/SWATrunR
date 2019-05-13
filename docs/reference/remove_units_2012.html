@@ -6,9 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Translate the parameter inputs into a parameter input table and a separarate
-table providing the file constraints and the filter expressions for the
-respective parameter — format_swatplus_parameter • SWATplusR</title>
+<title>Remove the units from variable names in output files of SWAT2012 simulations — remove_units_2012 • SWATplusR</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -32,13 +30,9 @@ respective parameter — format_swatplus_parameter • SWATplusR</title>
 
 
 
-<meta property="og:title" content="Translate the parameter inputs into a parameter input table and a separarate
-table providing the file constraints and the filter expressions for the
-respective parameter — format_swatplus_parameter" />
+<meta property="og:title" content="Remove the units from variable names in output files of SWAT2012 simulations — remove_units_2012" />
 
-<meta property="og:description" content="Translate the parameter inputs into a parameter input table and a separarate
-table providing the file constraints and the filter expressions for the
-respective parameter" />
+<meta property="og:description" content="Remove the units from variable names in output files of SWAT2012 simulations" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -129,29 +123,25 @@ respective parameter" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Translate the parameter inputs into a parameter input table and a separarate
-table providing the file constraints and the filter expressions for the
-respective parameter</h1>
-    <small class="dont-index">Source: <a href='https://github.com/chrisschuerz/SWATplusR/blob/master/R/swatplus_parameter_write.R'><code>R/swatplus_parameter_write.R</code></a></small>
-    <div class="hidden name"><code>format_swatplus_parameter.Rd</code></div>
+    <h1>Remove the units from variable names in output files of SWAT2012 simulations</h1>
+    <small class="dont-index">Source: <a href='https://github.com/chrisschuerz/SWATplusR/blob/master/R/swat2012_handle_output.R'><code>R/swat2012_handle_output.R</code></a></small>
+    <div class="hidden name"><code>remove_units_2012.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Translate the parameter inputs into a parameter input table and a separarate
-table providing the file constraints and the filter expressions for the
-respective parameter</p>
+    <p>Remove the units from variable names in output files of SWAT2012 simulations</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>format_swatplus_parameter</span>(<span class='no'>parameter</span>)</pre>
+    <pre class="usage"><span class='fu'>remove_units_2012</span>(<span class='no'>col_nm</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>parameter</th>
-      <td><p>Model parameters as named vector or tibble</p></td>
+      <th>col_nm</th>
+      <td><p>Character vector with column names</p></td>
     </tr>
     </table>
     
