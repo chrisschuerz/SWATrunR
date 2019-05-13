@@ -69,12 +69,20 @@ load_demo <- function(dataset, path = NULL, version = NULL, revision = NULL) {
   }
 
   if(dataset == "pro") {
-    if(is.null(revision) | !is.numeric(revision)) {
-      stop("Loading a SWAT demo project requires a valid 'revision' number.")
+
+    os <- get_os()
+    demo_files <- list.files(pkg_path%//%"extdata")
+
+    if(is.null(revision)) {
+      revision <- demo_files %>%
+        .[grepl(version, .)] %>%
+        .[grepl(os, .)] %>%
+        substr(., 6, nchar(.)) %>%
+        gsub("[^[:digit:]]", "",.) %>%
+        as.numeric(.) %>%
+        max(.)
     }
 
-    demo_files <- list.files(pkg_path%//%"extdata")
-    os <- SWATplusR:::get_os()
     swat_exe <- version%_%"rev"%&%revision%_%os%.%"zip"
     swat_project <- version%_%"rev"%&%revision%_%"project"%.%"zip"
 
