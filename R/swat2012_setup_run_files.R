@@ -32,6 +32,7 @@
 #' @importFrom dplyr case_when mutate select %>%
 #' @importFrom purrr map_chr set_names
 #' @importFrom readr read_lines read_table
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 setup_swat2012 <- function(project_path,
@@ -101,7 +102,7 @@ setup_swat2012 <- function(project_path,
                                  output_interval == 1 ~ "d",
                                  output_interval == 2 ~ "y")
   } else {
-    output_interval <- substr(output_interval, 1,1) %>% tolower(.)
+    output_interval <- str_sub(output_interval, 1,1) %>% tolower(.)
     out_int <- case_when(output_interval %in% c("m", "0") ~ 0,
                          output_interval %in% c("d", "1") ~ 1,
                          output_interval %in% c("y", "2") ~ 2)

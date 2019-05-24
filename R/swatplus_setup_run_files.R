@@ -17,6 +17,7 @@
 #' @importFrom dplyr case_when mutate select %>%
 #' @importFrom purrr map_chr set_names
 #' @importFrom readr read_lines read_table
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 setup_swatplus <- function(project_path, parameter, output,
@@ -104,7 +105,7 @@ setup_swatplus <- function(project_path, parameter, output,
   ## Set output_interval to 'daily' as default if not provided by user.
   if(is.null(output_interval)) output_interval <- "d"
 
-  output_interval <- substr(output_interval, 1,1) %>% tolower(.)
+  output_interval <- str_sub(output_interval, 1,1) %>% tolower(.)
   output_interval <-
     case_when(output_interval == "d" ~ "daily",
               output_interval == "m" ~ "monthly",

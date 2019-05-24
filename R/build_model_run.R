@@ -66,6 +66,7 @@ manage_model_run <- function(project_path, run_path, n_thread, os,
 #' @importFrom parallel detectCores
 #' @importFrom dplyr %>%
 #' @importFrom lubridate now
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 
@@ -77,7 +78,7 @@ build_model_run <- function(project_path, run_path, n_thread, os, swat_vers, qui
 
     # Batch file template required to run swat on Windows
     batch_temp <- c("@echo off",
-                    substr(run_path, 1, 2),
+                    str_sub(run_path, 1, 2),
                     "cd"%&&%run_path,
                     swat_exe,
                     "if %errorlevel% == 0 exit 0",
@@ -159,6 +160,7 @@ get_os <- function() {
 #' @param swat_exe Character string that gives the name of the SWAT executable.
 #'
 #' @importFrom dplyr %>%
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 check_revision <- function(project_path, run_path, os, swat_exe, swat_vers) {
@@ -172,7 +174,7 @@ check_revision <- function(project_path, run_path, os, swat_exe, swat_vers) {
   if(os == "win") {
     # Batch file template required to run swat on Windows
     batch_temp <- c("@echo off",
-                    substr(run_path, 1, 2),
+                    str_sub(run_path, 1, 2),
                     "cd"%&&%run_path%//%"tmp",
                     swat_exe,
                     "if %errorlevel% == 0 exit 0",

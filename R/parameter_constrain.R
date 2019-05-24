@@ -5,6 +5,7 @@
 #' @importFrom dplyr %>% bind_cols bind_rows everything mutate one_of select
 #' @importFrom purrr map map2 map_lgl pmap set_names
 #' @importFrom tibble as_tibble tibble
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 translate_parameter_constraints <- function(par) {
@@ -24,7 +25,7 @@ translate_parameter_constraints <- function(par) {
            change     = gsub(".*change|\\|.*", "", par) %>%
              gsub(bool_op, "",.) %>%
              trimws(.) %>%
-             substr(., 1, 6))
+             str_sub(., 1, 6))
 
   is_correct_change <- model_par$change %in% c("relchg", "pctchg", "abschg", "absval")
   if(any(!is_correct_change)) {
@@ -52,8 +53,20 @@ translate_parameter_constraints <- function(par) {
 
   file_expr <- "filter(., file_name == '"%&%model_par$file_name%&%"')"
 
-  filter_expr <- par %>%
-    strsplit(., "\\|") %>%
+  is_sub_par <- model_par$file_name %in% c("pnd", "rte", "sub", "swq")
+  is_bsn_par <- model_par$file_name %in% c("bsn", "wwq", "res", "ops", "hlt", "plt", "pst", "cli")
+
+
+  par_clean <- par %>% strsplit(., "\\|")
+  chg_pos <- map(par_clean, ~ which(grepl("change", .x)))
+  sub_pos <- map(par_clean, ~ which(grepl("sub", .x))) %>%
+    map2(., chg_pos, ~ c(1:.y, .x)) %>%
+    map(., unique)
+
+  par_clean[is_bsn_par] <- map2(par_clean[is_bsn_par],chg_pos[is_bsn_par], ~.x[1:.y])
+  par_clean[is_sub_par] <- map2(par_clean[is_sub_par],sub_pos[is_sub_par], ~.x[.y])
+
+  filter_expr <- par_clean %>%
     map(., ~ .x[2:length(.x)] %>% .[!grepl("change",.)])
 
   filter_var <- map(filter_expr, ~ gsub("["%&%bool_op%&%"].*", "", .x)) %>%
@@ -66,7 +79,7 @@ translate_parameter_constraints <- function(par) {
   filter_op  <- map(filter_expr, ~ gsub("[^"%&%bool_op%&%"]", "", .x)) %>%
     map(., ~ trimws(.x)) %>%
     map(., ~ gsub("\\=", "\\=\\=", .x )) %>%
-    map(., ~ substr(.x, 1, 2))
+    map(., ~ str_sub(.x, 1, 2))
 
   expressions <- pmap(list(filter_var, filter_val, filter_op), build_expr) %>%
     map_df(., as_tibble) %>%
