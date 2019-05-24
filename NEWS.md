@@ -1,3 +1,8 @@
+# SWATplusR 0.2.6.9000
+
+- Fixed issue with `substr()` in R3.6.0
+- Fixed issues with parameter constraining in `run_swat2012()`
+
 # SWATplusR 0.2.5
 
 - Included compatibility with SWAT+ revisions 55 and 59
