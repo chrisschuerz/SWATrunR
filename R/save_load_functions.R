@@ -476,8 +476,15 @@ convert_date <- function(date_tbl) {
                 min   = minute(date),
                 sec   = second(date))
   } else {
-    date_tbl %>%
-      transmute(date = ymd_hms(year%//%month%//%day%&&%hour%&&%min%&&%sec))
+    time_diff <- (date_tbl[1,] - date_tbl[2,])[4:6]
+
+    if(any(time_diff != 0)) {
+      date_tbl %>%
+        transmute(date = ymd_hm(year%//%month%//%day%&&%hour%&&%min%&&%sec))
+    } else {
+      date_tbl %>%
+      transmute(date = ymd(year%//%month%//%day))
+    }
   }
 }
 
