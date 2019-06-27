@@ -15,7 +15,7 @@ translate_parameter_constraints <- function(par) {
 
   if(any(!has_change)) stop("Type of change must be provided for all parameters!")
 
-  bool_op <- "\\=|\\=\\=|\\!\\=|\\<|\\<\\=|\\>|\\>\\="
+  bool_op <- "\\=|\\=\\=|\\!\\=|\\<|\\<\\=|\\>|\\>\\=|\\%in\\%"
 
   model_par <- tibble(par_name  = gsub("\\:\\:.*", "", par) %>% trimws(.),
                       parameter = gsub(".*\\:\\:|\\|.*","", par) %>% trimws(.)) %>%
@@ -79,7 +79,7 @@ translate_parameter_constraints <- function(par) {
   filter_op  <- map(filter_expr, ~ gsub("[^"%&%bool_op%&%"]", "", .x)) %>%
     map(., ~ trimws(.x)) %>%
     map(., ~ gsub("\\=", "\\=\\=", .x )) %>%
-    map(., ~ str_sub(.x, 1, 2))
+    map(., ~ gsub("\\=\\=\\=\\=", "\\=\\=", .x ))
 
   expressions <- pmap(list(filter_var, filter_val, filter_op), build_expr) %>%
     map_df(., as_tibble) %>%
@@ -114,7 +114,8 @@ add_quotes_if_chr <- function(chr) {
     strsplit(., ",") %>%
     map(., ~ trimws(.x)) %>%
     map_if(., is_chr, ~ paste0("'",.x, "'")) %>%
-    map_chr(., ~ paste(.x, collapse = ", "))
+    map_chr(., ~ paste(.x, collapse = ", ")) %>%
+    gsub("\\'\\'", "\\'",.)
 }
 
 #' Helper function to wrap text string with "c(...)" to concatenate values
@@ -166,7 +167,7 @@ build_expr <- function(var, val, op) {
 #'
 build_filter <- function(var, val, op) {
   if(grepl("\\,|\\:", val)){
-    if(op == "==") {
+    if(op == "==" | op == "%in%") {
       expr <- "filter(.,"%&&%var%&&%"%in%"%&&%val%&%")"
     } else if (op == "!=") {
       expr <- "filter(., !("%&%var%&&%"%in%"%&&%val%&%"))"

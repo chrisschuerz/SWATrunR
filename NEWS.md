@@ -1,3 +1,7 @@
+# SWATplusR 0.2.6.9001
+
+- Fixes issue with expressions in parameter constraints in SWAT2012
+
 # SWATplusR 0.2.6.9000
 
 - Fixed issue with `substr()` in R3.6.0
