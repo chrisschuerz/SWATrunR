@@ -7,11 +7,15 @@
 #' @keywords internal
 #'
 format_swat2012_parameter <- function(parameter) {
-  par_constrain <- suppressWarnings(
-    translate_parameter_constraints(names(parameter)))
-  names(parameter) <- par_constrain$par_name
-  if(!is.data.frame(parameter)) parameter <- map_dfc(parameter, ~.x)
-  return(list(values = parameter, definition = par_constrain))
+  if(!any(names(parameter) == c("values", "definition"))) {
+    par_constrain <- suppressWarnings(
+      translate_parameter_constraints(names(parameter)))
+    names(parameter) <- par_constrain$par_name
+    if(!is.data.frame(parameter)) parameter <- map_dfc(parameter, ~.x)
+    return(list(values = parameter, definition = par_constrain))
+  } else {
+    return(parameter)
+    }
 }
 
 #' Read the original swat parameter values from the parameter files in

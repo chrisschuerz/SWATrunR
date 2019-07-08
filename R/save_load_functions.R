@@ -20,6 +20,8 @@ save_run <- function(save_path, model_output, parameter, run_index, i_run, i_thr
       nrow(.) %>%
       as.character(.) %>%
       nchar(.)
+  } else {
+    n_digit <- 1
   }
   run_name <- "run"%_%sprintf("%0"%&%n_digit%&%"d", run_index[i_run])
   save_list <- map(model_output, ~.x) %>%
@@ -164,22 +166,22 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
     map(., ~ collect_sim_run(.x, save_list), save_list) %>%
     tidy_results(., parameter, date, add_parameter, add_date, run_avail)
 
-  if(is.list(sim_results)) {
-    if(add_parameter) {
-      run_load <- map(sim_results$simulation, ~ names(.x))
-    } else {
-      run_load <- map(sim_results, ~ names(.x))
-    }
-    run_load <- run_load %>%
-      map(., ~.x[ .x != "date"]) %>%
-      map(., ~ gsub("run_", "", .x)) %>%
-      map(., ~ as.numeric(.x))
-
-    run_in_loaded <- map(run_load, ~ run %in% .x)
-    if(any(!map_lgl(run_in_loaded, all))) {
-      cat("Here comes more...")
-    }
-  }
+  # if(is.list(sim_results)) {
+  #   if(add_parameter) {
+  #     run_load <- map(sim_results$simulation, ~ names(.x))
+  #   } else {
+  #     run_load <- map(sim_results, ~ names(.x))
+  #   }
+  #   run_load <- run_load %>%
+  #     map(., ~.x[ .x != "date"]) %>%
+  #     map(., ~ gsub("run_", "", .x)) %>%
+  #     map(., ~ as.numeric(.x))
+  #
+  #   run_in_loaded <- map(run_load, ~ run %in% .x)
+  #   if(any(!map_lgl(run_in_loaded, all))) {
+  #     cat("Here comes more...")
+  #   }
+  # }
 
 
   walk(save_list$par_dat_con, ~ dbDisconnect(.x))

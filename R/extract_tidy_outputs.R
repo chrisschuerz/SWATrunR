@@ -63,7 +63,7 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
     }
   }
 
-  if(add_parameter & !is.null(parameter)) {
+  if(add_parameter & !is.null(parameter$value)) {
     sim_result <- list(parameter  = parameter,
                        simulation = sim_result)
   }

@@ -42,6 +42,10 @@ setup_swat2012 <- function(project_path,
                            hru_out_var, hru_out_nr) {
   model_setup <- list()
 
+  ## Fix unix/win case issue with file "Tmp1.tmp"
+    suppressWarnings(file.rename(project_path%//%"Tmp1.Tmp",
+                                 project_path%//%"tmp1.tmp"))
+
   ## Read unmodified file.cio
   file_cio <- readLines(project_path%//%"file.cio", warn = FALSE)
 
