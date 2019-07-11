@@ -57,7 +57,7 @@ demo_path <- "Define:/your/path"
 
 # Loading the SWAT+ demo project on your hard drive
 path_plus <- load_demo(dataset = "project",
-                       swat_version = "plus",
+                       version = "plus",
                        path = demo_path)
 ```
 
@@ -125,15 +125,15 @@ par_iter1
 In a next step we implement all LHS sampled parameter combinations in the SWAT+ demo setup and simulate daily discharges for the calibration period 2003-01-01 until 2007-12-31 (with a warm-up period of 3 years fro 2000 to 2002). To perform the simulations we pass the entire `tibble` with the parameter combinations with the argument `parameter` in the function `run_swatplus()`.
 
 ```{r, eval=FALSE}
-q_iter1 <- run_swatplus(project_path = path_plus,
-                        output = list(q_out = define_output(file = "channel",
-                                      variable = "flo_out",
-                                      unit = 1)),
-                        parameter = par_iter1,
-                        start_date = "2000-01-01",
-                         end_date = "2007-12-31",
-                        years_skip = 3,
-                        n_thread = 4)
+q_cal1 <- run_swatplus(project_path = path_plus,
+                       output = list(q_sim = define_output(file = "channel",
+                                     variable = "flo_out",
+                                     unit = 1)),
+                       parameter = par_iter1,
+                       start_date = "2000-01-01",
+                        end_date = "2007-12-31",
+                       years_skip = 3,
+                       n_thread = 4)
 
 #> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
 #>  Completed 4 threads in 0S
@@ -142,7 +142,7 @@ q_iter1 <- run_swatplus(project_path = path_plus,
 ```
 
 ```{r, echo=FALSE}
-q_iter1 <- readRDS(here::here("vignettes/datasets/q_iter1.rds"))
+q_cal1 <- readRDS(here::here("vignettes/datasets/q_iter1.rds"))
 ```
 
 ### Model evaluation
@@ -150,21 +150,21 @@ q_iter1 <- readRDS(here::here("vignettes/datasets/q_iter1.rds"))
 We use the Nash Sutcliffe Efficiency criterion [NSE; @Nash1970] to evaluate the simulations for the calibration period. The NSE is implemented in `hydroGOF` with the function `NSE()`:
 
 ```{r}
-nse_iter1 <- q_iter1$simulation$q_out %>%
+nse_cal1 <- q_iter1$simulation$q_sim %>%
   select(-date) %>%
-  map_dbl(., ~NSE(.x/8.64, q_obs_cal$q_out))
+  map_dbl(., ~NSE(.x/8.64, q_obs_cal$discharge))
 ```
 
 The first iteration of discharge simulations and their evaluation with the NSE should help us to identify the relevant parameter and/or constrain parameter boundaries of parameters. Therefore we display the parameter samples with the resulting NSE values in dotty plots:
 
 ```{r}
-dotty_iter1 <- q_iter1$parameter$values %>%
-  mutate(nse = nse_iter1) %>%
+dotty_cal1 <- q_cal1$parameter$values %>%
+  mutate(nse = nse_cal1) %>%
   filter(nse > -5) %>%
-  gather(key = "par", value = "val", -nse)
+  gather(key = "par", value = "parameter_range", -nse)
 
-ggplot(data = dotty_iter1) +
-  geom_point(aes(x = val, y = nse)) +
+ggplot(data = dotty_cal1) +
+  geom_point(aes(x = parameter_range, y = nse)) +
   facet_wrap(.~par, ncol = 3, scales = "free") +
   theme_bw()
 ```
@@ -178,20 +178,20 @@ To constrain the parameter "lat_ttime" we update the parameter boundaries table.
 ```{r, eval=FALSE}
 par_bound$`lat_ttime.hru | change = absval` <- c(0, 5)
 
-par_iter2 <- randomLHS(n = n_sample, k = n_par) %>%
+par_cal2 <- randomLHS(n = n_sample, k = n_par) %>%
   as_tibble(.) %>%
   map2_df(., par_bound, ~ (.x * (.y[2] - .y[1]) + .y[1])) %>%
   set_names(names(par_bound))
 
-q_iter2 <- run_swatplus(project_path = path_plus,
-                        output = list(q_out = define_output(file = "channel",
-                                      variable = "flo_out",
-                                      unit = 1)),
-                        parameter = par_iter2,
-                        start_date = "2000-01-01",
-                         end_date = "2007-12-31",
-                        years_skip = 3,
-                        n_thread = 4)
+q_cal2 <- run_swatplus(project_path = path_plus,
+                       output = list(q_sim = define_output(file = "channel",
+                                     variable = "flo_out",
+                                     unit = 1)),
+                       parameter = par_iter2,
+                       start_date = "2000-01-01",
+                        end_date = "2007-12-31",
+                       years_skip = 3,
+                       n_thread = 4)
 
 #> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
 #>  Completed 4 threads in 0S
@@ -201,25 +201,25 @@ q_iter2 <- run_swatplus(project_path = path_plus,
 ```
 
 ```{r, echo=FALSE}
-q_iter2 <- readRDS(here::here("vignettes/datasets/q_iter2.rds"))
+q_cal2 <- readRDS(here::here("vignettes/datasets/q_iter2.rds"))
 ```
 
 The updated simulations are again evaluated:
 ```{r}
-nse_iter2 <- q_iter2$simulation$q_out %>%
+nse_cal2 <- q_cal2$simulation$q_sim %>%
   select(-date) %>%
-  map_dbl(., ~NSE(.x/8.64, q_obs_cal$q_out))
+  map_dbl(., ~NSE(.x/8.64, q_obs_cal$discharge))
 ```
 
 In our example we consider all simulations that resulted in an NSE > 0.7 as acceptable simulation results. Therefore we select the acceptable simulations and their respective parameter combinations from our simulation outputs:
 
 ```{r}
-run_sel <- nse_iter2 >= 0.7
+run_sel <- which(nse_cal2 >= 0.7)
 
-sum(run_sel)
+length(run_sel)
 ```
 
-In total `r sum(run_sel)` simulations resulted in acceptable representations of the observed discharge.
+In total `r length(run_sel)` simulations resulted in acceptable representations of the observed discharge.
 
 ## Model validation
 
@@ -228,18 +228,16 @@ In total `r sum(run_sel)` simulations resulted in acceptable representations of 
 We will validate the selected `r sum(run_sel)` parameter combinations in the validation period 2008-01-01 to 2012-12-31. Therefore, we select the acceptable parameter combinations and perform the simulations with these parametrizations in the validation period:
 
 ```{r}
-par_val <- q_iter2$parameter$values[run_sel,] %>%
-  set_names(names(par_bound))
-
-par_val
+par_val <- q_cal2$parameter
 ```
 
 ```{r, eval=FALSE}
 q_val <- run_swatplus(project_path = path_plus,
-                      output = list(q_out = define_output(file = "channel",
+                      output = list(q_sim = define_output(file = "channel",
                                     variable = "flo_out",
                                     unit = 1)),
                       parameter = par_val,
+                      run_index = run_sel,
                       start_date = "2005-01-01",
                        end_date = "2012-12-31",
                       years_skip = 3,

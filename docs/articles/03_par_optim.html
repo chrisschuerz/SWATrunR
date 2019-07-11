@@ -30,7 +30,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SWATplusR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6.9002</span>
       </span>
     </div>
 
@@ -141,8 +141,8 @@ path_plus &lt;-<span class="st"> </span><span class="kw"><a href="../reference/l
 <p><code>SWATplusR</code> also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2012-12-31. Therefore, we load the demo data and limit it to this time period:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_obs &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"observation"</span>)
 
-q_obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2003-01-01"</span>),
-                       date <span class="op">&lt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2012-12-31"</span>))</code></pre></div>
+q_obs &lt;-<span class="st"> </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw"><a href="http://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span>(<span class="st">"2003-01-01"</span>),
+                       date <span class="op">&lt;=</span><span class="st"> </span><span class="kw"><a href="http://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span>(<span class="st">"2012-12-31"</span>))</code></pre></div>
 </div>
 <div id="definition-of-the-function-to-optimize" class="section level2">
 <h2 class="hasAnchor">
@@ -162,10 +162,10 @@ q_obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocum
 
 swat_optim &lt;-<span class="st"> </span><span class="cf">function</span>(par, obs) {
   q_sim &lt;-<span class="st"> </span><span class="kw">swat_model</span>(par)
-  nse_q &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span><span class="kw">NSE</span>(q_sim<span class="op">$</span>simulation<span class="op">$</span>flo_out<span class="op">/</span><span class="fl">8.64</span>, obs)
+  nse_q &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/hydroGOF/topics/NSE">NSE</a></span>(q_sim<span class="op">$</span>simulation<span class="op">$</span>flo_out<span class="op">/</span><span class="fl">8.64</span>, obs)
   <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/function">return</a></span>(nse_q)
   }</code></pre></div>
-<p>We defined a function that has one input argument <code>par</code> that is the named parameter vector that will be passed to <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code>. The simulation will return the discharge at the main outlet (<code>unit = 1</code>) for the time period 2003-01-01 to 2012-12-31 (considering the <code>years_skip = 3</code> as warm up period). In this case we set the function to be <code>quiet = TRUE</code>. In a next step the function uses the observed discharge values from <code>q_obs$q_out</code> for the same period and evaluate the simulated discharges using the Nash Sutcliffe Efficiency criterion <span class="citation">(Nash and Sutcliffe, <a href="#ref-Nash1970">1970</a>)</span> that is available with the function <code>NSE()</code> from the package <code>hydroGOF</code> that is then returned as a single value. You can see that we implemented the negative NSE as we will minimize with <code><a href="https://www.rdocumentation.org/packages/stats/topics/optim">optim()</a></code></p>
+<p>We defined a function that has one input argument <code>par</code> that is the named parameter vector that will be passed to <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code>. The simulation will return the discharge at the main outlet (<code>unit = 1</code>) for the time period 2003-01-01 to 2012-12-31 (considering the <code>years_skip = 3</code> as warm up period). In this case we set the function to be <code>quiet = TRUE</code>. In a next step the function uses the observed discharge values from <code>q_obs$q_out</code> for the same period and evaluate the simulated discharges using the Nash Sutcliffe Efficiency criterion <span class="citation">(Nash and Sutcliffe, <a href="#ref-Nash1970">1970</a>)</span> that is available with the function <code><a href="https://www.rdocumentation.org/packages/hydroGOF/topics/NSE">NSE()</a></code> from the package <code>hydroGOF</code> that is then returned as a single value. You can see that we implemented the negative NSE as we will minimize with <code><a href="https://www.rdocumentation.org/packages/stats/topics/optim">optim()</a></code></p>
 </div>
 <div id="parameter-optimization-with-optim" class="section level2">
 <h2 class="hasAnchor">
@@ -209,24 +209,24 @@ opt_bfgs<span class="op">$</span>value
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_bfgs &lt;-<span class="st"> </span><span class="kw">swat_model</span>(opt_bfgs<span class="op">$</span>par)</code></pre></div>
 <p>We will visualize the simulation with the optimized parameter set together with the observed discharge. We prepare our data with <code>dplyr</code> <span class="citation">(Wickham et al., <a href="#ref-Wickham2019">2019</a>)</span> and <code>tidyr</code> <span class="citation">(Wickham and Henry, <a href="#ref-Wickham2018a">2018</a>)</span> and plot it with <code>ggplot2</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_plot &lt;-<span class="st"> </span>q_bfgs<span class="op">$</span>simulation <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">rename</span>(., <span class="dt">q_sim =</span> flo_out) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">q_sim =</span> q_sim<span class="op">/</span><span class="fl">8.64</span>) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">left_join</span>(., q_obs, <span class="dt">by =</span> <span class="st">"date"</span>) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">rename</span>(<span class="dt">q_obs =</span> q_out) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">gather</span>(., <span class="dt">key =</span> <span class="st">"variable"</span>, <span class="dt">value =</span> <span class="st">"discharge"</span>, <span class="op">-</span>date)
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/select.html">rename</a></span>(., <span class="dt">q_sim =</span> flo_out) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="dt">q_sim =</span> q_sim<span class="op">/</span><span class="fl">8.64</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/join.html">left_join</a></span>(., q_obs, <span class="dt">by =</span> <span class="st">"date"</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/select.html">rename</a></span>(<span class="dt">q_obs =</span> q_out) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://tidyr.tidyverse.org/reference/gather.html">gather</a></span>(., <span class="dt">key =</span> <span class="st">"variable"</span>, <span class="dt">value =</span> <span class="st">"discharge"</span>, <span class="op">-</span>date)
 
-<span class="kw">ggplot</span>(<span class="dt">data =</span> q_plot) <span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> discharge, <span class="dt">col =</span> variable, <span class="dt">lty =</span> variable)) <span class="op">+</span>
-<span class="st">  </span><span class="kw">scale_color_manual</span>(<span class="dt">values =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"black"</span>, <span class="st">"tomato3"</span>)) <span class="op">+</span>
-<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
+<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="dt">data =</span> q_plot) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span>(<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> date, <span class="dt">y =</span> discharge, <span class="dt">col =</span> variable, <span class="dt">lty =</span> variable)) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html">scale_color_manual</a></span>(<span class="dt">values =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"black"</span>, <span class="st">"tomato3"</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span>()</code></pre></div>
 <p><img src="03_par_optim_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 </div>
 <div id="parameter-optimization-with-sceoptim" class="section level2">
 <h2 class="hasAnchor">
-<a href="#parameter-optimization-with-sceoptim" class="anchor"></a>Parameter optimization with <code>SCEoptim()</code>
+<a href="#parameter-optimization-with-sceoptim" class="anchor"></a>Parameter optimization with <code><a href="https://www.rdocumentation.org/packages/hydromad/topics/SCEoptim">SCEoptim()</a></code>
 </h2>
-<p>The implementation of the SCE algorithm provided by <code>hydromad</code> with the function <code>SCEoptim()</code> follows an almost identical syntax as the <code><a href="https://www.rdocumentation.org/packages/stats/topics/optim">optim()</a></code> function. Therefore, we can perform the optimization in almost the same manner as above. In <code>SCEoptim()</code> we will add however a few control arguments to define some settings in the optimization, such as the relative tolerance <code>reltol = 0.001</code> that is used to stop the optimization when the improvements in NSE are below the threshold, <code>tolsteps = 3</code> to stop after the third time the improvement in NSE was below the threshold, and <code>trace = 1</code> to get feedback from each optimization cycle. The optimization run looks as follows:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">opt_sce  &lt;-<span class="st"> </span><span class="kw">SCEoptim</span>(swat_optim, par_init, <span class="dt">lower =</span> par_lwr, <span class="dt">upper =</span> par_upr,
+<p>The implementation of the SCE algorithm provided by <code>hydromad</code> with the function <code><a href="https://www.rdocumentation.org/packages/hydromad/topics/SCEoptim">SCEoptim()</a></code> follows an almost identical syntax as the <code><a href="https://www.rdocumentation.org/packages/stats/topics/optim">optim()</a></code> function. Therefore, we can perform the optimization in almost the same manner as above. In <code><a href="https://www.rdocumentation.org/packages/hydromad/topics/SCEoptim">SCEoptim()</a></code> we will add however a few control arguments to define some settings in the optimization, such as the relative tolerance <code>reltol = 0.001</code> that is used to stop the optimization when the improvements in NSE are below the threshold, <code>tolsteps = 3</code> to stop after the third time the improvement in NSE was below the threshold, and <code>trace = 1</code> to get feedback from each optimization cycle. The optimization run looks as follows:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">opt_sce  &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/hydromad/topics/SCEoptim">SCEoptim</a></span>(swat_optim, par_init, <span class="dt">lower =</span> par_lwr, <span class="dt">upper =</span> par_upr,
                      <span class="dt">control =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">reltol =</span> <span class="dv">10</span><span class="op">^</span>(<span class="op">-</span><span class="dv">3</span>), <span class="dt">tolsteps =</span> <span class="dv">3</span>, <span class="dt">trace =</span> <span class="dv">1</span>))
 <span class="co">#&gt; Nr Iter  Nr Fun Eval    Current best function    Current worst function</span>
 <span class="co">#&gt;     1       391                -0.736847                   497.542</span>
@@ -239,8 +239,8 @@ opt_bfgs<span class="op">$</span>value
 <span class="co">#&gt;     8      2061                -0.744018                   497.542</span>
 <span class="co">#&gt;     9      2272                -0.744347                   497.542</span>
 <span class="co">#&gt;    10      2476                -0.744557                   497.542</span></code></pre></div>
-<p>The optimization result with <code>SCEoptim()</code> provides more detailed information compared to <code><a href="https://www.rdocumentation.org/packages/stats/topics/optim">optim()</a></code>, such as the best parameter set of each iteration step. In our example you can see that all ten simulations actually resulted in almost the same model performance, a look at the respective parameter sets shows however, that some parameters strongly vary between these results. Therefore, it can be interesting to have a look on all ten simulation results. The best parameter set for each iteration step is saved in the variable <code>opt_sce$BESTMEM.ALL</code>. We will write them in a <code>tibble</code> <span class="citation">(Müller and Wickham, <a href="#ref-Mueller2019">2019</a>)</span> to use them in our simulations. In a next step we can run the SWAT+ model with these ten parameter sets. We will use parallel computing here to have shorter computation times:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_best &lt;-<span class="st"> </span><span class="kw">as_tibble</span>(opt_sce<span class="op">$</span>BESTMEM.ALL)
+<p>The optimization result with <code><a href="https://www.rdocumentation.org/packages/hydromad/topics/SCEoptim">SCEoptim()</a></code> provides more detailed information compared to <code><a href="https://www.rdocumentation.org/packages/stats/topics/optim">optim()</a></code>, such as the best parameter set of each iteration step. In our example you can see that all ten simulations actually resulted in almost the same model performance, a look at the respective parameter sets shows however, that some parameters strongly vary between these results. Therefore, it can be interesting to have a look on all ten simulation results. The best parameter set for each iteration step is saved in the variable <code>opt_sce$BESTMEM.ALL</code>. We will write them in a <code>tibble</code> <span class="citation">(Müller and Wickham, <a href="#ref-Mueller2019">2019</a>)</span> to use them in our simulations. In a next step we can run the SWAT+ model with these ten parameter sets. We will use parallel computing here to have shorter computation times:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_best &lt;-<span class="st"> </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/reexports.html">as_tibble</a></span>(opt_sce<span class="op">$</span>BESTMEM.ALL)
 
 q_sce &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> plus_path,
                       <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_sim =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
@@ -258,30 +258,30 @@ q_sce &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_s
 <span class="co">#&gt;  Completed 10 simulations in 8S</span></code></pre></div>
 <p>To see the distribution of the parameters we first create dotty plots. To do that we have to add the optimized NSE values to the parameter table <code>par_best</code>. After that we agin transform our data and plot with <code>ggpot2</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_plot &lt;-<span class="st"> </span>q_sce<span class="op">$</span>parameter<span class="op">$</span>values <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">nse =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/apply">apply</a></span>(opt_sce<span class="op">$</span>POP.FIT.ALL, <span class="dv">1</span>, min),
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="dt">nse =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/apply">apply</a></span>(opt_sce<span class="op">$</span>POP.FIT.ALL, <span class="dv">1</span>, min),
          <span class="dt">run =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste0</a></span>(<span class="st">"run_"</span>, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sprintf">sprintf</a></span>(<span class="st">"%02d"</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">10</span>))) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">gather</span>(<span class="dt">key =</span> <span class="st">"par"</span>, <span class="dt">value =</span> <span class="st">"val"</span>, <span class="op">-</span>nse, <span class="op">-</span>run)
+<span class="st">  </span><span class="kw"><a href="https://tidyr.tidyverse.org/reference/gather.html">gather</a></span>(<span class="dt">key =</span> <span class="st">"par"</span>, <span class="dt">value =</span> <span class="st">"val"</span>, <span class="op">-</span>nse, <span class="op">-</span>run)
 
 
-<span class="kw">ggplot</span>(par_plot) <span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">x =</span> val, <span class="dt">y =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/MathFun">abs</a></span>(nse), <span class="dt">col =</span> run)) <span class="op">+</span>
-<span class="st">  </span><span class="kw">facet_wrap</span>(.<span class="op">~</span>par, <span class="dt">scales =</span> <span class="st">"free"</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
+<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(par_plot) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> val, <span class="dt">y =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/MathFun">abs</a></span>(nse), <span class="dt">col =</span> run)) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html">facet_wrap</a></span>(.<span class="op">~</span>par, <span class="dt">scales =</span> <span class="st">"free"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span>()</code></pre></div>
 <p><img src="03_par_optim_files/figure-html/unnamed-chunk-18-1.png" width="700"></p>
 <p>The time series of the simulated discharges are plotted similarly to the plot for the results of <code>otim()</code>. Though, some modifications were necessary in the data preparation and the plot command itself to plot all ten simulations:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sce_plot &lt;-<span class="st"> </span>q_sce<span class="op">$</span>simulation<span class="op">$</span>q_sim <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate_if</span>(is.numeric, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="op">~</span>.<span class="op">/</span><span class="fl">8.64</span>)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">gather</span>(., <span class="dt">key =</span> <span class="st">"variable"</span>, <span class="dt">value =</span> <span class="st">"discharge"</span>, <span class="op">-</span>date)
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/mutate_all.html">mutate_if</a></span>(is.numeric, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="op">~</span>.<span class="op">/</span><span class="fl">8.64</span>)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://tidyr.tidyverse.org/reference/gather.html">gather</a></span>(., <span class="dt">key =</span> <span class="st">"variable"</span>, <span class="dt">value =</span> <span class="st">"discharge"</span>, <span class="op">-</span>date)
 
-obs_plot &lt;-<span class="st"> </span><span class="kw">rename</span>(q_obs, <span class="dt">q_obs =</span> q_out)
+obs_plot &lt;-<span class="st"> </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/select.html">rename</a></span>(q_obs, <span class="dt">q_obs =</span> q_out)
 
-<span class="kw">ggplot</span>() <span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_line</span>(<span class="dt">data =</span> obs_plot, <span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> q_obs), <span class="dt">col =</span> <span class="st">"black"</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_line</span>(<span class="dt">data =</span> sce_plot,
-            <span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> discharge, <span class="dt">col =</span> variable), <span class="dt">alpha =</span> <span class="fl">0.75</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw">scale_color_brewer</span>(<span class="dt">palette =</span> <span class="st">"Paired"</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw">ylab</span>(<span class="st">"discharge"</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
+<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span>(<span class="dt">data =</span> obs_plot, <span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> date, <span class="dt">y =</span> q_obs), <span class="dt">col =</span> <span class="st">"black"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span>(<span class="dt">data =</span> sce_plot,
+            <span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> date, <span class="dt">y =</span> discharge, <span class="dt">col =</span> variable), <span class="dt">alpha =</span> <span class="fl">0.75</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html">scale_color_brewer</a></span>(<span class="dt">palette =</span> <span class="st">"Paired"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ylab</a></span>(<span class="st">"discharge"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span>()</code></pre></div>
 <p><img src="03_par_optim_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
 </div>
 <div id="references" class="section level2 unnumbered">
@@ -337,7 +337,7 @@ obs_plot &lt;-<span class="st"> </span><span class="kw">rename</span>(q_obs, <sp
       <li><a href="#loading-demo-data">Loading demo data</a></li>
       <li><a href="#definition-of-the-function-to-optimize">Definition of the function to optimize</a></li>
       <li><a href="#parameter-optimization-with-optim">Parameter optimization with <code>optim</code></a></li>
-      <li><a href="#parameter-optimization-with-sceoptim">Parameter optimization with <code>SCEoptim()</code></a></li>
+      <li><a href="#parameter-optimization-with-sceoptim">Parameter optimization with <code><a href="https://www-rdocumentation-org/packages/hydromad/topics/SCEoptim">SCEoptim()</a></code></a></li>
       <li><a href="#references">References</a></li>
       </ul>
 </div>
