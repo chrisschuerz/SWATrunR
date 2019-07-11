@@ -103,7 +103,7 @@ The definition of the simulation output always follows a simple pattern. An outp
 Below is a simple example to run a SWAT+ project and return the `variable = 'flo_out'` that is written into the `file = 'channel'` file for the spatial `unit = 1`. **Caution** in the demo SWAT+ model setup the main channel is channel number 1.
 
 ```{r, echo=FALSE}
-path_plus <- "C:/swat_demo/swatplus_rev59_demo"
+path_plus <- "C:/swat_demo/swatplus_rev57_demo"
 ```
 ```{r, echo=FALSE}
 path_2012 <- "C:/swat_demo/swat2012_rev622_demo"
@@ -282,9 +282,9 @@ q_sim <- run_swatplus(project_path = path_plus,
                       output = list(q_sur  = define_output(file = "basin_wb",
                                                            variable = "surq_gen",
                                                            unit = 1),
-                      q_lat  = define_output(file = "basin_wb",
-                                             variable = "latq",
-                                             unit = 1)),
+                                    q_lat  = define_output(file = "basin_wb",
+                                                           variable = "latq",
+                                                           unit = 1)),
                       parameter = par_set,
                       n_thread = 4)
 
@@ -293,7 +293,7 @@ q_sim <- run_swatplus(project_path = path_plus,
 #>  Completed 4 thread in 2S
 #> Performing 8 simulations on 4 cores:
 #>  Simulation 4 of 8   Time elapsed: 4S   Time remaining: 4S
-#>  Completed 8 simulations in 5S
+#>  Completed 8 simulations in 11S
 ```
 
 ```{r, echo = F}
@@ -342,7 +342,7 @@ run_swatplus(project_path = path_plus,
 #>  Completed 4 thread in 2S
 #> Performing 8 simulations on 4 cores:
 #>  Simulation 4 of 8   Time elapsed: 3S   Time remaining: 3S
-#>  Completed 8 simulations in 6S
+#>  Completed 8 simulations in 8S
 ```
 
 You can see that the function did not return any results in R but generated a folder that we called "q_sur_lat" passed by the argument `save_file` in the project folder. That folder now contains several data bases. The first data base is called "par_dat.sqlite" and stores the parameter information and the date vector. Further, each of the parallel threads of the simulation generated a data base where each thread wrote the simulation results (This is necessary to avoid access conflicts when writing to data bases in parallel). The simulation data bases are always called "sim_thread_i.sqlite", where "i" are the indexes of the individual threads (1 to 4 in this case).
