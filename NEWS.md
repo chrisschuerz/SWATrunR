@@ -1,3 +1,13 @@
+# SWATplusR 0.2.6
+
+Tested release that includes fixes from the development branch:
+- Fixed issue with expressions in parameter constraints in SWAT2012
+- Fixed issues with loading and saving in SWAT2012
+
+# SWATplusR 0.2.6.9002
+
+- Fixes issues with loading and saving in SWAT2012
+
 # SWATplusR 0.2.6.9001
 
 - Fixes issue with expressions in parameter constraints in SWAT2012

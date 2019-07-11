@@ -103,15 +103,15 @@ The definition of the simulation output always follows a simple pattern. An outp
 Below is a simple example to run a SWAT+ project and return the `variable = 'flo_out'` that is written into the `file = 'channel'` file for the spatial `unit = 1`. **Caution** in the demo SWAT+ model setup the main channel is channel number 1.
 
 ```{r, echo=FALSE}
-path_plus <- "C:/swatplus_demo"
+path_plus <- "C:/swat_demo/swatplus_rev59_demo"
 ```
 ```{r, echo=FALSE}
-path_2012 <- "C:/swat2012_demo"
+path_2012 <- "C:/swat_demo/swat2012_rev622_demo"
 ```
 
 
 ```{r, eval=FALSE}
-q_out_plus <- run_swatplus(project_path = path_plus,
+q_sim_plus <- run_swatplus(project_path = path_plus,
                            output = define_output(file = "channel",
                                                   variable = "flo_out",
                                                   unit = 1))
@@ -127,7 +127,7 @@ q_out_plus <- run_swatplus(project_path = path_plus,
 The syntax definition of simulations outputs applies to SWAT+ and SWAT2012. The only difference between the two models in the output definition is how to correctly address the output variables. The output files are organized in different ways in SWAT+ and SWAT2012. Below you find an example to extract the simulation outputs of discharge at all three subbasin outlets in the SWAT2012 demo setup:
 
 ```{r, eval=FALSE}
-q_out_2012 <- run_swat2012(project_path = path_2012,
+q_sim_2012 <- run_swat2012(project_path = path_2012,
                            output = define_output(file = "rch",
                                                   variable = "FLOW_OUT",
                                                   unit = 1:3))
@@ -141,7 +141,7 @@ q_out_2012 <- run_swat2012(project_path = path_2012,
 ```
 
 ```{r, echo=FALSE}
-q_out_2012 <- readRDS(here::here("vignettes/datasets/q_out.rds"))
+q_sim_2012 <- readRDS(here::here("vignettes/datasets/q_out.rds"))
 ```
 
 
@@ -154,7 +154,7 @@ You might have noticed, that running SWAT also provides information on the progr
 The previous examples illustrated how to extract one `variable` (but maybe for several `units`) from the simulation outputs. To extract several variables you can simply combine them in a `list()`. In the example below we extract several water balance components of the SWAT+ demo simulations. Aggregated variables for a SWAT+ simulation are written to the *'basin_wb'* file and there is only one spatial unit (the entire basin) written to that file. Therefore, the `unit` must be 1. Values different from 1 will not return any simulation results:
 
 ```{r,eval=FALSE}
-wb_out <- run_swatplus(project_path = path_plus,
+wb_sim <- run_swatplus(project_path = path_plus,
            output = list(precip = define_output(file = "basin_wb",
                                                 variable = "precip",
                                                 unit = 1),
@@ -177,7 +177,7 @@ wb_out <- run_swatplus(project_path = path_plus,
 ```
 
 ```{r, echo=FALSE}
-wb_out <- readRDS(here::here("vignettes/datasets/wb_out.rds"))
+wb_sim <- readRDS(here::here("vignettes/datasets/wb_out.rds"))
 ```
 
 
@@ -190,13 +190,13 @@ The goal of `SWATplusR` is to return the SWAT simulations in a *tidy* format. Th
 If only one simulation was performed, where no model parameters were modified, `run_swat*()` returns a `tibble` [@Mueller2019] with a `date` column and the columns with the simulated values of the extracted variables. The output table of the simulated water balance components has a date column and columns with the four extracted water balance components. The variable names are the individual names that we defined in the output definition:
 
 ```{r}
-wb_out
+wb_sim
 ```
 
 In case no variable name is assigned in the output definition (as in the simulations of the discharge above), the variable name of the extracted variable is used as the variable name. When several units are defined in `define_output()` (e.g. in the example above `unit = 1:3`) a column in the output table is created for each unit and the unit number is added to the variable name. This is the case for the the simulation of *'FLOW_OUT'* in the example above:
 
 ```{r}
-q_out_2012
+q_sim_2012
 ```
 
 The *tidy* writing of the simulation results allows an easy processing of the data in the analysis workflow in R. Here is a quick example how to 'wrangle' the simulated discharge data with `dplyr` [@Wickham2019] and `tidyr` [@Wickham2018a] and plotting it with `ggplot2`:
@@ -206,11 +206,11 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 
-q_plot <- q_out_2012 %>%
+q_plot <- q_sim_2012 %>%
   select(date, FLOW_OUT_3) %>%
   rename(q_sim = FLOW_OUT_3) %>%
   left_join(., q_obs, by = "date") %>%
-  rename(q_obs = q_out) %>%
+  rename(q_obs = discharge) %>%
   gather(., key = "variable", value = "discharge", -date)
 
 ggplot(data = q_plot) +
@@ -253,7 +253,7 @@ par_single <- c("cn2.hru|change = pctchg" = - 5,
 To include the parameter changes in the SWAT+ model execution the defined vector is simply passed with the argument `parameter` in the `run_swatplus()` function call:
 
 ```{r, eval=F}
-q_out <- run_swatplus(project_path = path_plus,
+q_sim <- run_swatplus(project_path = path_plus,
                       output = define_output(file = "channel",
                                              variable = "flo_out",
                                              unit = 1),
@@ -278,7 +278,7 @@ par_set
 The implementation in the `run_swat*()` function works the same way. To execute multiple SWAT simulations with many parameter sets the `SWATplusR` package provides an option parallel computing. To perform a parallel model execution the number of parallel threads is defined with the input argument `n_thread`.
 
 ```{r, eval=F}
-q_out <- run_swatplus(project_path = path_plus,
+q_sim <- run_swatplus(project_path = path_plus,
                       output = list(q_sur  = define_output(file = "basin_wb",
                                                            variable = "surq_gen",
                                                            unit = 1),
@@ -297,7 +297,7 @@ q_out <- run_swatplus(project_path = path_plus,
 ```
 
 ```{r, echo = F}
-q_out <- readRDS(here::here("vignettes/datasets/q_out_8.rds"))
+q_sim <- readRDS(here::here("vignettes/datasets/q_out_8.rds"))
 ```
 
 ### Exploring simulations with parameter alterations
@@ -307,13 +307,13 @@ When parameters were altered in a simulation run, the performed parameter change
 The list entry `$parameter` holds two `tibbles`. The first `tibble` shows the values of the parameter changes of each model evaluation that was performed with `run_swat*()`. Each row of the `tibble` represents a parameter set that was used in a model run. The second `tibble` provides information on the parameter names, their actual names in the model, the type of change and the constraints on the parameter:
 
 ```{r}
-q_out$parameter
+q_sim$parameter
 ```
 
 The list entry `$simulation` provides the simulation runs that corresponds to each parameter set. Different to the single simulation without parameter changes is that now the simulated variables are not saved in a single `tibble`, but as a `list` of `tibbles`. In this case each simulated variable is saved in one `tibble`, where the first column of each `tibble` is the 'date' and the other columns are the individual simulation runs. Now the tibbles are named by the variables and each individual run saved in the tibbles is named 'run_1' to run 'run_n'. In the example two variables were simulated, `q_out$simulation$q_sur` and `q_out$simulation$q_lat`. Each `tibble` holds the date and the runs 1 to 8:
 
 ```{r}
-q_out$simulation
+q_sim$simulation
 ```
 
 ## Saving and loading Simulations
