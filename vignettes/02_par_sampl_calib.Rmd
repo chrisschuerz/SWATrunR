@@ -58,7 +58,7 @@ demo_path <- "Define:/your/path"
 # Loading the SWAT+ demo project on your hard drive
 path_plus <- load_demo(dataset = "project",
                        version = "plus",
-                       path = demo_path)
+                       path = demo_path, revision = 57)
 ```
 
 `SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. For this example we define calibration and validation periods for our data set, where the calibration period is from 2003-01-01 to 2007-12-31 and the validation period ranges between 2008-01-01 and 2012-12-31. Therefore, we load the demo data and limit it to these time periods:
@@ -215,8 +215,6 @@ In our example we consider all simulations that resulted in an NSE > 0.7 as acce
 
 ```{r}
 run_sel <- which(nse_cal2 >= 0.7)
-
-length(run_sel)
 ```
 
 In total `r length(run_sel)` simulations resulted in acceptable representations of the observed discharge.
@@ -241,7 +239,7 @@ q_val <- run_swatplus(project_path = path_plus,
                       start_date = "2005-01-01",
                        end_date = "2012-12-31",
                       years_skip = 3,
-                      n_thread = 4)
+                      n_thread = 4, keep_folder = T)
 
 #> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
 #>  Completed 4 threads in 0S
@@ -250,7 +248,7 @@ q_val <- run_swatplus(project_path = path_plus,
 ```
 
 ```{r, echo=FALSE}
-q_val <- readRDS(here::here("vignettes/datasets/q_val.rds"))
+q_val1 <- readRDS(here::here("vignettes/datasets/q_val.rds"))
 ```
 
 ### Evaluation of the calibration period

@@ -41,7 +41,7 @@ demo_path <- "Define:/your/path"
 path_plus <- load_demo(dataset = "project",
                        version = "plus",
                        path = demo_path,
-                       revision = 59)
+                       revision = 57)
 
 # Loading a SWAT2012 demo project
 path_2012 <- load_demo(dataset = "project",
