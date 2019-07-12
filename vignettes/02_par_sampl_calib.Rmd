@@ -29,8 +29,9 @@ If you do not have installed any of the required R package, follow the instructi
 install.packages("lhs")
 install.packages("hydroGOF")
 install.packages("dplyr")
-install.packages("tidyr")
 install.packages("lubridate")
+install.packages("tibble")
+install.packages("tidyr")
 install.packages("purrr")
 install.packages("ggplot2")
 ```
@@ -42,6 +43,7 @@ library(lhs)
 library(hydroGOF)
 library(dplyr)
 library(lubridate)
+library(tibble)
 library(tidyr)
 library(purrr)
 library(ggplot2)
@@ -105,7 +107,7 @@ n_sample <- 250
 n_par <- ncol(par_bound)
 
 par_iter1 <- randomLHS(n = n_sample, k = n_par) %>%
-  as_tibble(.) %>%
+  as_tibble(., .name_repair = "minimal") %>%
   map2_df(., par_bound, ~ (.x * (.y[2] - .y[1]) + .y[1])) %>%
   set_names(names(par_bound))
 ```
@@ -150,7 +152,7 @@ q_cal1 <- readRDS(here::here("vignettes/datasets/q_iter1.rds"))
 We use the Nash Sutcliffe Efficiency criterion [NSE; @Nash1970] to evaluate the simulations for the calibration period. The NSE is implemented in `hydroGOF` with the function `NSE()`:
 
 ```{r}
-nse_cal1 <- q_iter1$simulation$q_sim %>%
+nse_cal1 <- q_cal1$simulation$q_sim %>%
   select(-date) %>%
   map_dbl(., ~NSE(.x/8.64, q_obs_cal$discharge))
 ```
@@ -165,7 +167,7 @@ dotty_cal1 <- q_cal1$parameter$values %>%
 
 ggplot(data = dotty_cal1) +
   geom_point(aes(x = parameter_range, y = nse)) +
-  facet_wrap(.~par, ncol = 3, scales = "free") +
+  facet_wrap(.~par, ncol = 3, scales = "free_x") +
   theme_bw()
 ```
 
@@ -211,6 +213,12 @@ nse_cal2 <- q_cal2$simulation$q_sim %>%
   map_dbl(., ~NSE(.x/8.64, q_obs_cal$discharge))
 ```
 
+To get an overview of the NSE values for the best simulation runs simply run the following command:
+
+```{r}
+sort(nse_cal2, decreasing = T) %>% enframe()
+```
+
 In our example we consider all simulations that resulted in an NSE > 0.7 as acceptable simulation results. Therefore we select the acceptable simulations and their respective parameter combinations from our simulation outputs:
 
 ```{r}
@@ -223,18 +231,14 @@ In total `r length(run_sel)` simulations resulted in acceptable representations 
 
 ### Parameter sampling and simulation
 
-We will validate the selected `r sum(run_sel)` parameter combinations in the validation period 2008-01-01 to 2012-12-31. Therefore, we select the acceptable parameter combinations and perform the simulations with these parametrizations in the validation period:
-
-```{r}
-par_val <- q_cal2$parameter
-```
+We will validate the selected `r sum(run_sel)` parameter combinations in the validation period 2008-01-01 to 2012-12-31. Therefore, we use the indices of the acceptable simulations for the calibration period and use their parameter combinations to perform the simulations in the validation period:
 
 ```{r, eval=FALSE}
 q_val <- run_swatplus(project_path = path_plus,
                       output = list(q_sim = define_output(file = "channel",
                                     variable = "flo_out",
                                     unit = 1)),
-                      parameter = par_val,
+                      parameter = q_cal2$parameter,
                       run_index = run_sel,
                       start_date = "2005-01-01",
                        end_date = "2012-12-31",
@@ -248,25 +252,33 @@ q_val <- run_swatplus(project_path = path_plus,
 ```
 
 ```{r, echo=FALSE}
-q_val1 <- readRDS(here::here("vignettes/datasets/q_val.rds"))
+q_val <- readRDS(here::here("vignettes/datasets/q_val.rds"))
 ```
 
 ### Evaluation of the calibration period
 The evaluation of the validation period is identical to the evaluation of the iterations of the calibration period. To get an overview of the model performance in the validation period we visualize a summary statistics:
 
 ```{r}
-nse_val <- q_val$simulation$q_out %>%
+nse_val <- q_val$simulation$q_sim %>%
   select(-date) %>%
-  map_dbl(., ~NSE(.x/8.64, q_obs_val$q_out))
+  map_dbl(., ~NSE(.x/8.64, q_obs_val$discharge))
 
-nse_comp <- tibble(calibration = nse_iter2[run_sel],
-                   validation = nse_val) %>%
-  gather(key = "period", value = "nse")
+nse_comp <- tibble(run = names(nse_cal2[run_sel]),
+                   calibration = nse_cal2[run_sel],
+                   validation = nse_val)
 
-
-ggplot(data = nse_comp) +
+nse_comp %>% 
+  gather(key = "period", value = "nse", - run) %>% 
+  ggplot(data = .) +
   geom_boxplot(aes(x = period, y = nse), fill = "grey") +
   theme_bw()
+```
+
+A tabular overview can show a direct comparison of the simulations in the calibration and validation period for the individual runs and their parametrizations:
+
+```{r}
+nse_comp %>% 
+  arrange(desc(calibration))
 ```
 
 
@@ -275,42 +287,45 @@ ggplot(data = nse_comp) +
 We will plot the ensemble of simulations as a band of minimum and maximum values for each time step and compare it to the observations.
 
 ```{r}
-run_cal_best <- names(which.max(nse_iter2))
-run_val <- names(nse_val)[which(names(which(run_sel)) == run_cal_best)]
+run_best <- nse_comp$run[1]
 
-cal_stat <- q_iter2$simulation$q_out %>%
-  select(one_of(names(which(run_sel)))) %>%
-  mutate(q_max = pmap_dbl(., max),
-         q_min = pmap_dbl(., min)) %>%
-  select(matches(run_cal_best), q_min, q_max) %>%
-  mutate_all(., list(~./8.64)) %>%
+get_run_stat <- function(run_table, best_run) {
+  run_table %>% 
+    select(-date) %>% 
+    mutate(q_max = pmap_dbl(., max),
+           q_min = pmap_dbl(., min)) %>%
+  select(matches(best_run), q_min, q_max) %>%
   set_names(c("q_sim", "q_min", "q_max")) %>%
-  mutate(date = q_obs_cal$date) %>%
+  add_column(date = run_table$date, .before = 1)
+}
+
+cal_stat <- q_cal2$simulation$q_sim %>% 
+  select(!!names(q_val$simulation$q_sim)) %>% 
+  get_run_stat(., run_best) %>% 
+  mutate_if(., is.numeric, ~ (./8.64)) %>% 
   mutate(period = "calibration")
 
-val_stat <-  q_val$simulation$q_out %>%
-  select(-date) %>%
-  mutate(q_max = pmap_dbl(., max),
-         q_min = pmap_dbl(., min)) %>%
-  select(matches(run_val), q_min, q_max) %>%
-  mutate_all(., list(~./8.64)) %>%
-  set_names(c("q_sim", "q_min", "q_max")) %>%
-  mutate(date = q_obs_val$date) %>%
+val_stat <- q_val$simulation$q_sim %>% 
+  get_run_stat(., run_best) %>% 
+  mutate_if(., is.numeric, ~ (./8.64)) %>% 
   mutate(period = "validation")
 
 sim_stat <- bind_rows(cal_stat, val_stat) %>%
   left_join(., q_obs, by = "date") %>%
-  rename( q_obs = q_out) %>%
+  rename( q_obs = discharge) %>%
   gather(key = "variable", value = "q", -date, -q_min, - q_max, -period)
 
 ggplot(data = sim_stat) +
-  geom_ribbon(aes(x = date, ymin = q_min, ymax = q_max, fill = period)) +
-  geom_line(aes(x = date, y = q, col = variable, linetype = period), lwd = 0.25) +
+  geom_ribbon(aes(x = date, ymin = q_min, ymax = q_max), fill = "grey50") +
+  geom_line(aes(x = date, y = q, col = variable), lwd = 0.25) +
   scale_color_manual(values = c("black", "tomato3")) +
-  scale_fill_manual(values = c("grey30", "grey70")) +
-  xlab("Date (yyyy)") +
-  ylab(expression (Discharge~(m^3~s^{-1}))) +
-  theme_bw()
+  labs( x = "Date (yyyy)", 
+        y = expression (Discharge~(m^3~s^{-1})), 
+        col = "Discharge") + 
+  facet_wrap(period~., scales = "free_x", ncol = 2) + 
+  theme_bw() + 
+  theme(panel.spacing = unit(0.2, "lines"),
+        legend.position = "bottom")
 ```
 
 ## References

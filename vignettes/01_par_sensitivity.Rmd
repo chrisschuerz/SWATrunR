@@ -27,26 +27,28 @@ Most methods for sensitivity analysis require a scalar model result to assess th
 
 If you do not have installed any of the required R package, follow the instructions for the respective R package. All of the required R packages are available from CRAN and can be installed with the following commands:
 ```{r, eval=FALSE}
-install.packages("sensitivity")
-install.packages("fast")
-install.packages("hydroGOF")
 install.packages("dplyr")
+install.packages("fast")
 install.packages("forcats")
-install.packages("tidyr")
 install.packages("ggplot2")
+install.packages("hydroGOF")
+install.packages("sensitivity")
+install.packages("tidyr")
+install.packages("purrr")
 ```
 
 ### Loading R packages
 ```{r, message=FALSE, warning=FALSE}
+library(dplyr)
+library(fast)
+library(forcats)
+library(ggplot2)
+library(hydroGOF)
+library(lubridate)
+library(purrr)
 library(SWATplusR)
 library(sensitivity)
-library(fast)
-library(hydroGOF)
-library(dplyr)
-library(forcats)
-library(lubridate)
 library(tidyr)
-library(ggplot2)
 ```
 
 ## Loading demo data
@@ -59,8 +61,9 @@ demo_path <- "Define:/your/path"
 
 # Loading the SWAT+ demo project on your hard drive
 path_plus <- load_demo(dataset = "project",
-                       swat_version = "plus",
-                       path = demo_path)
+                       version = "plus",
+                       path = demo_path,
+                       revision = 57)
 ```
 
 `SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2007-12-31. Therefore, we load the demo data and limit it to this time period:
@@ -109,7 +112,7 @@ To perform a FAST analysis for 7 parameters 167 model evaluations are required. 
 
 ```{r, eval=FALSE}
 q_fast <- run_swatplus(project_path = path_plus,
-            output = list(q_out = define_output(file = "channel",
+            output = list(q_sim = define_output(file = "channel",
                                   variable = "flo_out",
                                   unit = 3)),
             parameter = par_fast,
@@ -129,9 +132,9 @@ The model runs that used the parameter sets sampled with `fast` are evaluated us
 The `NSE()` function is available from the `hydroGOF` package. The simulations are evaluated with the daily observations of discharge for the period 2003 to 2007. The calculated NSE values can than be used to assess the sensitivity of the NSE to changes in parameter values with the function `sensitivity()` from the `fast` package:  
 
 ```{r, eval=FALSE}
-nse_fast <- q_fast$simulation$q_out %>%
+nse_fast <- q_fast$simulation$q_sim %>%
   select(-date) %>%
-  map_dbl(., ~NSE(.x, q_obs$q_out))
+  map_dbl(., ~NSE(.x/8.64, q_obs$discharge))
 
 sens_fast <- sensitivity(nse_fast, 7)
 ```
@@ -152,7 +155,7 @@ result_fast <- readRDS(here::here("vignettes/datasets/fast.rds"))
 
 ```{r}
 ggplot(data = result_fast) +
-  geom_bar(aes(x = parameter, y = fast), stat = "identity") +
+  geom_col(aes(x = parameter, y = fast)) +
   xlab("Parameter") +
   ylab("Sensitivity") +
   coord_flip() +
@@ -166,15 +169,15 @@ The method of Sobol is a reference method for GSA. To implement the SWAT model i
 ```{r, eval=FALSE}
 swat_sobol <- function(par, obs) {
   q_sim <- run_swatplus(project_path = proj_path,
-                        output = define_output(file = "channel",
-                                               variable = "flo_out",
-                                               unit = 1),
+                        output =list(q_sim = define_output(file = "channel",
+                                     variable = "flo_out",
+                                     unit = 1)),
                         parameter = par,
                         start_date = "2000-01-01",
                         end_date = "2007-12-31",
                         years_skip = 3, n_thread = 4,
                         add_date = FALSE)
-  nse_q <- map_dbl(q_sim$simulation$flo_out/8.64, ~ NSE(.x, obs))
+  nse_q <- map_dbl(q_sim$simulation$q_sim/8.64, ~ NSE(.x, obs))
   return(nse_q)
 }
 ```
@@ -202,7 +205,7 @@ To perform the sensitivity analysis with using method of Sobol the following com
 
 ```{r, eval=FALSE}
 sens_sobol <- sobol(model = swat_nse, X1 = x1, X2 = x2, 
-                    obs = q_obs$q_out, nboot = 100)
+                    obs = q_obs$discharge, nboot = 100)
 ```
 
 ```{r, echo=FALSE}
