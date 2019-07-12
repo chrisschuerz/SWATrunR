@@ -7,7 +7,7 @@
 #' @keywords internal
 #'
 format_swat2012_parameter <- function(parameter) {
-  if(!any(names(parameter) == c("values", "definition"))) {
+  if(!any(names(parameter) %in% c("values", "definition"))) {
     par_constrain <- suppressWarnings(
       translate_parameter_constraints(names(parameter)))
     names(parameter) <- par_constrain$par_name
