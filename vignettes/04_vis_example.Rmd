@@ -33,6 +33,7 @@ install.packages("lubridate")
 install.packages("mapview")
 install.packages("purrr")
 install.packages("plotly")
+install.packages("sf")
 install.packages("tibble")
 install.packages("tidyr")
 install.packages("xts")
@@ -46,10 +47,9 @@ library(dygraphs)
 library(ggplot2)
 library(lubridate)
 library(plotly)
-library(purrr)
+library(sf)
 library(tibble)
 library(tidyr)
-library(xts)
 ```
 
 ## Loading demo data
@@ -213,5 +213,68 @@ gg_wb <- ggplot() +
 ggplotly(gg_wb)
 ```
 
- 
+## Viewing spatial data
+To analyze a SWAT project spatially distributed functions that are provided in traditional GIS can be useful. Several R packages offer implementations that allow quick and intuitive ways to visualize spatial data. A great example is the R package `mapview`. In the example below we calculate average annual values for three water balance components on the HRU scale and visualize them in an interactive map. 
+
+```{r, eval = FALSE}
+wb_hru <- run_swatplus(project_path = path_plus,
+                       output = list(aet = define_output(file = "hru_wb",
+                                       variable = "et",
+                                       unit = 1:131),
+                                     q_sur = define_output(file = "hru_wb",
+                                       variable = "surq_gen",
+                                       unit = 1:131),
+                                     q_lat = define_output(file = "hru_wb",
+                                       variable = "latq",
+                                       unit = 1:131)),
+                       parameter = par_wb,
+                       start_date = "2000-01-01",
+                        end_date = "2007-12-31",
+                       output_interval = "y",
+                       years_skip = 3)
+
+#> Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run':
+#>  Completed 1 threads in 0S
+#> Performing 1 simulations on 1 core:
+#>  Completed 4 simulations in 5S
+```
+The simulated outputs provided by `SWATplusR` do not have the form yet that we require for the visualization. Therefore, some data wrang
+
+```{r, eval=FALSE}
+wb_hru_aa <- wb_hru$simulation %>% 
+  select(-date) %>% 
+  summarise_all(., .funs = mean) %>% 
+  gather(.) %>% 
+  mutate(hru = gsub("[^[:digit:]]", "",key) %>% as.numeric(.),
+         wb_comp = gsub("[^[:alpha:]]", "",key)) %>% 
+  select(hru, wb_comp, value) %>% 
+  spread(., key = wb_comp, value = value)
+```
+
+```{r, echo=FALSE}
+wb_hru_aa <- readRDS(here::here("vignettes/datasets/wb_hru_aa.rds"))
+```
+
+
+```{r}
+hru_path <- load_demo("hru", version = "plus")
+
+hru <- read_sf(hru_path) %>% 
+  select(HRUS) %>% 
+  mutate(HRUS = as.numeric(HRUS)) %>% 
+  rename(hru = HRUS)
+```
+```{r}
+hru <- left_join(hru, wb_hru_aa)
+```
+
+```{r}
+aet <- mapview(hru, zcol = "aet")
+qlat <- mapview(hru, zcol = "qlat")
+qsur <- mapview(hru, zcol = "qsur")
+
+sync(aet, qlat, qsur)
+```
+
+
 ## References
