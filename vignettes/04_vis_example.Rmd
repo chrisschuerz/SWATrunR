@@ -142,5 +142,67 @@ q_sim <- q_day$simulation$q_sim %>%
 view_timeseries(q_sim = q_sim, q_obs = q_obs)
 ```
 
+## Visualization of the water balance components
 
+Having an overview of the shares of the individual water balance components in a model setup can provide a lot of information on how well the SWAT model setup represents a catchment (see for instance SWATcheck as a great example for that). Below we will simulate basin averages of water balance components and visualize them in an interactive plot using `ggplot2`
+and `plotly`. Again we will use `run_swatplus` to simulate the water balance components for one model parametrization:
+
+```{r}
+par_wb <- par[1,]
+
+wb_mon <- run_swatplus(project_path = path_plus,
+                       output = list(pet = define_output(file = "basin_wb",
+                                       variable = "pet",
+                                       unit = 1),
+                                     pcp = define_output(file = "basin_wb",
+                                       variable = "precip",
+                                       unit = 1),
+                                     aet = define_output(file = "basin_wb",
+                                       variable = "et",
+                                       unit = 1),
+                                     q_sur = define_output(file = "basin_wb",
+                                       variable = "surq_gen",
+                                       unit = 1),
+                                     q_lat = define_output(file = "basin_wb",
+                                       variable = "latq",
+                                       unit = 1)),
+                       parameter = par_wb,
+                       start_date = "2000-01-01",
+                        end_date = "2007-12-31",
+                       output_interval = "m",
+                       years_skip = 3)
+```
+
+```{r}
+wb_comp <- wb_mon$simulation %>% 
+  mutate(month = month(date)) %>% 
+  select(-date) %>% 
+  group_by(month) %>% 
+  summarise_all(., .funs = mean)
+
+wb_land <- wb_comp %>% 
+  select(-pet, -pcp) %>% 
+  gather(data = ., key = "Land_phase", value = "value", - month) %>% 
+  mutate(Land_phase = factor(Land_phase, levels = c("aet", "q_sur", "q_lat")))
+
+wb_atm <- wb_comp %>% 
+  select(month, pet, pcp) %>% 
+  gather(data = ., key = "Atmosphere", value = "value", - month) %>% 
+  mutate(Atmosphere = factor(Atmosphere, levels = c("pet", "pcp")))
+
+
+gg_wb <- ggplot() + 
+  geom_col(data = wb_land, 
+           aes(x = month, y = value, fill = Land_phase)) + 
+  geom_line(data = wb_atm, 
+           aes(x = month, y = value, col = Atmosphere)) + 
+  scale_fill_manual(values = c("#41AB5D", "#9ECAE1", "#08519C")) + 
+  scale_color_manual(values = c("#CB181D", "#08519C")) + 
+  scale_x_continuous(breaks = 1:12, labels = substr(month.abb, 1,1)) + 
+  theme_bw()
+
+ggplotly(gg_wb)
+```
+
+ 
 ## References
