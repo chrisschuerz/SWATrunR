@@ -1,5 +1,5 @@
 ---
-title: "02 - Parameter sampling and model calibration"
+title: "02 - Visualization of simulation results"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Exploring SWATplusR}
@@ -19,34 +19,36 @@ knitr::opts_chunk$set(
 
 ## R packages
 
-A common procedure in hydrological modeling is to draw random samples for a set of parameters, to execute the model with all drawn parameter combinations, evaluate the simulations based on one or several criteria, and select parameter sets that were able to reproduce the observation date sufficiently with the applied model setup. For R different routines are available to draw random samples. The simplest approach might be to use the function `runif()` from the base R package `stats` [@Rcore2019] to draw uniform samples for each parameter. You can draw Latin Hypercube Samples [LHS] with the package `lhs` [@Carnell2019]. Other 'pseudo' and 'quasi' random numbers (that can be relevant for some methods for sensitivity analysis) can be drawn using the package `randtoolbox` [@Dutang2018]. In this example we will implement LHS sampling.
-To evaluate simulated time series of hydrological variables, multiple goodness-of-fit functions are available from literature. The `hydroGOF` package [@MZB2017] summarizes frequently used functions for the evaluation of time series of hydrological variables.
+R offers a large variety of methods and packages for visualization. Most plotting methods are however static, which makes sense for publishing results. For model diagnosis, however, interactive plotting can greatly support the modeler. This chapter gives a brief overview of plotting methods that can support you in analyzing your simulation results. 
+A great R package to visualize time series data and offer options such as zooming is `dygraphs`. It works with `xts` time series data and can support you in comparing the simulated time series (e.g. discharge, in-stream nitrogen etc.) with observation data. `ggplot2` is a very versatile package for data visualization, that you have seen already several times in the previous chapters. `plotly` offers easy ways to make ggplots more interactive. To visualize spatial data and have functionalities that are usually provided by GIS software `mapview` provides a great alternative. It is based on `leaflet` that most of us have most likely already seen in action on web pages with interactive maps (and maybe did not realize that this is a leaflet map and we can also produce something similar with R easily).
 
 ### Package installation
 
 If you do not have installed any of the required R package, follow the instructions for the respective R package. All of the required R packages are available from CRAN and can be installed with the following commands:
 ```{r, eval=FALSE}
-install.packages("lhs")
-install.packages("hydroGOF")
 install.packages("dplyr")
+install.packages("dygraphs")
+install.packages("ggplot2")
 install.packages("lubridate")
+install.packages("mapview")
+install.packages("purrr")
+install.packages("plotly")
 install.packages("tibble")
 install.packages("tidyr")
-install.packages("purrr")
-install.packages("ggplot2")
+install.packages("xts")
 ```
 
 ### Loading R packages
 ```{r, message=FALSE, warning=FALSE}
 library(SWATplusR)
-library(lhs)
-library(hydroGOF)
 library(dplyr)
+library(dygraphs)
 library(lubridate)
 library(tibble)
 library(tidyr)
 library(purrr)
 library(ggplot2)
+library(xts)
 ```
 
 ## Loading demo data
@@ -63,17 +65,13 @@ path_plus <- load_demo(dataset = "project",
                        path = demo_path, 
                        revision = 57)
 ```
-
-`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. For this example we define calibration and validation periods for our data set, where the calibration period is from 2003-01-01 to 2007-12-31 and the validation period ranges between 2008-01-01 and 2012-12-31. Therefore, we load the demo data and limit it to these time periods:
+```{r, echo=FALSE}
+path_plus <- "C:/swat_demo/swatplus_rev57_demo"
+```
+`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to compare the discharge simulations with observed values:
 
 ```{r}
 q_obs <- load_demo(dataset = "observation")
-
-q_obs_cal <- filter(q_obs, date >= ymd("2003-01-01"),
-                           date <= ymd("2007-12-31"))
-
-q_obs_val <- filter(q_obs, date >= ymd("2008-01-01"),
-                           date <= ymd("2012-12-31"))
 ```
 
 ## Parameter sampling

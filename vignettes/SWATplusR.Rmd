@@ -387,7 +387,7 @@ With `load_swat_run()` you can then load the simulations saved in the data bases
 
 
 ```{r, echo=FALSE}
-q_subset <- readRDS("D:/Projects_R/SWATplusR/vignettes/datasets/q_subset.rds")
+q_subset <- readRDS(here::here("vignettes/datasets/q_subset.rds"))
 ```
 
 ```{r, eval = FALSE}
