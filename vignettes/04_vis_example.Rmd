@@ -215,12 +215,16 @@ ggplotly(gg_wb)
 ```
 
 ## Viewing spatial data
-To analyze a SWAT project spatially distributed functions that are provided in traditional GIS can be useful. Several R packages offer implementations that allow quick and intuitive ways to visualize spatial data. A great example is the R package `mapview`. In the example below we calculate average annual values for three water balance components on the HRU scale and visualize them in an interactive map. 
+
+To analyze a SWAT project spatially distributed functions that are provided in traditional GIS can be useful. Several R packages offer implementations that allow quick and intuitive ways to visualize spatial data. A great example is the R package `mapview`. In the example below we calculate average annual values for four water balance components on the HRU scale and visualize them in an interactive map. 
 
 ```{r, eval = FALSE}
 wb_hru <- run_swatplus(project_path = path_plus,
                        output = list(aet = define_output(file = "hru_wb",
                                        variable = "et",
+                                       unit = 1:131),
+                                     wyld = define_output(file = "hru_wb",
+                                       variable = "wateryld",
                                        unit = 1:131),
                                      q_sur = define_output(file = "hru_wb",
                                        variable = "surq_gen",
@@ -273,10 +277,11 @@ hru <- left_join(hru, wb_hru_aa, by = "hru")
 Plotting spatial information with mapview is very intuitive. Here is a code example that allows you to compare different simulated components:
 ```{r, message=FALSE, warning=FALSE}
 aet <- mapview(hru, zcol = "aet")
+wyld <- mapview(hru, zcol = "wyld")
 qlat <- mapview(hru, zcol = "qlat")
 qsur <- mapview(hru, zcol = "qsur")
 
-sync(aet, qlat, qsur)
+sync(aet, wyld, qlat, qsur)
 ```
 
 
