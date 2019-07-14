@@ -127,7 +127,7 @@ The defined optimization function `swat_optim()` can now be implemented in the a
 ```{r, eval=FALSE}
 opt_bfgs <- optim(par = par_init, fn = swat_optim, method = "L-BFGS-B",
                   lower = par_lwr, upper = par_upr, obs = q_obs$discharge,
-                  control = list(maxit = 10))
+                  control = list(maxit = 100))
 ```
 
 ```{r, echo = FALSE}
@@ -245,7 +245,7 @@ sce_plot <- q_sce$simulation$q_sim %>%
   mutate_if(is.numeric, list(~./8.64)) %>%
   gather(., key = "variable", value = "discharge", -date)
 
-obs_plot <- rename(q_obs, q_obs = q_out)
+obs_plot <- rename(q_obs, q_obs = discharge)
 
 ggplot() +
   geom_line(data = obs_plot, aes(x = date, y = q_obs), col = "black") +
