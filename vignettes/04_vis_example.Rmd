@@ -46,6 +46,7 @@ library(dplyr)
 library(dygraphs)
 library(ggplot2)
 library(lubridate)
+library(mapview)
 library(plotly)
 library(sf)
 library(tibble)
@@ -238,8 +239,7 @@ wb_hru <- run_swatplus(project_path = path_plus,
 #> Performing 1 simulations on 1 core:
 #>  Completed 4 simulations in 5S
 ```
-The simulated outputs provided by `SWATplusR` do not have the form yet that we require for the visualization. Therefore, some data wrang
-
+The simulated outputs provided by `SWATplusR` do not have the form yet that we require for the visualization. Therefore, some data wrangling is necessary as shown below:
 ```{r, eval=FALSE}
 wb_hru_aa <- wb_hru$simulation %>% 
   select(-date) %>% 
@@ -255,8 +255,8 @@ wb_hru_aa <- wb_hru$simulation %>%
 wb_hru_aa <- readRDS(here::here("vignettes/datasets/wb_hru_aa.rds"))
 ```
 
-
-```{r}
+To visualize the simulated values for each HRU we require the spatial information for all HRUs. The HRU map for the SWAT+ project can be acquired from `SWATdata`. Therefore, we us the R package `sf`: 
+```{r, message=FALSE}
 hru_path <- load_demo("hru", version = "plus")
 
 hru <- read_sf(hru_path) %>% 
@@ -264,11 +264,14 @@ hru <- read_sf(hru_path) %>%
   mutate(HRUS = as.numeric(HRUS)) %>% 
   rename(hru = HRUS)
 ```
-```{r}
-hru <- left_join(hru, wb_hru_aa)
+
+The advantage of `sf` is that spatial data is simply treated as a `data.frame` and it is therefore easy to link the spatial reference to our simulated data:
+```{r, message=FALSE}
+hru <- left_join(hru, wb_hru_aa, by = "hru")
 ```
 
-```{r}
+Plotting spatial information with mapview is very intuitive. Here is a code example that allows you to compare different simulated components:
+```{r, message=FALSE, warning=FALSE}
 aet <- mapview(hru, zcol = "aet")
 qlat <- mapview(hru, zcol = "qlat")
 qsur <- mapview(hru, zcol = "qsur")
