@@ -160,7 +160,7 @@ nse_cal1 <- q_cal1$simulation$q_sim %>%
 
 The first iteration of discharge simulations and their evaluation with the NSE should help us to identify the relevant parameter and/or constrain parameter boundaries of parameters. Therefore we display the parameter samples with the resulting NSE values in dotty plots:
 
-```{r}
+```{r, fig.height= 8}
 dotty_cal1 <- q_cal1$parameter$values %>%
   mutate(nse = nse_cal1) %>%
   filter(nse > -5) %>%
