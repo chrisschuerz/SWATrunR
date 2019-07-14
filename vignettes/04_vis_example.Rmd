@@ -1,5 +1,5 @@
 ---
-title: "02 - Visualization of simulation results"
+title: "04 - Visualization of simulation results"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Exploring SWATplusR}
@@ -43,11 +43,12 @@ install.packages("xts")
 library(SWATplusR)
 library(dplyr)
 library(dygraphs)
+library(ggplot2)
 library(lubridate)
+library(plotly)
+library(purrr)
 library(tibble)
 library(tidyr)
-library(purrr)
-library(ggplot2)
 library(xts)
 ```
 

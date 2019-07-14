@@ -124,9 +124,6 @@
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/grapes-.-grapes.html</loc>
   </url>
   <url>
-    <loc>http://chrisschuerz.github.io/SWATplusR/reference/grapes-_-grapes.html</loc>
-  </url>
-  <url>
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/grapes-and-and-grapes.html</loc>
   </url>
   <url>
@@ -137,6 +134,9 @@
   </url>
   <url>
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/grapes-slash-slash-grapes.html</loc>
+  </url>
+  <url>
+    <loc>http://chrisschuerz.github.io/SWATplusR/reference/grapes-_-grapes.html</loc>
   </url>
   <url>
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/initialize_save_file.html</loc>
@@ -217,13 +217,13 @@
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/scan_swat_run.html</loc>
   </url>
   <url>
-    <loc>http://chrisschuerz.github.io/SWATplusR/reference/set_save_path.html</loc>
-  </url>
-  <url>
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/setup_swat2012.html</loc>
   </url>
   <url>
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/setup_swatplus.html</loc>
+  </url>
+  <url>
+    <loc>http://chrisschuerz.github.io/SWATplusR/reference/set_save_path.html</loc>
   </url>
   <url>
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/split_line.html</loc>
@@ -259,10 +259,10 @@
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/write_mgt.html</loc>
   </url>
   <url>
-    <loc>http://chrisschuerz.github.io/SWATplusR/reference/write_par_list.html</loc>
+    <loc>http://chrisschuerz.github.io/SWATplusR/reference/write_parameter.html</loc>
   </url>
   <url>
-    <loc>http://chrisschuerz.github.io/SWATplusR/reference/write_parameter.html</loc>
+    <loc>http://chrisschuerz.github.io/SWATplusR/reference/write_par_list.html</loc>
   </url>
   <url>
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/write_sol.html</loc>
