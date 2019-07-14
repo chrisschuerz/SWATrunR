@@ -75,16 +75,72 @@ q_obs <- load_demo(dataset = "observation")
 ```
 
 ## Parameter sampling
-For the sampling example we will use 7 SWAT model parameters that are frequently calibrated for discharge. Below we create a `tibble` [@Mueller2019] that provides the parameter boundaries for the 7 parameters. We name the parameters using the specific syntax that is requested by the `run_swat*()` functions (see the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration) section on 'Model parameter alteration' to learn more on parameter names):
+For this example we will use 7 SWAT model parameters that are frequently calibrated for discharge. Below we create a `tibble` [@Mueller2019] that provides 4 parameter combinations for the 7 parameters. The parameter values that are given here resulted in acceptable simulations of discharge in the previous chapters and were just selected for demonstration here. These parameter combinations are uses througout the following chapters. We name the parameters using the specific syntax that is requested by the `run_swat*()` functions (see the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration) section on 'Model parameter alteration' to learn more on parameter names):
 
 ```{r}
-par_bound <- tibble("cn2.hru | change = abschg" = c(-15, 10),
-                    "lat_ttime.hru | change = absval" = c(0.5, 50),
-                    "lat_len.hru | change = absval" = c(10, 100),
-                    "k.sol | change = pctchg" = c(-50, 50),
-                    "z.sol | change = pctchg" = c(-50, 50),
-                    "esco.hru | change = absval" = c(0, 1),
-                    "epco.hru | change = absval" = c(0, 1))
+par <- tibble("cn2.hru | change = abschg" = c(-4.56, -4.47, -4.89, -14.4),
+              "lat_ttime.hru | change = absval" = c(1.64, 2.55, 1.08, 0.844),
+              "lat_len.hru | change = absval" = c(95.2, 94.8, 42.2, 87.8),
+              "k.sol | change = pctchg" = c(-45.0, -37.8, -41.1, -48.5),
+              "z.sol | change = pctchg" = c(-41.0, 25.7, 12.7, 27.9),
+              "esco.hru | change = absval" = c(0.809, 0.437, 0.368, 0.848),
+              "epco.hru | change = absval" = c(0.165, 0.507, 0.197, 0.353))
 ```
+
+## Visualization of time series data
+
+`dygraphs` offers great ways to visualize time series data. Before we can visualize our simulation results the data we have to perform the simulations. Running SWAT+ works the same way as in the previous examples:
+
+```{r, eval=FALSE}
+q_day <- run_swatplus(project_path = path_plus,
+                      output = list(q_sim = define_output(file = "channel",
+                                    variable = "flo_out",
+                                    unit = 1)),
+                      parameter = par,
+                      start_date = "2000-01-01",
+                       end_date = "2007-12-31",
+                      years_skip = 3,
+                      n_thread = 4)
+
+#> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
+#>  Completed 4 threads in 2S
+#> Performing 4 simulations on 4 cores:
+#>  Completed 4 simulations in 6S
+```
+
+```{r, echo=FALSE}
+q_day <- readRDS(here::here("vignettes/datasets/q_vis_day.rds"))
+```
+
+You can use the function `view_timeseries` below as a template for your future SWAT-R projects. The implementation reminds of the view option you have in SWAT-CUP and it is a great pendant to that. The function requires the simulated and the observed time series in a `date.frame` format where in both data sets the first column must be the `date` and the following columns are the simulated/observed values:
+
+```{r}
+view_timeseries <- function(q_sim, q_obs) {
+  names(q_obs) <- c("date", "q_obs")
+  
+  q_xts <- q_sim %>% 
+    dplyr::left_join(., q_obs, by = "date") %>% 
+    xts::xts(x = .[,c(2:ncol(.))], order.by = .$date)
+  
+  n_sim <- ncol(q_sim) - 1
+  
+  dygraph(q_xts) %>% 
+    dyRangeSelector() %>% 
+    dyOptions(colors = 
+      c(colorRampPalette( 
+        RColorBrewer::brewer.pal(8, "Paired"))(n_sim), 
+        "black"))
+}
+```
+
+Using the function `view_timeseries` we can now interactively compare the four simulated time series of the discharge with the discharge observations. Again, do not forget to convert the SWAT+ discharge given in $ha \cdot m^{-1}$ to $m^3 \cdot s^{-1}$ with a conversion factor of $8.64$ for daily time steps:
+
+```{r}
+q_sim <- q_day$simulation$q_sim %>% 
+  mutate_if(., is.numeric, ~(./8.64)) 
+
+view_timeseries(q_sim = q_sim, q_obs = q_obs)
+```
+
 
 ## References
