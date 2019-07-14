@@ -148,7 +148,7 @@ view_timeseries(q_sim = q_sim, q_obs = q_obs)
 Having an overview of the shares of the individual water balance components in a model setup can provide a lot of information on how well the SWAT model setup represents a catchment (see for instance SWATcheck as a great example for that). Below we will simulate basin averages of water balance components and visualize them in an interactive plot using `ggplot2`
 and `plotly`. Again we will use `run_swatplus` to simulate the water balance components for one model parametrization:
 
-```{r}
+```{r, eval=FALSE}
 par_wb <- par[1,]
 
 wb_mon <- run_swatplus(project_path = path_plus,
@@ -172,6 +172,14 @@ wb_mon <- run_swatplus(project_path = path_plus,
                         end_date = "2007-12-31",
                        output_interval = "m",
                        years_skip = 3)
+
+#> Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run':
+#>  Completed 1 threads in 0S
+#> Performing 1 simulations on 1 core:
+#>  Completed 4 simulations in 4S
+```
+```{r, echo=FALSE}
+wb_mon <- readRDS(here::here("vignettes/datasets/wb_vis_mon.rds"))
 ```
 
 ```{r}
