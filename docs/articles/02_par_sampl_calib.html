@@ -30,7 +30,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SWATplusR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6</span>
       </span>
     </div>
 
@@ -63,6 +63,9 @@
     </li>
     <li>
       <a href="../articles/03_par_optim.html">03 - Parameter optimization</a>
+    </li>
+    <li>
+      <a href="../articles/04_vis_example.html">04 - Visualization of simulation results</a>
     </li>
   </ul>
 </li>
@@ -110,8 +113,9 @@
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"lhs"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"hydroGOF"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"dplyr"</span>)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"tidyr"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"lubridate"</span>)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"tibble"</span>)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"tidyr"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"purrr"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"ggplot2"</span>)</code></pre></div>
 </div>
@@ -121,27 +125,9 @@
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(SWATplusR)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(lhs)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(hydroGOF)
-<span class="co">#&gt; Loading required package: zoo</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Attaching package: 'zoo'</span>
-<span class="co">#&gt; The following objects are masked from 'package:base':</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;     as.Date, as.Date.numeric</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dplyr)
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Attaching package: 'dplyr'</span>
-<span class="co">#&gt; The following objects are masked from 'package:stats':</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;     filter, lag</span>
-<span class="co">#&gt; The following objects are masked from 'package:base':</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;     intersect, setdiff, setequal, union</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(lubridate)
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Attaching package: 'lubridate'</span>
-<span class="co">#&gt; The following object is masked from 'package:base':</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;     date</span>
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(tibble)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(tidyr)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(purrr)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)</code></pre></div>
@@ -156,22 +142,23 @@ demo_path &lt;-<span class="st"> "Define:/your/path"</span>
 
 <span class="co"># Loading the SWAT+ demo project on your hard drive</span>
 path_plus &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"project"</span>,
-                       <span class="dt">swat_version =</span> <span class="st">"plus"</span>,
-                       <span class="dt">path =</span> demo_path)</code></pre></div>
+                       <span class="dt">version =</span> <span class="st">"plus"</span>,
+                       <span class="dt">path =</span> demo_path, 
+                       <span class="dt">revision =</span> <span class="dv">57</span>)</code></pre></div>
 <p><code>SWATplusR</code> also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. For this example we define calibration and validation periods for our data set, where the calibration period is from 2003-01-01 to 2007-12-31 and the validation period ranges between 2008-01-01 and 2012-12-31. Therefore, we load the demo data and limit it to these time periods:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_obs &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_demo.html">load_demo</a></span>(<span class="dt">dataset =</span> <span class="st">"observation"</span>)
 
-q_obs_cal &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2003-01-01"</span>),
-                           date <span class="op">&lt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2007-12-31"</span>))
+q_obs_cal &lt;-<span class="st"> </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw"><a href="http://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span>(<span class="st">"2003-01-01"</span>),
+                           date <span class="op">&lt;=</span><span class="st"> </span><span class="kw"><a href="http://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span>(<span class="st">"2007-12-31"</span>))
 
-q_obs_val &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2008-01-01"</span>),
-                           date <span class="op">&lt;=</span><span class="st"> </span><span class="kw">ymd</span>(<span class="st">"2012-12-31"</span>))</code></pre></div>
+q_obs_val &lt;-<span class="st"> </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(q_obs, date <span class="op">&gt;=</span><span class="st"> </span><span class="kw"><a href="http://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span>(<span class="st">"2008-01-01"</span>),
+                           date <span class="op">&lt;=</span><span class="st"> </span><span class="kw"><a href="http://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span>(<span class="st">"2012-12-31"</span>))</code></pre></div>
 </div>
 <div id="parameter-sampling" class="section level2">
 <h2 class="hasAnchor">
 <a href="#parameter-sampling" class="anchor"></a>Parameter sampling</h2>
 <p>For the sampling example we will use 7 SWAT model parameters that are frequently calibrated for discharge. Below we create a <code>tibble</code> <span class="citation">(Müller and Wickham, <a href="#ref-Mueller2019">2019</a>)</span> that provides the parameter boundaries for the 7 parameters. We name the parameters using the specific syntax that is requested by the <code>run_swat*()</code> functions (see the <a href="https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration">Get started</a> section on ‘Model parameter alteration’ to learn more on parameter names):</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_bound &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="st">"cn2.hru | change = abschg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">15</span>, <span class="dv">10</span>),
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_bound &lt;-<span class="st"> </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/reexports.html">tibble</a></span>(<span class="st">"cn2.hru | change = abschg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">15</span>, <span class="dv">10</span>),
                     <span class="st">"lat_ttime.hru | change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="fl">0.5</span>, <span class="dv">50</span>),
                     <span class="st">"lat_len.hru | change = absval"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">10</span>, <span class="dv">100</span>),
                     <span class="st">"k.sol | change = pctchg"</span> =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">50</span>, <span class="dv">50</span>),
@@ -184,22 +171,22 @@ q_obs_val &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rd
 </h3>
 <p>The most basic way to draw random parameter samples is to use the base R function <code><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif()</a></code>. With <code><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif()</a></code> you can create a uniformly distributed vector. To draw a specific number of parameter sets with <code><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif()</a></code> you have to create a vector with that number of random values for each parameter and transform them to their parameter ranges. Below you find a very efficient approach to create a table of parameter combinations using a <code>map*()</code> function from the functional programing package <code>purrr</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">n_sample &lt;-<span class="st"> </span><span class="dv">250</span>
-par_runif &lt;-<span class="st"> </span><span class="kw">map_df</span>(par_bound, <span class="op">~</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif</a></span>(n_sample, .x[<span class="dv">1</span>], .x[<span class="dv">2</span>]))
+par_runif &lt;-<span class="st"> </span><span class="kw"><a href="https://purrr.tidyverse.org/reference/map.html">map_df</a></span>(par_bound, <span class="op">~</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Uniform">runif</a></span>(n_sample, .x[<span class="dv">1</span>], .x[<span class="dv">2</span>]))
 par_runif
 <span class="co">#&gt; # A tibble: 250 x 7</span>
-<span class="co">#&gt;    `cn2.hru | chan~ `lat_ttime.hru ~ `lat_len.hru | ~ `k.sol | change~</span>
+<span class="co">#&gt;    `cn2.hru | chan… `lat_ttime.hru … `lat_len.hru | … `k.sol | change…</span>
 <span class="co">#&gt;               &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;</span>
-<span class="co">#&gt;  1           -0.399            14.5              25.4            40.8 </span>
-<span class="co">#&gt;  2           -2.19              8.93             90.9             6.07</span>
-<span class="co">#&gt;  3            7.26             16.0              47.3             7.83</span>
-<span class="co">#&gt;  4            7.24              1.01             15.6           -46.5 </span>
-<span class="co">#&gt;  5           -7.71             33.8              88.4             7.52</span>
-<span class="co">#&gt;  6           -4.51              9.28             56.6             9.13</span>
-<span class="co">#&gt;  7           -8.34             26.3              76.7            19.3 </span>
-<span class="co">#&gt;  8           -4.19             29.9              68.7           -46.3 </span>
-<span class="co">#&gt;  9           -2.85             49.3              96.8            16.3 </span>
-<span class="co">#&gt; 10            5.41             37.1              72.4           -47.5 </span>
-<span class="co">#&gt; # ... with 240 more rows, and 3 more variables: `z.sol | change =</span>
+<span class="co">#&gt;  1            5.31            28.9               22.2           -39.1 </span>
+<span class="co">#&gt;  2          -14.3              9.23              62.6            33.4 </span>
+<span class="co">#&gt;  3            2.67            26.9               48.7            42.4 </span>
+<span class="co">#&gt;  4           -7.77            27.6               43.0             6.99</span>
+<span class="co">#&gt;  5           -7.17            39.5               80.6            11.5 </span>
+<span class="co">#&gt;  6            0.120           25.0               11.3            18.6 </span>
+<span class="co">#&gt;  7            7.00             0.863             58.2           -24.8 </span>
+<span class="co">#&gt;  8           -6.06            24.8               83.1           -37.5 </span>
+<span class="co">#&gt;  9          -13.8             20.4               15.0           -22.4 </span>
+<span class="co">#&gt; 10            9.36             0.906             62.1           -37.3 </span>
+<span class="co">#&gt; # … with 240 more rows, and 3 more variables: `z.sol | change =</span>
 <span class="co">#&gt; #   pctchg` &lt;dbl&gt;, `esco.hru | change = absval` &lt;dbl&gt;, `epco.hru | change</span>
 <span class="co">#&gt; #   = absval` &lt;dbl&gt;</span></code></pre></div>
 </div>
@@ -207,17 +194,17 @@ par_runif
 <h3 class="hasAnchor">
 <a href="#random-sampling-with-lhs" class="anchor"></a>Random sampling with <code>lhs</code>
 </h3>
-<p>In a very similar way you can draw LHS samples using the function <code>randomLHS()</code> from the <code>lhs</code> package. Below you find an efficient example to draw a <code>n_sample = 250</code> LHS sampled parameter combinations:</p>
+<p>In a very similar way you can draw LHS samples using the function <code><a href="https://www.rdocumentation.org/packages/lhs/topics/randomLHS">randomLHS()</a></code> from the <code>lhs</code> package. Below you find an efficient example to draw a <code>n_sample = 250</code> LHS sampled parameter combinations:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">n_sample &lt;-<span class="st"> </span><span class="dv">250</span>
 n_par &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">ncol</a></span>(par_bound)
 
-par_iter1 &lt;-<span class="st"> </span><span class="kw">randomLHS</span>(<span class="dt">n =</span> n_sample, <span class="dt">k =</span> n_par) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">as_tibble</span>(.) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">map2_df</span>(., par_bound, <span class="op">~</span><span class="st"> </span>(.x <span class="op">*</span><span class="st"> </span>(.y[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>.y[<span class="dv">1</span>]) <span class="op">+</span><span class="st"> </span>.y[<span class="dv">1</span>])) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">set_names</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_bound))</code></pre></div>
+par_iter1 &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/lhs/topics/randomLHS">randomLHS</a></span>(<span class="dt">n =</span> n_sample, <span class="dt">k =</span> n_par) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/reexports.html">as_tibble</a></span>(., <span class="dt">.name_repair =</span> <span class="st">"minimal"</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://purrr.tidyverse.org/reference/map2.html">map2_df</a></span>(., par_bound, <span class="op">~</span><span class="st"> </span>(.x <span class="op">*</span><span class="st"> </span>(.y[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>.y[<span class="dv">1</span>]) <span class="op">+</span><span class="st"> </span>.y[<span class="dv">1</span>])) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://purrr.tidyverse.org/reference/set_names.html">set_names</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_bound))</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_iter1
 <span class="co">#&gt; # A tibble: 250 x 7</span>
-<span class="co">#&gt;    `cn2.hru | chan~ `lat_ttime.hru ~ `lat_len.hru | ~ `k.sol | change~</span>
+<span class="co">#&gt;    `cn2.hru | chan… `lat_ttime.hru … `lat_len.hru | … `k.sol | change…</span>
 <span class="co">#&gt;               &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;</span>
 <span class="co">#&gt;  1            0.423            49.5              48.4          -45.6  </span>
 <span class="co">#&gt;  2            7.21             37.4              78.4          -44.8  </span>
@@ -229,7 +216,7 @@ par_iter1 &lt;-<span class="st"> </span><span class="kw">randomLHS</span>(<span 
 <span class="co">#&gt;  8           -8.93             21.8              74.3          -20.1  </span>
 <span class="co">#&gt;  9            7.95              2.29             86.5           -2.96 </span>
 <span class="co">#&gt; 10           -9.43             27.3              20.1          -42.6  </span>
-<span class="co">#&gt; # ... with 240 more rows, and 3 more variables: `z.sol | change =</span>
+<span class="co">#&gt; # … with 240 more rows, and 3 more variables: `z.sol | change =</span>
 <span class="co">#&gt; #   pctchg` &lt;dbl&gt;, `esco.hru | change = absval` &lt;dbl&gt;, `epco.hru | change</span>
 <span class="co">#&gt; #   = absval` &lt;dbl&gt;</span></code></pre></div>
 </div>
@@ -241,15 +228,15 @@ par_iter1 &lt;-<span class="st"> </span><span class="kw">randomLHS</span>(<span 
 <h3 class="hasAnchor">
 <a href="#simulation-runs" class="anchor"></a>Simulation runs</h3>
 <p>In a next step we implement all LHS sampled parameter combinations in the SWAT+ demo setup and simulate daily discharges for the calibration period 2003-01-01 until 2007-12-31 (with a warm-up period of 3 years fro 2000 to 2002). To perform the simulations we pass the entire <code>tibble</code> with the parameter combinations with the argument <code>parameter</code> in the function <code><a href="../reference/run_swatplus.html">run_swatplus()</a></code>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_iter1 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
-                        <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_out =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
-                                      <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
-                                      <span class="dt">unit =</span> <span class="dv">1</span>)),
-                        <span class="dt">parameter =</span> par_iter1,
-                        <span class="dt">start_date =</span> <span class="st">"2000-01-01"</span>,
-                         <span class="dt">end_date =</span> <span class="st">"2007-12-31"</span>,
-                        <span class="dt">years_skip =</span> <span class="dv">3</span>,
-                        <span class="dt">n_thread =</span> <span class="dv">4</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_cal1 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
+                       <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_sim =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
+                                     <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
+                                     <span class="dt">unit =</span> <span class="dv">1</span>)),
+                       <span class="dt">parameter =</span> par_iter1,
+                       <span class="dt">start_date =</span> <span class="st">"2000-01-01"</span>,
+                        <span class="dt">end_date =</span> <span class="st">"2007-12-31"</span>,
+                       <span class="dt">years_skip =</span> <span class="dv">3</span>,
+                       <span class="dt">n_thread =</span> <span class="dv">4</span>)
 
 <span class="co">#&gt; Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':</span>
 <span class="co">#&gt;  Completed 4 threads in 0S</span>
@@ -259,20 +246,20 @@ par_iter1 &lt;-<span class="st"> </span><span class="kw">randomLHS</span>(<span 
 <div id="model-evaluation" class="section level3">
 <h3 class="hasAnchor">
 <a href="#model-evaluation" class="anchor"></a>Model evaluation</h3>
-<p>We use the Nash Sutcliffe Efficiency criterion <span class="citation">(NSE; Nash and Sutcliffe, <a href="#ref-Nash1970">1970</a>)</span> to evaluate the simulations for the calibration period. The NSE is implemented in <code>hydroGOF</code> with the function <code>NSE()</code>:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nse_iter1 &lt;-<span class="st"> </span>q_iter1<span class="op">$</span>simulation<span class="op">$</span>q_out <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">map_dbl</span>(., <span class="op">~</span><span class="kw">NSE</span>(.x<span class="op">/</span><span class="fl">8.64</span>, q_obs_cal<span class="op">$</span>q_out))</code></pre></div>
+<p>We use the Nash Sutcliffe Efficiency criterion <span class="citation">(NSE; Nash and Sutcliffe, <a href="#ref-Nash1970">1970</a>)</span> to evaluate the simulations for the calibration period. The NSE is implemented in <code>hydroGOF</code> with the function <code><a href="https://www.rdocumentation.org/packages/hydroGOF/topics/NSE">NSE()</a></code>:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nse_cal1 &lt;-<span class="st"> </span>q_cal1<span class="op">$</span>simulation<span class="op">$</span>q_sim <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://purrr.tidyverse.org/reference/map.html">map_dbl</a></span>(., <span class="op">~</span><span class="kw"><a href="https://www.rdocumentation.org/packages/hydroGOF/topics/NSE">NSE</a></span>(.x<span class="op">/</span><span class="fl">8.64</span>, q_obs_cal<span class="op">$</span>discharge))</code></pre></div>
 <p>The first iteration of discharge simulations and their evaluation with the NSE should help us to identify the relevant parameter and/or constrain parameter boundaries of parameters. Therefore we display the parameter samples with the resulting NSE values in dotty plots:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dotty_iter1 &lt;-<span class="st"> </span>q_iter1<span class="op">$</span>parameter<span class="op">$</span>values <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">nse =</span> nse_iter1) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(nse <span class="op">&gt;</span><span class="st"> </span><span class="op">-</span><span class="dv">5</span>) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">gather</span>(<span class="dt">key =</span> <span class="st">"par"</span>, <span class="dt">value =</span> <span class="st">"val"</span>, <span class="op">-</span>nse)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dotty_cal1 &lt;-<span class="st"> </span>q_cal1<span class="op">$</span>parameter<span class="op">$</span>values <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="dt">nse =</span> nse_cal1) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(nse <span class="op">&gt;</span><span class="st"> </span><span class="op">-</span><span class="dv">5</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://tidyr.tidyverse.org/reference/gather.html">gather</a></span>(<span class="dt">key =</span> <span class="st">"par"</span>, <span class="dt">value =</span> <span class="st">"parameter_range"</span>, <span class="op">-</span>nse)
 
-<span class="kw">ggplot</span>(<span class="dt">data =</span> dotty_iter1) <span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">x =</span> val, <span class="dt">y =</span> nse)) <span class="op">+</span>
-<span class="st">  </span><span class="kw">facet_wrap</span>(.<span class="op">~</span>par, <span class="dt">ncol =</span> <span class="dv">3</span>, <span class="dt">scales =</span> <span class="st">"free"</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
+<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="dt">data =</span> dotty_cal1) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> parameter_range, <span class="dt">y =</span> nse)) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html">facet_wrap</a></span>(.<span class="op">~</span>par, <span class="dt">ncol =</span> <span class="dv">3</span>, <span class="dt">scales =</span> <span class="st">"free_x"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span>()</code></pre></div>
 <p><img src="02_par_sampl_calib_files/figure-html/unnamed-chunk-13-1.png" width="700"></p>
 <p>The only parameter that showed a clear parameter front in dotty plot is the “lat_ttime”. For the next iteration we will constrain the “lat_ttime” to the interval [0.5,5].</p>
 </div>
@@ -282,34 +269,47 @@ par_iter1 &lt;-<span class="st"> </span><span class="kw">randomLHS</span>(<span 
 <p>To constrain the parameter “lat_ttime” we update the parameter boundaries table. As we only modify the boundaries of one parameter an efficient way is to do the following. In a next step we draw a new set of LHS sampled model parameter combinations and re-run the model:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_bound<span class="op">$</span><span class="st">`</span><span class="dt">lat_ttime.hru | change = absval</span><span class="st">`</span> &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">0</span>, <span class="dv">5</span>)
 
-par_iter2 &lt;-<span class="st"> </span><span class="kw">randomLHS</span>(<span class="dt">n =</span> n_sample, <span class="dt">k =</span> n_par) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">as_tibble</span>(.) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">map2_df</span>(., par_bound, <span class="op">~</span><span class="st"> </span>(.x <span class="op">*</span><span class="st"> </span>(.y[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>.y[<span class="dv">1</span>]) <span class="op">+</span><span class="st"> </span>.y[<span class="dv">1</span>])) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">set_names</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_bound))
+par_cal2 &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/lhs/topics/randomLHS">randomLHS</a></span>(<span class="dt">n =</span> n_sample, <span class="dt">k =</span> n_par) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/reexports.html">as_tibble</a></span>(.) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://purrr.tidyverse.org/reference/map2.html">map2_df</a></span>(., par_bound, <span class="op">~</span><span class="st"> </span>(.x <span class="op">*</span><span class="st"> </span>(.y[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>.y[<span class="dv">1</span>]) <span class="op">+</span><span class="st"> </span>.y[<span class="dv">1</span>])) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://purrr.tidyverse.org/reference/set_names.html">set_names</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_bound))
 
-q_iter2 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
-                        <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_out =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
-                                      <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
-                                      <span class="dt">unit =</span> <span class="dv">1</span>)),
-                        <span class="dt">parameter =</span> par_iter2,
-                        <span class="dt">start_date =</span> <span class="st">"2000-01-01"</span>,
-                         <span class="dt">end_date =</span> <span class="st">"2007-12-31"</span>,
-                        <span class="dt">years_skip =</span> <span class="dv">3</span>,
-                        <span class="dt">n_thread =</span> <span class="dv">4</span>)
+q_cal2 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
+                       <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_sim =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
+                                     <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
+                                     <span class="dt">unit =</span> <span class="dv">1</span>)),
+                       <span class="dt">parameter =</span> par_iter2,
+                       <span class="dt">start_date =</span> <span class="st">"2000-01-01"</span>,
+                        <span class="dt">end_date =</span> <span class="st">"2007-12-31"</span>,
+                       <span class="dt">years_skip =</span> <span class="dv">3</span>,
+                       <span class="dt">n_thread =</span> <span class="dv">4</span>)
 
 <span class="co">#&gt; Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':</span>
 <span class="co">#&gt;  Completed 4 threads in 0S</span>
 <span class="co">#&gt; Performing 250 simulations on 4 cores:</span>
 <span class="co">#&gt;  Completed 250 simulations in 1M 56S</span></code></pre></div>
 <p>The updated simulations are again evaluated:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nse_iter2 &lt;-<span class="st"> </span>q_iter2<span class="op">$</span>simulation<span class="op">$</span>q_out <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">map_dbl</span>(., <span class="op">~</span><span class="kw">NSE</span>(.x<span class="op">/</span><span class="fl">8.64</span>, q_obs_cal<span class="op">$</span>q_out))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nse_cal2 &lt;-<span class="st"> </span>q_cal2<span class="op">$</span>simulation<span class="op">$</span>q_sim <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://purrr.tidyverse.org/reference/map.html">map_dbl</a></span>(., <span class="op">~</span><span class="kw"><a href="https://www.rdocumentation.org/packages/hydroGOF/topics/NSE">NSE</a></span>(.x<span class="op">/</span><span class="fl">8.64</span>, q_obs_cal<span class="op">$</span>discharge))</code></pre></div>
+<p>To get an overview of the NSE values for the best simulation runs simply run the following command:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sort">sort</a></span>(nse_cal2, <span class="dt">decreasing =</span> T) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw"><a href="https://tibble.tidyverse.org/reference/enframe.html">enframe</a></span>()
+<span class="co">#&gt; # A tibble: 250 x 2</span>
+<span class="co">#&gt;    name    value</span>
+<span class="co">#&gt;    &lt;chr&gt;   &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 run_001 0.764</span>
+<span class="co">#&gt;  2 run_137 0.751</span>
+<span class="co">#&gt;  3 run_024 0.746</span>
+<span class="co">#&gt;  4 run_038 0.745</span>
+<span class="co">#&gt;  5 run_203 0.741</span>
+<span class="co">#&gt;  6 run_078 0.739</span>
+<span class="co">#&gt;  7 run_124 0.737</span>
+<span class="co">#&gt;  8 run_149 0.735</span>
+<span class="co">#&gt;  9 run_073 0.730</span>
+<span class="co">#&gt; 10 run_241 0.729</span>
+<span class="co">#&gt; # … with 240 more rows</span></code></pre></div>
 <p>In our example we consider all simulations that resulted in an NSE &gt; 0.7 as acceptable simulation results. Therefore we select the acceptable simulations and their respective parameter combinations from our simulation outputs:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">run_sel &lt;-<span class="st"> </span>nse_iter2 <span class="op">&gt;=</span><span class="st"> </span><span class="fl">0.7</span>
-
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sum">sum</a></span>(run_sel)
-<span class="co">#&gt; [1] 44</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">run_sel &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which">which</a></span>(nse_cal2 <span class="op">&gt;=</span><span class="st"> </span><span class="fl">0.7</span>)</code></pre></div>
 <p>In total 44 simulations resulted in acceptable representations of the observed discharge.</p>
 </div>
 </div>
@@ -319,36 +319,17 @@ q_iter2 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run
 <div id="parameter-sampling-and-simulation" class="section level3">
 <h3 class="hasAnchor">
 <a href="#parameter-sampling-and-simulation" class="anchor"></a>Parameter sampling and simulation</h3>
-<p>We will validate the selected 44 parameter combinations in the validation period 2008-01-01 to 2012-12-31. Therefore, we select the acceptable parameter combinations and perform the simulations with these parametrizations in the validation period:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">par_val &lt;-<span class="st"> </span>q_iter2<span class="op">$</span>parameter<span class="op">$</span>values[run_sel,] <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">set_names</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(par_bound))
-
-par_val
-<span class="co">#&gt; # A tibble: 44 x 7</span>
-<span class="co">#&gt;    `cn2.hru | chan~ `lat_ttime.hru ~ `lat_len.hru | ~ `k.sol | change~</span>
-<span class="co">#&gt;               &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;</span>
-<span class="co">#&gt;  1           -4.56             1.64              95.2           -45.0 </span>
-<span class="co">#&gt;  2            0.482            0.979             35.0           -21.2 </span>
-<span class="co">#&gt;  3            2.54             1.54              50.0           -24.0 </span>
-<span class="co">#&gt;  4          -13.8              1.13              39.7           -35.2 </span>
-<span class="co">#&gt;  5            8.44             0.169             87.7            35.7 </span>
-<span class="co">#&gt;  6           -9.54             0.801             66.6             8.99</span>
-<span class="co">#&gt;  7           -1.89             0.910             63.4            42.6 </span>
-<span class="co">#&gt;  8            1.86             1.01              52.5             3.85</span>
-<span class="co">#&gt;  9            6.28             2.14              70.4           -10.1 </span>
-<span class="co">#&gt; 10            4.00             0.230             74.1            -7.25</span>
-<span class="co">#&gt; # ... with 34 more rows, and 3 more variables: `z.sol | change =</span>
-<span class="co">#&gt; #   pctchg` &lt;dbl&gt;, `esco.hru | change = absval` &lt;dbl&gt;, `epco.hru | change</span>
-<span class="co">#&gt; #   = absval` &lt;dbl&gt;</span></code></pre></div>
+<p>We will validate the selected 4299 parameter combinations in the validation period 2008-01-01 to 2012-12-31. Therefore, we use the indices of the acceptable simulations for the calibration period and use their parameter combinations to perform the simulations in the validation period:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">q_val &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_swatplus.html">run_swatplus</a></span>(<span class="dt">project_path =</span> path_plus,
-                      <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_out =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
+                      <span class="dt">output =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">q_sim =</span> <span class="kw"><a href="../reference/define_output.html">define_output</a></span>(<span class="dt">file =</span> <span class="st">"channel"</span>,
                                     <span class="dt">variable =</span> <span class="st">"flo_out"</span>,
                                     <span class="dt">unit =</span> <span class="dv">1</span>)),
-                      <span class="dt">parameter =</span> par_val,
+                      <span class="dt">parameter =</span> q_cal2<span class="op">$</span>parameter,
+                      <span class="dt">run_index =</span> run_sel,
                       <span class="dt">start_date =</span> <span class="st">"2005-01-01"</span>,
                        <span class="dt">end_date =</span> <span class="st">"2012-12-31"</span>,
                       <span class="dt">years_skip =</span> <span class="dv">3</span>,
-                      <span class="dt">n_thread =</span> <span class="dv">4</span>)
+                      <span class="dt">n_thread =</span> <span class="dv">4</span>, <span class="dt">keep_folder =</span> T)
 
 <span class="co">#&gt; Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':</span>
 <span class="co">#&gt;  Completed 4 threads in 0S</span>
@@ -359,62 +340,83 @@ par_val
 <h3 class="hasAnchor">
 <a href="#evaluation-of-the-calibration-period" class="anchor"></a>Evaluation of the calibration period</h3>
 <p>The evaluation of the validation period is identical to the evaluation of the iterations of the calibration period. To get an overview of the model performance in the validation period we visualize a summary statistics:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nse_val &lt;-<span class="st"> </span>q_val<span class="op">$</span>simulation<span class="op">$</span>q_out <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">map_dbl</span>(., <span class="op">~</span><span class="kw">NSE</span>(.x<span class="op">/</span><span class="fl">8.64</span>, q_obs_val<span class="op">$</span>q_out))
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nse_val &lt;-<span class="st"> </span>q_val<span class="op">$</span>simulation<span class="op">$</span>q_sim <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://purrr.tidyverse.org/reference/map.html">map_dbl</a></span>(., <span class="op">~</span><span class="kw"><a href="https://www.rdocumentation.org/packages/hydroGOF/topics/NSE">NSE</a></span>(.x<span class="op">/</span><span class="fl">8.64</span>, q_obs_val<span class="op">$</span>discharge))
 
-nse_comp &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">calibration =</span> nse_iter2[run_sel],
-                   <span class="dt">validation =</span> nse_val) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">gather</span>(<span class="dt">key =</span> <span class="st">"period"</span>, <span class="dt">value =</span> <span class="st">"nse"</span>)
+nse_comp &lt;-<span class="st"> </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/reexports.html">tibble</a></span>(<span class="dt">run =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(nse_cal2[run_sel]),
+                   <span class="dt">calibration =</span> nse_cal2[run_sel],
+                   <span class="dt">validation =</span> nse_val)
 
-
-<span class="kw">ggplot</span>(<span class="dt">data =</span> nse_comp) <span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_boxplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> period, <span class="dt">y =</span> nse), <span class="dt">fill =</span> <span class="st">"grey"</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
+nse_comp <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw"><a href="https://tidyr.tidyverse.org/reference/gather.html">gather</a></span>(<span class="dt">key =</span> <span class="st">"period"</span>, <span class="dt">value =</span> <span class="st">"nse"</span>, <span class="op">-</span><span class="st"> </span>run) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="dt">data =</span> .) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html">geom_boxplot</a></span>(<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> period, <span class="dt">y =</span> nse), <span class="dt">fill =</span> <span class="st">"grey"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span>()</code></pre></div>
 <p><img src="02_par_sampl_calib_files/figure-html/unnamed-chunk-21-1.png" width="700"></p>
+<p>A tabular overview can show a direct comparison of the simulations in the calibration and validation period for the individual runs and their parametrizations:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nse_comp <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/arrange.html">arrange</a></span>(<span class="kw"><a href="https://dplyr.tidyverse.org/reference/desc.html">desc</a></span>(calibration))
+<span class="co">#&gt; # A tibble: 44 x 3</span>
+<span class="co">#&gt;    run     calibration validation</span>
+<span class="co">#&gt;    &lt;chr&gt;         &lt;dbl&gt;      &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 run_001       0.764      0.746</span>
+<span class="co">#&gt;  2 run_137       0.751      0.713</span>
+<span class="co">#&gt;  3 run_024       0.746      0.689</span>
+<span class="co">#&gt;  4 run_038       0.745      0.707</span>
+<span class="co">#&gt;  5 run_203       0.741      0.744</span>
+<span class="co">#&gt;  6 run_078       0.739      0.706</span>
+<span class="co">#&gt;  7 run_124       0.737      0.645</span>
+<span class="co">#&gt;  8 run_149       0.735      0.724</span>
+<span class="co">#&gt;  9 run_073       0.730      0.699</span>
+<span class="co">#&gt; 10 run_241       0.729      0.698</span>
+<span class="co">#&gt; # … with 34 more rows</span></code></pre></div>
 </div>
 </div>
 <div id="visualization-of-discharge-simulation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#visualization-of-discharge-simulation" class="anchor"></a>Visualization of discharge simulation</h2>
 <p>We will plot the ensemble of simulations as a band of minimum and maximum values for each time step and compare it to the observations.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">run_cal_best &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which.min">which.max</a></span>(nse_iter2))
-run_val &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(nse_val)[<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which">which</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which">which</a></span>(run_sel)) <span class="op">==</span><span class="st"> </span>run_cal_best)]
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">run_best &lt;-<span class="st"> </span>nse_comp<span class="op">$</span>run[<span class="dv">1</span>]
 
-cal_stat &lt;-<span class="st"> </span>q_iter2<span class="op">$</span>simulation<span class="op">$</span>q_out <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(<span class="kw">one_of</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which">which</a></span>(run_sel)))) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">q_max =</span> <span class="kw">pmap_dbl</span>(., max),
-         <span class="dt">q_min =</span> <span class="kw">pmap_dbl</span>(., min)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(<span class="kw">matches</span>(run_cal_best), q_min, q_max) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate_all</span>(., <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="op">~</span>.<span class="op">/</span><span class="fl">8.64</span>)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">set_names</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"q_sim"</span>, <span class="st">"q_min"</span>, <span class="st">"q_max"</span>)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">date =</span> q_obs_cal<span class="op">$</span>date) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">period =</span> <span class="st">"calibration"</span>)
+get_run_stat &lt;-<span class="st"> </span><span class="cf">function</span>(run_table, best_run) {
+  run_table <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">    </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="op">-</span>date) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">    </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="dt">q_max =</span> <span class="kw"><a href="https://purrr.tidyverse.org/reference/map2.html">pmap_dbl</a></span>(., max),
+           <span class="dt">q_min =</span> <span class="kw"><a href="https://purrr.tidyverse.org/reference/map2.html">pmap_dbl</a></span>(., min)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="kw"><a href="https://dplyr.tidyverse.org/reference/reexports.html">matches</a></span>(best_run), q_min, q_max) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://purrr.tidyverse.org/reference/set_names.html">set_names</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"q_sim"</span>, <span class="st">"q_min"</span>, <span class="st">"q_max"</span>)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://tibble.tidyverse.org/reference/add_column.html">add_column</a></span>(<span class="dt">date =</span> run_table<span class="op">$</span>date, <span class="dt">.before =</span> <span class="dv">1</span>)
+}
 
-val_stat &lt;-<span class="st">  </span>q_val<span class="op">$</span>simulation<span class="op">$</span>q_out <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>date) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">q_max =</span> <span class="kw">pmap_dbl</span>(., max),
-         <span class="dt">q_min =</span> <span class="kw">pmap_dbl</span>(., min)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(<span class="kw">matches</span>(run_val), q_min, q_max) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate_all</span>(., <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="op">~</span>.<span class="op">/</span><span class="fl">8.64</span>)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">set_names</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"q_sim"</span>, <span class="st">"q_min"</span>, <span class="st">"q_max"</span>)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">date =</span> q_obs_val<span class="op">$</span>date) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">period =</span> <span class="st">"validation"</span>)
+cal_stat &lt;-<span class="st"> </span>q_cal2<span class="op">$</span>simulation<span class="op">$</span>q_sim <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="op">!!</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(q_val<span class="op">$</span>simulation<span class="op">$</span>q_sim)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">get_run_stat</span>(., run_best) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/mutate_all.html">mutate_if</a></span>(., is.numeric, <span class="op">~</span><span class="st"> </span>(.<span class="op">/</span><span class="fl">8.64</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="dt">period =</span> <span class="st">"calibration"</span>)
 
-sim_stat &lt;-<span class="st"> </span><span class="kw">bind_rows</span>(cal_stat, val_stat) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">left_join</span>(., q_obs, <span class="dt">by =</span> <span class="st">"date"</span>) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">rename</span>( <span class="dt">q_obs =</span> q_out) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">gather</span>(<span class="dt">key =</span> <span class="st">"variable"</span>, <span class="dt">value =</span> <span class="st">"q"</span>, <span class="op">-</span>date, <span class="op">-</span>q_min, <span class="op">-</span><span class="st"> </span>q_max, <span class="op">-</span>period)
+val_stat &lt;-<span class="st"> </span>q_val<span class="op">$</span>simulation<span class="op">$</span>q_sim <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">get_run_stat</span>(., run_best) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/mutate_all.html">mutate_if</a></span>(., is.numeric, <span class="op">~</span><span class="st"> </span>(.<span class="op">/</span><span class="fl">8.64</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="dt">period =</span> <span class="st">"validation"</span>)
 
-<span class="kw">ggplot</span>(<span class="dt">data =</span> sim_stat) <span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_ribbon</span>(<span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">ymin =</span> q_min, <span class="dt">ymax =</span> q_max, <span class="dt">fill =</span> period)) <span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> q, <span class="dt">col =</span> variable, <span class="dt">linetype =</span> period), <span class="dt">lwd =</span> <span class="fl">0.25</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw">scale_color_manual</span>(<span class="dt">values =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"black"</span>, <span class="st">"tomato3"</span>)) <span class="op">+</span>
-<span class="st">  </span><span class="kw">scale_fill_manual</span>(<span class="dt">values =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"grey30"</span>, <span class="st">"grey70"</span>)) <span class="op">+</span>
-<span class="st">  </span><span class="kw">xlab</span>(<span class="st">"Date (yyyy)"</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw">ylab</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/expression">expression</a></span> (Discharge<span class="op">~</span>(m<span class="op">^</span><span class="dv">3</span><span class="op">~</span>s<span class="op">^</span>{<span class="op">-</span><span class="dv">1</span>}))) <span class="op">+</span>
-<span class="st">  </span><span class="kw">theme_bw</span>()</code></pre></div>
-<p><img src="02_par_sampl_calib_files/figure-html/unnamed-chunk-22-1.png" width="700"></p>
+sim_stat &lt;-<span class="st"> </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/bind.html">bind_rows</a></span>(cal_stat, val_stat) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/join.html">left_join</a></span>(., q_obs, <span class="dt">by =</span> <span class="st">"date"</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://dplyr.tidyverse.org/reference/select.html">rename</a></span>( <span class="dt">q_obs =</span> discharge) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="https://tidyr.tidyverse.org/reference/gather.html">gather</a></span>(<span class="dt">key =</span> <span class="st">"variable"</span>, <span class="dt">value =</span> <span class="st">"q"</span>, <span class="op">-</span>date, <span class="op">-</span>q_min, <span class="op">-</span><span class="st"> </span>q_max, <span class="op">-</span>period)
+
+<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="dt">data =</span> sim_stat) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html">geom_ribbon</a></span>(<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> date, <span class="dt">ymin =</span> q_min, <span class="dt">ymax =</span> q_max), <span class="dt">fill =</span> <span class="st">"grey50"</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span>(<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> date, <span class="dt">y =</span> q, <span class="dt">col =</span> variable), <span class="dt">lwd =</span> <span class="fl">0.25</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html">scale_color_manual</a></span>(<span class="dt">values =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"black"</span>, <span class="st">"tomato3"</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span>( <span class="dt">x =</span> <span class="st">"Date (yyyy)"</span>, 
+        <span class="dt">y =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/expression">expression</a></span> (Discharge<span class="op">~</span>(m<span class="op">^</span><span class="dv">3</span><span class="op">~</span>s<span class="op">^</span>{<span class="op">-</span><span class="dv">1</span>})), 
+        <span class="dt">col =</span> <span class="st">"Discharge"</span>) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html">facet_wrap</a></span>(period<span class="op">~</span>., <span class="dt">scales =</span> <span class="st">"free_x"</span>, <span class="dt">ncol =</span> <span class="dv">1</span>) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span>() <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span>(<span class="dt">panel.spacing =</span> <span class="kw"><a href="https://ggplot2.tidyverse.org/reference/reexports.html">unit</a></span>(<span class="fl">0.2</span>, <span class="st">"lines"</span>),
+        <span class="dt">legend.position =</span> <span class="st">"bottom"</span>)</code></pre></div>
+<p><img src="02_par_sampl_calib_files/figure-html/unnamed-chunk-23-1.png" width="700"></p>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="hasAnchor">

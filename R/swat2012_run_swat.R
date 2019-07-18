@@ -174,10 +174,8 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
   ## Initialize the save_file if defined
   if(!is.null(save_file)) {
-    save_path <- set_save_path(project_path, save_path, save_file)
     initialize_save_file(save_path, parameter, model_setup)
   }
-
 #-------------------------------------------------------------------------------
   # Initiate foreach loop to run SWAT models
   ## make and register cluster, create table that links the parallel worker
@@ -207,14 +205,14 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     opts <- list()
   }
 
-  sim_result <- foreach(i_run = 1:n_run,
-    .packages = c("dplyr", "lubridate"), .options.snow = opts) %dopar% {
-  # for(i_run in 1:max(nrow(parameter$values), 1)) {
+ sim_result <- foreach(i_run = 1:n_run,
+   .packages = c("dplyr", "lubridate", "stringr"), .options.snow = opts) %dopar% {
+   # for(i_run in 1:max(nrow(parameter$values), 1)) {
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
     thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
     thread_path <- run_path%//%thread_id
-    # thread_path <- "C:/swat2012_demo/.model_run/thread_1"
+    # thread_path <- run_path%//%"thread_1"
 
     ## Modify model parameters if parameter set was provided
     if(!is.null(parameter)) {

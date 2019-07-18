@@ -1,0 +1,288 @@
+---
+title: "04 - Visualization of simulation results"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exploring SWATplusR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: literature.bib
+link-citations: yes
+csl: copernicus.csl
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## R packages
+
+R offers a large variety of methods and packages for visualization. Most plotting methods are however static, which makes sense for publishing results. For model diagnosis, however, interactive plotting can greatly support the modeler. This chapter gives a brief overview of plotting methods that can support you in analyzing your simulation results. 
+A great R package to visualize time series data and offer options such as zooming is `dygraphs`. It works with `xts` time series data and can support you in comparing the simulated time series (e.g. discharge, in-stream nitrogen etc.) with observation data. `ggplot2` is a very versatile package for data visualization, that you have seen already several times in the previous chapters. `plotly` offers easy ways to make ggplots more interactive. To visualize spatial data and have functionalities that are usually provided by GIS software `mapview` provides a great alternative. It is based on `leaflet` that most of us have most likely already seen in action on web pages with interactive maps (and maybe did not realize that this is a leaflet map and we can also produce something similar with R easily).
+
+### Package installation
+
+If you do not have installed any of the required R package, follow the instructions for the respective R package. All of the required R packages are available from CRAN and can be installed with the following commands:
+```{r, eval=FALSE}
+install.packages("dplyr")
+install.packages("dygraphs")
+install.packages("ggplot2")
+install.packages("lubridate")
+install.packages("mapview")
+install.packages("purrr")
+install.packages("plotly")
+install.packages("sf")
+install.packages("tibble")
+install.packages("tidyr")
+install.packages("xts")
+```
+
+### Loading R packages
+```{r, message=FALSE, warning=FALSE}
+library(SWATplusR)
+library(dplyr)
+library(dygraphs)
+library(ggplot2)
+library(lubridate)
+library(mapview)
+library(plotly)
+library(sf)
+library(tibble)
+library(tidyr)
+```
+
+## Loading demo data
+
+The optimization example uses the SWAT+ demo project available from `SWATplusR`. The demo project is a very simple model setups of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. You can load the to your hard drive as follows:
+
+```{r, eval=FALSE}
+# The path where the SWAT demo project will be written
+demo_path <- "Define:/your/path"
+
+# Loading the SWAT+ demo project on your hard drive
+path_plus <- load_demo(dataset = "project",
+                       version = "plus",
+                       path = demo_path, 
+                       revision = 57)
+```
+```{r, echo=FALSE}
+path_plus <- "C:/swat_demo/swatplus_rev57_demo"
+```
+`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to compare the discharge simulations with observed values:
+
+```{r}
+q_obs <- load_demo(dataset = "observation")
+```
+
+## Parameter sampling
+For this example we will use 7 SWAT model parameters that are frequently calibrated for discharge. Below we create a `tibble` [@Mueller2019] that provides 4 parameter combinations for the 7 parameters. The parameter values that are given here resulted in acceptable simulations of discharge in the previous chapters and were just selected for demonstration here. These parameter combinations are uses througout the following chapters. We name the parameters using the specific syntax that is requested by the `run_swat*()` functions (see the [Get started](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#model-parameter-alteration) section on 'Model parameter alteration' to learn more on parameter names):
+
+```{r}
+par <- tibble("cn2.hru | change = abschg" = c(-4.56, -4.47, -4.89, -14.4),
+              "lat_ttime.hru | change = absval" = c(1.64, 2.55, 1.08, 0.844),
+              "lat_len.hru | change = absval" = c(95.2, 94.8, 42.2, 87.8),
+              "k.sol | change = pctchg" = c(-45.0, -37.8, -41.1, -48.5),
+              "z.sol | change = pctchg" = c(-41.0, 25.7, 12.7, 27.9),
+              "esco.hru | change = absval" = c(0.809, 0.437, 0.368, 0.848),
+              "epco.hru | change = absval" = c(0.165, 0.507, 0.197, 0.353))
+```
+
+## Visualization of time series data
+
+`dygraphs` offers great ways to visualize time series data. Before we can visualize our simulation results the data we have to perform the simulations. Running SWAT+ works the same way as in the previous examples:
+
+```{r, eval=FALSE}
+q_day <- run_swatplus(project_path = path_plus,
+                      output = list(q_sim = define_output(file = "channel",
+                                    variable = "flo_out",
+                                    unit = 1)),
+                      parameter = par,
+                      start_date = "2000-01-01",
+                       end_date = "2007-12-31",
+                      years_skip = 3,
+                      n_thread = 4)
+
+#> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
+#>  Completed 4 threads in 2S
+#> Performing 4 simulations on 4 cores:
+#>  Completed 4 simulations in 6S
+```
+
+```{r, echo=FALSE}
+q_day <- readRDS(here::here("vignettes/datasets/q_vis_day.rds"))
+```
+
+You can use the function `view_timeseries` below as a template for your future SWAT-R projects. The implementation reminds of the view option you have in SWAT-CUP and it is a great pendant to that. The function requires the simulated and the observed time series in a `date.frame` format where in both data sets the first column must be the `date` and the following columns are the simulated/observed values:
+
+```{r}
+view_timeseries <- function(q_sim, q_obs) {
+  names(q_obs) <- c("date", "q_obs")
+  
+  q_xts <- q_sim %>% 
+    dplyr::left_join(., q_obs, by = "date") %>% 
+    xts::xts(x = .[,c(2:ncol(.))], order.by = .$date)
+  
+  n_sim <- ncol(q_sim) - 1
+  
+  dygraph(q_xts) %>% 
+    dyRangeSelector() %>% 
+    dyOptions(colors = 
+      c(colorRampPalette( 
+        RColorBrewer::brewer.pal(8, "Paired"))(n_sim), 
+        "black"))
+}
+```
+
+Using the function `view_timeseries` we can now interactively compare the four simulated time series of the discharge with the discharge observations. Again, do not forget to convert the SWAT+ discharge given in $ha \cdot m^{-1}$ to $m^3 \cdot s^{-1}$ with a conversion factor of $8.64$ for daily time steps:
+
+```{r}
+q_sim <- q_day$simulation$q_sim %>% 
+  mutate_if(., is.numeric, ~(./8.64)) 
+
+view_timeseries(q_sim = q_sim, q_obs = q_obs)
+```
+
+## Visualization of the water balance components
+
+Having an overview of the shares of the individual water balance components in a model setup can provide a lot of information on how well the SWAT model setup represents a catchment (see for instance SWATcheck as a great example for that). Below we will simulate basin averages of water balance components and visualize them in an interactive plot using `ggplot2`
+and `plotly`. Again we will use `run_swatplus` to simulate the water balance components for one model parametrization:
+
+```{r, eval=FALSE}
+par_wb <- par[1,]
+
+wb_mon <- run_swatplus(project_path = path_plus,
+                       output = list(pet = define_output(file = "basin_wb",
+                                       variable = "pet",
+                                       unit = 1),
+                                     pcp = define_output(file = "basin_wb",
+                                       variable = "precip",
+                                       unit = 1),
+                                     aet = define_output(file = "basin_wb",
+                                       variable = "et",
+                                       unit = 1),
+                                     q_sur = define_output(file = "basin_wb",
+                                       variable = "surq_gen",
+                                       unit = 1),
+                                     q_lat = define_output(file = "basin_wb",
+                                       variable = "latq",
+                                       unit = 1)),
+                       parameter = par_wb,
+                       start_date = "2000-01-01",
+                        end_date = "2007-12-31",
+                       output_interval = "m",
+                       years_skip = 3)
+
+#> Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run':
+#>  Completed 1 threads in 0S
+#> Performing 1 simulations on 1 core:
+#>  Completed 4 simulations in 4S
+```
+```{r, echo=FALSE}
+wb_mon <- readRDS(here::here("vignettes/datasets/wb_vis_mon.rds"))
+```
+
+```{r}
+wb_comp <- wb_mon$simulation %>% 
+  mutate(month = month(date)) %>% 
+  select(-date) %>% 
+  group_by(month) %>% 
+  summarise_all(., .funs = mean)
+
+wb_land <- wb_comp %>% 
+  select(-pet, -pcp) %>% 
+  gather(data = ., key = "Land_phase", value = "value", - month) %>% 
+  mutate(Land_phase = factor(Land_phase, levels = c("aet", "q_sur", "q_lat")))
+
+wb_atm <- wb_comp %>% 
+  select(month, pet, pcp) %>% 
+  gather(data = ., key = "Atmosphere", value = "value", - month) %>% 
+  mutate(Atmosphere = factor(Atmosphere, levels = c("pet", "pcp")))
+
+
+gg_wb <- ggplot() + 
+  geom_col(data = wb_land, 
+           aes(x = month, y = value, fill = Land_phase)) + 
+  geom_line(data = wb_atm, 
+           aes(x = month, y = value, col = Atmosphere)) + 
+  scale_fill_manual(values = c("#41AB5D", "#9ECAE1", "#08519C")) + 
+  scale_color_manual(values = c("#CB181D", "#08519C")) + 
+  scale_x_continuous(breaks = 1:12, labels = substr(month.abb, 1,1)) + 
+  theme_bw()
+
+ggplotly(gg_wb)
+```
+
+## Viewing spatial data
+
+To analyze a SWAT project spatially distributed functions that are provided in traditional GIS can be useful. Several R packages offer implementations that allow quick and intuitive ways to visualize spatial data. A great example is the R package `mapview`. In the example below we calculate average annual values for four water balance components on the HRU scale and visualize them in an interactive map. 
+
+```{r, eval = FALSE}
+wb_hru <- run_swatplus(project_path = path_plus,
+                       output = list(aet = define_output(file = "hru_wb",
+                                       variable = "et",
+                                       unit = 1:131),
+                                     wyld = define_output(file = "hru_wb",
+                                       variable = "wateryld",
+                                       unit = 1:131),
+                                     q_sur = define_output(file = "hru_wb",
+                                       variable = "surq_gen",
+                                       unit = 1:131),
+                                     q_lat = define_output(file = "hru_wb",
+                                       variable = "latq",
+                                       unit = 1:131)),
+                       parameter = par_wb,
+                       start_date = "2000-01-01",
+                        end_date = "2007-12-31",
+                       output_interval = "y",
+                       years_skip = 3)
+
+#> Building 1 thread in 'Define:/your/path/swatplus_demo/.model_run':
+#>  Completed 1 threads in 0S
+#> Performing 1 simulations on 1 core:
+#>  Completed 4 simulations in 5S
+```
+The simulated outputs provided by `SWATplusR` do not have the form yet that we require for the visualization. Therefore, some data wrangling is necessary as shown below:
+```{r, eval=FALSE}
+wb_hru_aa <- wb_hru$simulation %>% 
+  select(-date) %>% 
+  summarise_all(., .funs = mean) %>% 
+  gather(.) %>% 
+  mutate(hru = gsub("[^[:digit:]]", "",key) %>% as.numeric(.),
+         wb_comp = gsub("[^[:alpha:]]", "",key)) %>% 
+  select(hru, wb_comp, value) %>% 
+  spread(., key = wb_comp, value = value)
+```
+
+```{r, echo=FALSE}
+wb_hru_aa <- readRDS(here::here("vignettes/datasets/wb_hru_aa.rds"))
+```
+
+To visualize the simulated values for each HRU we require the spatial information for all HRUs. The HRU map for the SWAT+ project can be acquired from `SWATdata`. Therefore, we us the R package `sf`: 
+```{r, message=FALSE}
+hru_path <- load_demo("hru", version = "plus")
+
+hru <- read_sf(hru_path) %>% 
+  select(HRUS) %>% 
+  mutate(HRUS = as.numeric(HRUS)) %>% 
+  rename(hru = HRUS)
+```
+
+The advantage of `sf` is that spatial data is simply treated as a `data.frame` and it is therefore easy to link the spatial reference to our simulated data:
+```{r, message=FALSE}
+hru <- left_join(hru, wb_hru_aa, by = "hru")
+```
+
+Plotting spatial information with mapview is very intuitive. Here is a code example that allows you to compare different simulated components:
+```{r, message=FALSE, warning=FALSE}
+aet <- mapview(hru, zcol = "aet")
+wyld <- mapview(hru, zcol = "wyld")
+qlat <- mapview(hru, zcol = "qlat")
+qsur <- mapview(hru, zcol = "qsur")
+
+sync(aet, wyld, qlat, qsur)
+```
+
+
+## References

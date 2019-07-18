@@ -35,7 +35,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">SWATplusR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6</span>
       </span>
     </div>
 
@@ -68,6 +68,9 @@
     </li>
     <li>
       <a href="articles/03_par_optim.html">03 - Parameter optimization</a>
+    </li>
+    <li>
+      <a href="articles/04_vis_example.html">04 - Visualization of simulation results</a>
     </li>
   </ul>
 </li>
@@ -107,13 +110,13 @@
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
-<p><code>SWATplusR</code> is currently under development. You can install an unreleased version of <code>SWATplusR</code> from the package’s GitHub repository.</p>
+<p><code>SWATplusR</code> is still under development and will be constantly updated (particularly to keep up with the newest revisions of SWAT+). You can install the release version of <code>SWATplusR</code> from the <em>master</em> branch of the package’s GitHub repository:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># If you do not have the package devtools installed</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"devtools"</span>)
 
-<span class="co"># If access is denied, then the repository might be still set to private</span>
-<span class="co"># In that case, please contact me (c.schuerz@posteo.org).</span>
-devtools<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/devtools/topics/reexports">install_github</a></span>(<span class="st">"chrisschuerz/SWATplusR"</span>)</code></pre></div>
+devtools<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/devtools/topics/reexports">install_github</a></span>(<span class="st">"chrisschuerz/SWATplusR"</span>, <span class="dt">ref =</span> <span class="st">"master"</span>)</code></pre></div>
+<p>The most recent developments of <code>SWATplusR</code> are available from the <em>development</em> branch of the package’s GitHub repository. See the package’s <a href="https://chrisschuerz.github.io/SWATplusR/news/index.html">Changelog</a> for updates available in the development version. You can install the development version of <code>SWATplusR</code> available from the <em>dev</em> branch as follows:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">devtools<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/devtools/topics/reexports">install_github</a></span>(<span class="st">"chrisschuerz/SWATplusR"</span>, <span class="dt">ref =</span> <span class="st">"dev"</span>)</code></pre></div>
 <!---You can install the released version of SWATplusR from [CRAN](https://CRAN.R-project.org) with:
 
 ``` r
@@ -124,7 +127,7 @@ install.packages("SWATplusR")
 <div id="functionality-and-workflow" class="section level2">
 <h2 class="hasAnchor">
 <a href="#functionality-and-workflow" class="anchor"></a>Functionality and workflow</h2>
-<p>The functionality of <code>SWATplusR</code> is reduced to a few essential functions that maintain the link between the SWAT project on the local hard drive and the R environment. With <code><a href="reference/load_demo.html">load_demo()</a></code> you can retrieve demo data sets of SWAT projects, calibration data, and shape files of the demo catchment. With <code><a href="reference/run_swat2012.html">run_swat2012()</a></code> and <code><a href="reference/run_swat2012.html">run_swat2012()</a></code> you can run a SWAT model located in a local project folder and return simulation outputs to R that were defined with <code><a href="reference/define_output.html">define_output()</a></code>. Simulation results can be saved incrementally to an SQLite data base when a <code>save_file</code> is defined in <code>run_swat*()</code>. With <code><a href="reference/load_swat_run.html">load_swat_run()</a></code> all or selected parts of the simulation results stored in the data base can be loaded back to R. <code><a href="reference/scan_swat_run.html">scan_swat_run()</a></code> scans the content of saved simulations and returns meta data on the saved content.</p>
+<p>The functionality of <code>SWATplusR</code> is reduced to a few essential functions that maintain the link between the SWAT project on the local hard drive and the R environment. With <code><a href="reference/load_demo.html">load_demo()</a></code> you can retrieve demo data sets of SWAT projects, calibration data, and shape files of the demo catchment. To keep <code>SWATplusR</code> lightweight demo date sets are hosted in the separate package <a href="https://github.com/chrisschuerz/SWATdata#swatdata-"><code>SWATdata</code></a>. With <code><a href="reference/run_swat2012.html">run_swat2012()</a></code> and <code><a href="reference/run_swat2012.html">run_swat2012()</a></code> you can run a SWAT model located in a local project folder and return simulation outputs to R that were defined with <code><a href="reference/define_output.html">define_output()</a></code>. Simulation results can be saved incrementally to an SQLite data base when a <code>save_file</code> is defined in <code>run_swat*()</code>. With <code><a href="reference/load_swat_run.html">load_swat_run()</a></code> all or selected parts of the simulation results stored in the data base can be loaded back to R. <code><a href="reference/scan_swat_run.html">scan_swat_run()</a></code> scans the content of saved simulations and returns meta data on the saved content.</p>
 <p><img src="reference/figures/package_workflow.svg" width="60%" style="display: block; margin: auto;"></p>
 </div>
 <div id="getting-started-with-swatplusr" class="section level2">
@@ -189,6 +192,8 @@ install.packages("SWATplusR")
 </li>
 <li>Report a bug at <br><a href="https://github.com/chrisschuerz/SWATplusR/issues">https://​github.com/​chrisschuerz/​SWATplusR/​issues</a>
 </li>
+<li>Demo data sets at <br><a href="http://github.com/chrisschuerz/SWATdata">http://​github.com/​chrisschuerz/​SWATdata</a>
+</li>
 </ul>
 </div>
 <div class="license">
@@ -214,7 +219,7 @@ install.packages("SWATplusR")
 <h2>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://www.tidyverse.org/lifecycle/#maturing"><img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="lifecycle"></a></li>
-<li><a href="https://zenodo.org/badge/latestdoi/145028284"><img src="https://zenodo.org/badge/145028284.svg" alt="DOI"></a></li>
+<li><a href="https://doi.org/10.5281/zenodo.2837156"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.2837156.svg" alt="DOI"></a></li>
 </ul>
 </div>
 </div>

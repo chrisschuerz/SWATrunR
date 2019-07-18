@@ -70,6 +70,7 @@ get_file_header <- function(output_i, fwf_pos, tbl_pos, thread_path) {
 #'
 #' @importFrom dplyr %>%
 #' @importFrom readr read_lines
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 get_fwf_positions <- function(output_i, thread_path, tbl_pos) {
@@ -77,7 +78,7 @@ get_fwf_positions <- function(output_i, thread_path, tbl_pos) {
                             skip = tbl_pos - 1, n_max = 1)
   first_line <- read_lines(file = thread_path%//%output_i,
                            skip = tbl_pos, n_max = 1) %>%
-    substr(., 1, nchar(header_line))
+    str_sub(., 1, nchar(header_line))
   # Start pos must be tweaked due to untidy spacing in output tables -> ugly tweak with 39 :()
   start_pos <- c(1,find_first_space(header_line)[find_first_space(header_line) < 39],
                    find_first_space(first_line)) %>%
@@ -119,11 +120,12 @@ find_first_space <- function(string) {
 #' Helper function to convert file.cio entries to numerics
 #'
 #' @param cio_entry Line from file.cio
+#' @importFrom stringr str_sub
 #'
 #' @keywords internal
 #'
 cio_to_numeric <- function(cio_entry) {
-  cio_entry %>% substr(., 1, 16) %>% as.numeric(.)
+  cio_entry %>% str_sub(., 1, 16) %>% as.numeric(.)
 }
 
 #' Remove the units from variable names in output files of SWAT2012 simulations

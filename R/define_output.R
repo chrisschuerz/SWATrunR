@@ -32,6 +32,7 @@
 #'   expression can be defined as a string to perform an individual extraction of outputs.
 #'   This is still experimental and is not necessary in most cases!
 #' @importFrom tibble tibble
+#' @importFrom stringr str_sub
 #' @export
 #' @examples
 #' # A single variable can be defined as follows (e.g. "FLOW_OUT" for
@@ -100,7 +101,7 @@ define_output <- function(file, variable = NULL, unit = NULL,
 
 
   file_check <- file %>%
-    substr(., (nchar(.) - 2), nchar(.))
+    str_sub(., (nchar(.) - 2), nchar(.))
 
   vers <- ifelse(file_check %in% c("rch", "sub", "hru", "sed"), "2012", "plus")
 

@@ -7,11 +7,15 @@
 #' @keywords internal
 #'
 format_swatplus_parameter <- function(parameter) {
-  par_constrain <- suppressWarnings(translate_parameter_constraints(names(parameter)))
-  par_constrain <- select(par_constrain, -file_expression, -spec_expression)
-  names(parameter) <- par_constrain$par_name
-  if(!is.data.frame(parameter)) parameter <- map_dfc(parameter, ~.x)
-  return(list(values = parameter, definition = par_constrain))
+  if(!any(names(parameter) %in% c("values", "definition"))) {
+    par_constrain <- suppressWarnings(translate_parameter_constraints(names(parameter)))
+    par_constrain <- select(par_constrain, -file_expression, -spec_expression)
+    names(parameter) <- par_constrain$par_name
+    if(!is.data.frame(parameter)) parameter <- map_dfc(parameter, ~.x)
+    return(list(values = parameter, definition = par_constrain))
+  } else {
+    return(parameter)
+  }
 }
 
 

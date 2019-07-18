@@ -58,8 +58,9 @@ demo_path <- "Define:/your/path"
 
 # Loading the SWAT+ demo project on your hard drive
 path_plus <- load_demo(dataset = "project",
-                       swat_version = "plus",
-                       path = demo_path)
+                       version = "plus",
+                       path = demo_path,
+                       revision = 57)
 ```
 
 `SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. We will use the observation data to evaluate the model in each optimization step. The model will be evaluated for the time period 2003-01-01 to 2012-12-31. Therefore, we load the demo data and limit it to this time period:
@@ -78,9 +79,9 @@ Most optimizers require a function as an input argument that uses a parameter se
 ```{r}
 swat_model <- function(par) {
   run_swatplus(project_path = path_plus,
-               output = define_output(file = "channel",
+               output = list(q_sim = define_output(file = "channel",
                                      variable = "flo_out",
-                                     unit = 1),
+                                     unit = 1)),
                parameter = par,
                start_date = "2000-01-01",
                end_date = "2012-12-31",
@@ -90,12 +91,12 @@ swat_model <- function(par) {
 
 swat_optim <- function(par, obs) {
   q_sim <- swat_model(par)
-  nse_q <- - NSE(q_sim$simulation$flo_out/8.64, obs)
+  nse_q <- - NSE(q_sim$simulation$q_sim/8.64, obs)
   return(nse_q)
   }
 ```
 
-We defined a function that has one input argument `par` that is the named parameter vector that will be passed to `run_swatplus()`. The simulation will return the discharge at the main outlet (`unit = 1`) for the time period 2003-01-01 to 2012-12-31 (considering the `years_skip = 3` as warm up period). In this case we set the function to be `quiet = TRUE`. In a next step the function uses the observed discharge values from `q_obs$q_out` for the same period and evaluate the simulated discharges using the Nash Sutcliffe Efficiency criterion [@Nash1970] that is available with the function `NSE()` from the package `hydroGOF` that is then returned as a single value. You can see that we implemented the negative NSE as we will minimize with `optim()`
+We defined a function that has one input argument `par` that is the named parameter vector that will be passed to `run_swatplus()`. The simulation will return the discharge at the main outlet (`unit = 1`) for the time period 2003-01-01 to 2012-12-31 (considering the `years_skip = 3` as warm up period). In this case we set the function to be `quiet = TRUE`. In a next step the function uses the observed discharge values from `q_obs$discharge` for the same period and evaluate the simulated discharges using the Nash Sutcliffe Efficiency criterion [@Nash1970] that is available with the function `NSE()` from the package `hydroGOF` that is then returned as a single value. You can see that we implemented the negative NSE as we will minimize with `optim()`
 
 ## Parameter optimization with `optim`
 
@@ -125,7 +126,7 @@ The defined optimization function `swat_optim()` can now be implemented in the a
 
 ```{r, eval=FALSE}
 opt_bfgs <- optim(par = par_init, fn = swat_optim, method = "L-BFGS-B",
-                  lower = par_lwr, upper = par_upr, obs = q_obs$q_out,
+                  lower = par_lwr, upper = par_upr, obs = q_obs$discharge,
                   control = list(maxit = 100))
 ```
 
@@ -157,10 +158,9 @@ We will visualize the simulation with the optimized parameter set together with 
 
 ```{r}
 q_plot <- q_bfgs$simulation %>%
-  rename(., q_sim = flo_out) %>%
   mutate(q_sim = q_sim/8.64) %>%
   left_join(., q_obs, by = "date") %>%
-  rename(q_obs = q_out) %>%
+  rename(q_obs = discharge) %>%
   gather(., key = "variable", value = "discharge", -date)
 
 ggplot(data = q_plot) +
@@ -245,7 +245,7 @@ sce_plot <- q_sce$simulation$q_sim %>%
   mutate_if(is.numeric, list(~./8.64)) %>%
   gather(., key = "variable", value = "discharge", -date)
 
-obs_plot <- rename(q_obs, q_obs = q_out)
+obs_plot <- rename(q_obs, q_obs = discharge)
 
 ggplot() +
   geom_line(data = obs_plot, aes(x = date, y = q_obs), col = "black") +

@@ -5,6 +5,7 @@ articles:
   01_par_sensitivity: 01_par_sensitivity.html
   02_par_sampl_calib: 02_par_sampl_calib.html
   03_par_optim: 03_par_optim.html
+  04_vis_example: 04_vis_example.html
   SWATplusR: SWATplusR.html
 urls:
   reference: http://chrisschuerz.github.io/SWATplusR/reference

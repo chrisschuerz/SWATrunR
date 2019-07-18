@@ -215,7 +215,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
     thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
     thread_path <- run_path%//%thread_id
-    # thread_path <- project_path%//%".model_run/thread_1"
     # thread_path <- run_path%//%"thread_1"
 
     ## Modify model parameters if parameter set was provided and write

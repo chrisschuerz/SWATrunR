@@ -1,5 +1,5 @@
 ---
-title: "Exploring SWATplusR"
+title: "Getting started with SWATplusR"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Exploring SWATplusR}
@@ -25,12 +25,13 @@ Before exploring the package load `SWATplusR`:
 library(SWATplusR)
 ```
 
-
 ## Loading demos
+
+The R package `SWATdata` provides a set of fast running, lightweight SWAT2012 and SWAT+ model setups of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. Additionally, discharge observations at the outlet of the demo catchment (Gauge J of LREW) and spatial information of the SWAT model setups are available from `SWATdata`. An overview of the available data sets is available on the [`SWATdata`](https://github.com/chrisschuerz/SWATdata#swatdata-) GitHub page.
 
 ### SWAT projects
 
-`SWATplusR` provides very simple model setups of a head watershed of the Little River Experimental Watershed [LREW; @Bosch2007]. Demo model setups can be retrieved for SWAT2012 and for SWAT+. Currently a SWAT2012 demo is available for Windows and Linux, while for SWAT+ only a setup for Windows is currently available. A demo project can be loaded with the following command.
+The demo data that is available from `SWATdata` can be loaded with the function `load_demo()`. Loading an entire SWAT project to your hard drive requires the information that the loaded `dataset` is a `'project'`. As the project will be written to the hard drive a `path` is required. Further, the SWAT `version` must be provided, to either load a SWAT+ (`'plus'`), or a SWAT2012 (`'2012'`) project. Optionally, the `revision` number can be provided if a specific model revision (only for SWAT+) should be loaded. An overview of the different SWAT demo project setups (with their revision numbers) is available at the [`SWATdata`](https://github.com/chrisschuerz/SWATdata#swatdata-) GitHub page. If no revision number is provided, a project with the most recent revision number available fom `SWATdata` is loaded. A demo project can be loaded with the following command:
 
 ```{r, eval=FALSE}
 # The path where the SWAT demo project will be written
@@ -38,19 +39,20 @@ demo_path <- "Define:/your/path"
 
 # Loading a SWAT+ demo project
 path_plus <- load_demo(dataset = "project",
-                       swat_version = "plus",
-                       path = demo_path)
+                       version = "plus",
+                       path = demo_path,
+                       revision = 57)
 
 # Loading a SWAT2012 demo project
 path_2012 <- load_demo(dataset = "project",
-                       swat_version = "2012",
+                       version = "2012",
                        path = demo_path)
 ```
 
-Here `load_demo()` loads a demo project data set and saves it in the defined `demo_path`. Additionally, the function returns the final demo project path (`path_plus` and `path_2012`) as a character string back to R. This path is directly usable to run the SWAT model in that path.
+Here `load_demo()` loads a demo project data set and saves it in the defined `demo_path`. Additionally, the function returns the final demo project path (`path_plus` and `path_2012`) as a character string back to R. This path can be directly used to run the SWAT model located in that path.
 
 ### Observation data
-`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo for the time period 1968-01-01 until 2012-12-31. The data set is useful for the model evaluation of a demo project. You can load the observation data as follows:
+`SWATplusR` also provides observation data of daily discharge records at the main outlet of the demo catchment (Gauge J of LREW) for the time period 1968-01-01 until 2012-12-31. The data set is useful for the model evaluation of a demo project. You can load the observation data as follows:
 
 ```{r}
 q_obs <- load_demo(dataset = "observation")
@@ -64,13 +66,13 @@ plot(q_obs, type = "l")
 ```
 
 ### Spatial data
-To visualize simulation results spatially, shape files of the subbasins, river network, and HRUs for the SWAT+ and the SWAT2012 demo setups are available from `SWATplusR`. For spatial data `load_demo()` only returns the paths to the shape files. As the spatial data for the two SWAT project setups looks different loading the data requires the definition of the `swat_version`.
+To visualize simulation results spatially, shape files of the subbasins, river network, and HRUs for the SWAT+ and the SWAT2012 demo setups are available from `SWATplusR`. For spatial data `load_demo()` only returns the paths to the shape files. As the spatial data for the two SWAT project setups looks different loading the data requires the definition of the SWAT `version`.
 
 ```{r}
 # Path to the subbasin shape file
-sub_path <- load_demo(dataset = "subbasin", swat_version = "plus")
+sub_path <- load_demo(dataset = "subbasin", version = "plus")
 # Path to the subbasin shape file
-riv_path <- load_demo(dataset = "river", swat_version = "plus")
+riv_path <- load_demo(dataset = "river", version = "plus")
 
 sub_path
 ```
@@ -101,15 +103,15 @@ The definition of the simulation output always follows a simple pattern. An outp
 Below is a simple example to run a SWAT+ project and return the `variable = 'flo_out'` that is written into the `file = 'channel'` file for the spatial `unit = 1`. **Caution** in the demo SWAT+ model setup the main channel is channel number 1.
 
 ```{r, echo=FALSE}
-path_plus <- "C:/swatplus_demo"
+path_plus <- "C:/swat_demo/swatplus_rev57_demo"
 ```
 ```{r, echo=FALSE}
-path_2012 <- "C:/swat2012_demo"
+path_2012 <- "C:/swat_demo/swat2012_rev622_demo"
 ```
 
 
 ```{r, eval=FALSE}
-q_out_plus <- run_swatplus(project_path = plus_path,
+q_sim_plus <- run_swatplus(project_path = path_plus,
                            output = define_output(file = "channel",
                                                   variable = "flo_out",
                                                   unit = 1))
@@ -125,7 +127,7 @@ q_out_plus <- run_swatplus(project_path = plus_path,
 The syntax definition of simulations outputs applies to SWAT+ and SWAT2012. The only difference between the two models in the output definition is how to correctly address the output variables. The output files are organized in different ways in SWAT+ and SWAT2012. Below you find an example to extract the simulation outputs of discharge at all three subbasin outlets in the SWAT2012 demo setup:
 
 ```{r, eval=FALSE}
-q_out_2012 <- run_swat2012(project_path = path_2012,
+q_sim_2012 <- run_swat2012(project_path = path_2012,
                            output = define_output(file = "rch",
                                                   variable = "FLOW_OUT",
                                                   unit = 1:3))
@@ -138,8 +140,8 @@ q_out_2012 <- run_swat2012(project_path = path_2012,
 #>  Completed 1 simulation in 4S
 ```
 
-```{r}
-q_out_2012 <- readRDS(here::here("vignettes/datasets/q_out.rds"))
+```{r, echo=FALSE}
+q_sim_2012 <- readRDS(here::here("vignettes/datasets/q_out.rds"))
 ```
 
 
@@ -152,7 +154,7 @@ You might have noticed, that running SWAT also provides information on the progr
 The previous examples illustrated how to extract one `variable` (but maybe for several `units`) from the simulation outputs. To extract several variables you can simply combine them in a `list()`. In the example below we extract several water balance components of the SWAT+ demo simulations. Aggregated variables for a SWAT+ simulation are written to the *'basin_wb'* file and there is only one spatial unit (the entire basin) written to that file. Therefore, the `unit` must be 1. Values different from 1 will not return any simulation results:
 
 ```{r,eval=FALSE}
-wb_out <- run_swatplus(project_path = path_plus,
+wb_sim <- run_swatplus(project_path = path_plus,
            output = list(precip = define_output(file = "basin_wb",
                                                 variable = "precip",
                                                 unit = 1),
@@ -175,7 +177,7 @@ wb_out <- run_swatplus(project_path = path_plus,
 ```
 
 ```{r, echo=FALSE}
-wb_out <- readRDS(here::here("vignettes/datasets/wb_out.rds"))
+wb_sim <- readRDS(here::here("vignettes/datasets/wb_out.rds"))
 ```
 
 
@@ -188,13 +190,13 @@ The goal of `SWATplusR` is to return the SWAT simulations in a *tidy* format. Th
 If only one simulation was performed, where no model parameters were modified, `run_swat*()` returns a `tibble` [@Mueller2019] with a `date` column and the columns with the simulated values of the extracted variables. The output table of the simulated water balance components has a date column and columns with the four extracted water balance components. The variable names are the individual names that we defined in the output definition:
 
 ```{r}
-wb_out
+wb_sim
 ```
 
 In case no variable name is assigned in the output definition (as in the simulations of the discharge above), the variable name of the extracted variable is used as the variable name. When several units are defined in `define_output()` (e.g. in the example above `unit = 1:3`) a column in the output table is created for each unit and the unit number is added to the variable name. This is the case for the the simulation of *'FLOW_OUT'* in the example above:
 
 ```{r}
-q_out_2012
+q_sim_2012
 ```
 
 The *tidy* writing of the simulation results allows an easy processing of the data in the analysis workflow in R. Here is a quick example how to 'wrangle' the simulated discharge data with `dplyr` [@Wickham2019] and `tidyr` [@Wickham2018a] and plotting it with `ggplot2`:
@@ -204,11 +206,11 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 
-q_plot <- q_out_2012 %>%
+q_plot <- q_sim_2012 %>%
   select(date, FLOW_OUT_3) %>%
   rename(q_sim = FLOW_OUT_3) %>%
   left_join(., q_obs, by = "date") %>%
-  rename(q_obs = q_out) %>%
+  rename(q_obs = discharge) %>%
   gather(., key = "variable", value = "discharge", -date)
 
 ggplot(data = q_plot) +
@@ -251,7 +253,7 @@ par_single <- c("cn2.hru|change = pctchg" = - 5,
 To include the parameter changes in the SWAT+ model execution the defined vector is simply passed with the argument `parameter` in the `run_swatplus()` function call:
 
 ```{r, eval=F}
-q_out <- run_swatplus(project_path = path_plus,
+q_sim <- run_swatplus(project_path = path_plus,
                       output = define_output(file = "channel",
                                              variable = "flo_out",
                                              unit = 1),
@@ -276,13 +278,13 @@ par_set
 The implementation in the `run_swat*()` function works the same way. To execute multiple SWAT simulations with many parameter sets the `SWATplusR` package provides an option parallel computing. To perform a parallel model execution the number of parallel threads is defined with the input argument `n_thread`.
 
 ```{r, eval=F}
-q_out <- run_swatplus(project_path = path_plus,
+q_sim <- run_swatplus(project_path = path_plus,
                       output = list(q_sur  = define_output(file = "basin_wb",
                                                            variable = "surq_gen",
                                                            unit = 1),
-                      q_lat  = define_output(file = "basin_wb",
-                                             variable = "latq",
-                                             unit = 1)),
+                                    q_lat  = define_output(file = "basin_wb",
+                                                           variable = "latq",
+                                                           unit = 1)),
                       parameter = par_set,
                       n_thread = 4)
 
@@ -291,11 +293,11 @@ q_out <- run_swatplus(project_path = path_plus,
 #>  Completed 4 thread in 2S
 #> Performing 8 simulations on 4 cores:
 #>  Simulation 4 of 8   Time elapsed: 4S   Time remaining: 4S
-#>  Completed 8 simulations in 5S
+#>  Completed 8 simulations in 11S
 ```
 
 ```{r, echo = F}
-q_out <- readRDS(here::here("vignettes/datasets/q_out_8.rds"))
+q_sim <- readRDS(here::here("vignettes/datasets/q_out_8.rds"))
 ```
 
 ### Exploring simulations with parameter alterations
@@ -305,13 +307,13 @@ When parameters were altered in a simulation run, the performed parameter change
 The list entry `$parameter` holds two `tibbles`. The first `tibble` shows the values of the parameter changes of each model evaluation that was performed with `run_swat*()`. Each row of the `tibble` represents a parameter set that was used in a model run. The second `tibble` provides information on the parameter names, their actual names in the model, the type of change and the constraints on the parameter:
 
 ```{r}
-q_out$parameter
+q_sim$parameter
 ```
 
 The list entry `$simulation` provides the simulation runs that corresponds to each parameter set. Different to the single simulation without parameter changes is that now the simulated variables are not saved in a single `tibble`, but as a `list` of `tibbles`. In this case each simulated variable is saved in one `tibble`, where the first column of each `tibble` is the 'date' and the other columns are the individual simulation runs. Now the tibbles are named by the variables and each individual run saved in the tibbles is named 'run_1' to run 'run_n'. In the example two variables were simulated, `q_out$simulation$q_sur` and `q_out$simulation$q_lat`. Each `tibble` holds the date and the runs 1 to 8:
 
 ```{r}
-q_out$simulation
+q_sim$simulation
 ```
 
 ## Saving and loading Simulations
@@ -340,7 +342,7 @@ run_swatplus(project_path = path_plus,
 #>  Completed 4 thread in 2S
 #> Performing 8 simulations on 4 cores:
 #>  Simulation 4 of 8   Time elapsed: 3S   Time remaining: 3S
-#>  Completed 8 simulations in 6S
+#>  Completed 8 simulations in 8S
 ```
 
 You can see that the function did not return any results in R but generated a folder that we called "q_sur_lat" passed by the argument `save_file` in the project folder. That folder now contains several data bases. The first data base is called "par_dat.sqlite" and stores the parameter information and the date vector. Further, each of the parallel threads of the simulation generated a data base where each thread wrote the simulation results (This is necessary to avoid access conflicts when writing to data bases in parallel). The simulation data bases are always called "sim_thread_i.sqlite", where "i" are the indexes of the individual threads (1 to 4 in this case).
@@ -385,7 +387,7 @@ With `load_swat_run()` you can then load the simulations saved in the data bases
 
 
 ```{r, echo=FALSE}
-q_subset <- readRDS("D:/Projects_R/SWATplusR/vignettes/datasets/q_subset.rds")
+q_subset <- readRDS(here::here("vignettes/datasets/q_subset.rds"))
 ```
 
 ```{r, eval = FALSE}

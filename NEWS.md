@@ -1,3 +1,29 @@
+# SWATplusR 0.2.6
+
+Tested release that includes fixes from the development branch:
+- Fixed issue with expressions in parameter constraints in SWAT2012
+- Fixed issues with loading and saving in SWAT2012
+
+# SWATplusR 0.2.6.9002
+
+- Fixes issues with loading and saving in SWAT2012
+
+# SWATplusR 0.2.6.9001
+
+- Fixes issue with expressions in parameter constraints in SWAT2012
+
+# SWATplusR 0.2.6.9000
+
+- Fixed issue with `substr()` in R3.6.0
+- Fixed issues with parameter constraining in `run_swat2012()`
+
+# SWATplusR 0.2.5
+
+- Included compatibility with SWAT+ revisions 55 and 59
+- Added automatic revision check to `run_swatplus()`
+- Transferred demo data sets to external package `SWATdata`
+- Extended demo data to various SWAT+ revisions
+
 # SWATplusR 0.2.4
 
 This is the first tested [release](https://zenodo.org/record/2630510#.XKdiMtjgpGE) version of SWATplusR. The major functionality of running SWAT2012 and SWAT+ is available on win and unix platforms. Some functionality is still under development and/or depends on future developments of SWAT+. Functionality that is not available but will be implemented in future releases are:

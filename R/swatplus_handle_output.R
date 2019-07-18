@@ -83,10 +83,11 @@ translate_outfile_names <- function(output, output_interval, revision) {
 #' @importFrom dplyr %>% case_when
 #' @importFrom tibble tribble
 #' @importFrom purrr map
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 translate_rev57 <- function(output, output_interval) {
-  output_interval <- substr(output_interval, 1,1) %>% tolower(.)
+  output_interval <- str_sub(output_interval, 1,1) %>% tolower(.)
   output_interval <-
     case_when(output_interval == "d" ~ "_day",
               output_interval == "m" ~ "_mon",
@@ -108,6 +109,7 @@ translate_rev57 <- function(output, output_interval) {
 #' @importFrom dplyr %>% case_when
 #' @importFrom tibble tribble
 #' @importFrom purrr map
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 translate_rev55 <- function(output, output_interval) {
@@ -140,7 +142,7 @@ translate_rev55 <- function(output, output_interval) {
     # "hyd" is very inconsistent (hydin/out)!!!
     "ru",           "routing_units", "")
 
-  output_interval <- substr(output_interval, 1,1) %>% tolower(.)
+  output_interval <- str_sub(output_interval, 1,1) %>% tolower(.)
   output_interval <-
     case_when(output_interval == "d" ~ "_day",
               output_interval == "m" ~ "_mon",

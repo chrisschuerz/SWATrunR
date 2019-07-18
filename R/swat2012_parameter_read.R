@@ -7,11 +7,15 @@
 #' @keywords internal
 #'
 format_swat2012_parameter <- function(parameter) {
-  par_constrain <- suppressWarnings(
-    translate_parameter_constraints(names(parameter)))
-  names(parameter) <- par_constrain$par_name
-  if(!is.data.frame(parameter)) parameter <- map_dfc(parameter, ~.x)
-  return(list(values = parameter, definition = par_constrain))
+  if(!any(names(parameter) %in% c("values", "definition"))) {
+    par_constrain <- suppressWarnings(
+      translate_parameter_constraints(names(parameter)))
+    names(parameter) <- par_constrain$par_name
+    if(!is.data.frame(parameter)) parameter <- map_dfc(parameter, ~.x)
+    return(list(values = parameter, definition = par_constrain))
+  } else {
+    return(parameter)
+    }
 }
 
 #' Read the original swat parameter values from the parameter files in
@@ -54,6 +58,7 @@ read_swat2012_files <- function(project_path, file_meta) {
 #' @importFrom dplyr %>% left_join mutate
 #' @importFrom purrr map_df
 #' @importFrom tibble tibble
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 read_file_meta <- function(project_path, par_constrain) {
@@ -62,7 +67,9 @@ read_file_meta <- function(project_path, par_constrain) {
                       file_code = gsub("\\..*$", "", file),
                       file_name  = gsub(".*\\.","", file)) %>%
     left_join(., read_hru(project_path), by = "file_code") %>%
-    mutate(idx = 1:nrow(.))
+    mutate(idx = 1:nrow(.),
+           sub = str_sub(file_code, 1,5) %>% as_num(.),
+           sub = ifelse(sub > 0, sub, NA))
 
   idx_sel <- map(par_constrain$file_expression,
                  ~ evaluate_expression(file_meta, .x) %>% .[["idx"]]) %>%
@@ -219,6 +226,7 @@ read_sol <- function(file_meta, project_path) {
 #'
 #' @importFrom dplyr %>% filter mutate bind_rows
 #' @importFrom purrr map map2 set_names
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 read_mgt <- function(file_meta, project_path) {
@@ -243,10 +251,11 @@ read_mgt <- function(file_meta, project_path) {
 #' Check which row in a character vector file holds a model parameter
 #'
 #' @param chr Character string
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 is_par <- function(chr) {
-  num <- chr %>% substr(., 1, 16) %>% as_num(.)
+  num <- chr %>% str_sub(., 1, 16) %>% as_num(.)
   return(!is.na(num))
 }
 
@@ -267,12 +276,13 @@ get_par_name <- function(chr, par_pos) {
 #'
 #' @param file_i The i'th parameter file for a file suffix
 #' @param par_pos Logical vector that provides if a row holds a parameter or not
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 get_value <- function(file_i, par_pos) {
   par_pos <- par_pos[1:min(length(file_i), length(par_pos))]
   file_i[c(par_pos, rep(FALSE, (length(file_i) - length(par_pos))))] %>%
-    substr(., 1, 16) %>%
+    str_sub(., 1, 16) %>%
     as_num(.)
 }
 
@@ -297,9 +307,10 @@ get_table <- function(file_i, table_pos, col_pos) {
 #' @param start Index vector indicating the start values of a value
 #' @param end Index vector indicating the end values of a value
 #' @importFrom purrr map2_chr
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 split_line <- function(chr, start, end) {
-  map2_chr(start, end, ~ substr(chr, .x, .y)) %>%
+  map2_chr(start, end, ~ str_sub(chr, .x, .y)) %>%
     as.numeric(.)
 }

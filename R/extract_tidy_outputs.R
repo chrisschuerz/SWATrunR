@@ -63,7 +63,7 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
     }
   }
 
-  if(add_parameter & !is.null(parameter)) {
+  if(add_parameter & !is.null(parameter$value)) {
     sim_result <- list(parameter  = parameter,
                        simulation = sim_result)
   }
@@ -79,10 +79,11 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
 #' @importFrom dplyr %>%
 #' @importFrom lubridate floor_date year
 #' @importFrom tibble tibble
+#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 get_date_vector <- function(model_setup) {
-  int <- model_setup$output_interval %>% substr(., 1, 1)
+  int <- model_setup$output_interval %>% str_sub(., 1, 1)
   y_skip <-  model_setup$years_skip
   sd  <- (model_setup$start_date + years(y_skip)) %>% floor_date(., unit = "y")
   ed  <- model_setup$end_date

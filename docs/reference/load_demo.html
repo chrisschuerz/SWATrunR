@@ -66,7 +66,7 @@ SWAT setups." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SWATplusR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6</span>
       </span>
     </div>
 
@@ -99,6 +99,9 @@ SWAT setups." />
     </li>
     <li>
       <a href="../articles/03_par_optim.html">03 - Parameter optimization</a>
+    </li>
+    <li>
+      <a href="../articles/04_vis_example.html">04 - Visualization of simulation results</a>
     </li>
   </ul>
 </li>
@@ -140,7 +143,7 @@ SWAT setups.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>load_demo</span>(<span class='no'>dataset</span>, <span class='kw'>path</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>swat_version</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>load_demo</span>(<span class='no'>dataset</span>, <span class='kw'>path</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>version</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>revision</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -151,13 +154,13 @@ SWAT setups.</p>
 <code>dataset = c('project', 'observation', 'subbasin', 'river', 'hru')</code>.
 <code>dataset = 'project'</code> loads a SWAT demo project in the defined
 <code>path</code> location and returns the final project path as a text string in
-R. The definition of the <code>swat_version</code> is required.
+R. The definition of the <code>version</code> is required.
 <code>dataset = 'observation'</code> returns a <code>tibble</code> with discharge observation
 data at the main outlet of the demo watershed.
 The options <code>'subbasin'</code>, <code>'river'</code>, and <code>'hru'</code> return the paths
 of the respective subbasin, river network and HRU shape files. See examples
 how to load shapes unsing e.g. the <code>sf</code> package. These options require
-a definition of the <code>swat_version</code>.</p></td>
+a definition of the <code>version</code>.</p></td>
     </tr>
     <tr>
       <th>path</th>
@@ -165,10 +168,17 @@ a definition of the <code>swat_version</code>.</p></td>
 project.</p></td>
     </tr>
     <tr>
-      <th>swat_version</th>
+      <th>version</th>
       <td><p>Character string that defines the SWAT version. Options
-are <code>swat_version = c('2012', 'plus')</code>. This argument is required to
+are <code>version = c('2012', 'plus')</code>. This argument is required to
 load SWAT projects and shape files.</p></td>
+    </tr>
+    <tr>
+      <th>revision</th>
+      <td><p>Numeric value to define the model revision ofthe loaded SWAT
+project. See <code><a href='https://www.rdocumentation.org/packages/SWATdata/topics/SWATdata'>SWATdata</a></code> for valid revision numbers.
+When loading a SWAT project and leaving <code>revision = NULL</code>, then the
+most recent model revision is loaded by default.</p></td>
     </tr>
     </table>
     

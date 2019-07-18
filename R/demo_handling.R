@@ -31,6 +31,8 @@
 #'   section \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#loading-demos}{Loading demos}
 #'   on the package's *Get Started* page.
 #'
+#' @importFrom stringr str_sub
+#'
 #' @export
 
 load_demo <- function(dataset, path = NULL, version = NULL, revision = NULL) {
@@ -49,7 +51,7 @@ load_demo <- function(dataset, path = NULL, version = NULL, revision = NULL) {
   }
   pkg_path <- system.file(package = "SWATdata")
 
-  dataset <- tolower(dataset) %>% substr(., 1, 3)
+  dataset <- tolower(dataset) %>% str_sub(., 1, 3)
   if(!(dataset %in% c("pro", "obs", "sub", "riv", "hru"))) {
     stop("Invalid selection for dataset!")
   }
@@ -76,7 +78,7 @@ load_demo <- function(dataset, path = NULL, version = NULL, revision = NULL) {
       revision <- demo_files %>%
         .[grepl(version, .)] %>%
         .[grepl(os, .)] %>%
-        substr(., 6, nchar(.)) %>%
+        str_sub(., 6, nchar(.)) %>%
         gsub("[^[:digit:]]", "",.) %>%
         as.numeric(.) %>%
         max(.)
