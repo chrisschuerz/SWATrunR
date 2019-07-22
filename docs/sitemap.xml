@@ -82,9 +82,6 @@
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/find_first_line.html</loc>
   </url>
   <url>
-    <loc>http://chrisschuerz.github.io/SWATplusR/reference/find_first_space.html</loc>
-  </url>
-  <url>
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/finish_progress.html</loc>
   </url>
   <url>
@@ -224,6 +221,9 @@
   </url>
   <url>
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/setup_swatplus.html</loc>
+  </url>
+  <url>
+    <loc>http://chrisschuerz.github.io/SWATplusR/reference/split_by_units.html</loc>
   </url>
   <url>
     <loc>http://chrisschuerz.github.io/SWATplusR/reference/split_line.html</loc>
