@@ -16,13 +16,11 @@ read_swat2012_output <- function(output, thread_path) {
 
   ## Find the first position of table i neach file
   frst_pos <- find_first_line(output_file, thread_path)
+  ## Get the column header for all output files
+  file_header <- map2(output_file, frst_pos,
+                        ~ get_file_header(.x, .y, thread_path))
   ## Get the variable positions in all output files
   fwf_pos     <- map2(output_file, frst_pos, ~ get_fwf_positions(.x, thread_path, .y))
-  ## Get the column header for all output files
-  file_header <- pmap(list(output_file, frst_pos),
-                      function(out, frst, thread_path) {
-                        get_file_header(out, frst, thread_path)},
-                      thread_path)
 
   ## Read all output files, assign column names and assign output file names
   out_tables <- pmap(list(output_file, fwf_pos, frst_pos),
@@ -36,9 +34,9 @@ read_swat2012_output <- function(output, thread_path) {
   tables_nrow <- map(out_tables, ~nrow(.x)) %>% unlist(.)
   if(any(tables_nrow == 0)){
     stop("\nOne of the SWAT runs was not successful!\n"%&&%
-         "A reason can be the defined model parameters.\n"%&&%
+         "The defined model parameters could be a reason.\n"%&&%
          "Please check if any change in the model parametrization"%&&%
-         "caused any parameter to be out of bounds!")
+         "caused a parameter to be out of bounds!")
   }
 
   return(out_tables)
@@ -58,7 +56,7 @@ get_file_header <- function(output_i, tbl_pos, thread_path) {
   header <- read_lines(file = thread_path%//%output_i,
                        skip = tbl_pos - 1, n_max = 1) %>%
     split_by_units(.)
-  header[1] <- "FILE"
+  header <- c("FILE", header)
   return(header)
 }
 
@@ -69,23 +67,40 @@ get_file_header <- function(output_i, tbl_pos, thread_path) {
 #'
 #' @importFrom dplyr %>%
 #' @importFrom readr read_lines
-#' @importFrom stringr str_sub
+#' @importFrom stringr str_detect str_locate str_locate_all str_sub
 #' @keywords internal
 #'
 get_fwf_positions <- function(output_i, thread_path, tbl_pos) {
   header_line <- read_lines(file = thread_path%//%output_i,
                             skip = tbl_pos - 1, n_max = 1)
   first_line <- read_lines(file = thread_path%//%output_i,
-                           skip = tbl_pos, n_max = 1) %>%
-    str_sub(., 1, nchar(header_line))
-  # Start pos must be tweaked due to untidy spacing in output tables -> ugly tweak with 39 :()
-  start_pos <- c(1,find_first_space(header_line)[find_first_space(header_line) < 39],
-                   find_first_space(first_line)) %>%
-    unique(.) %>%
+                           skip = tbl_pos, n_max = 1)
+
+  # Workaround to split MON and AREA flexibly
+  pos_mon_area <- c(str_locate(header_line, "MON")[1],
+                    str_locate(header_line, "AREA")[2])
+  chr_mon_area <- str_sub(first_line, pos_mon_area[1], pos_mon_area[2])
+
+  chr_split <- chr_mon_area %>%
+    trimws(.) %>%
+    str_detect(., " ") %>%
+    ifelse(., " +", "\\.")
+
+  pos_split <- (str_locate_all(chr_mon_area, chr_split)[[1]] + pos_mon_area[1] - 1) %>%
+    .[nrow(.),1] %>%
+    unname(.)
+
+  last_val <- (str_locate_all(first_line, "E")[[1]][,1] + 4) %>%
+    .[length(.)]
+
+  start_pos <- str_locate_all(first_line, " +")[[1]][,1] %>%
+    .[!(. %in% pos_mon_area[1]:pos_mon_area[2])] %>%
+    c(1, pos_split, .) %>%
     sort(.)
-  duplicates <- which(diff(start_pos) == 1)
-  start_pos <- start_pos[-duplicates]
-  end_pos <- c((start_pos[2:length(start_pos)] - 1), nchar(header_line))
+
+  start_pos <- start_pos[start_pos < last_val]
+
+  end_pos <- c(start_pos[2:length(start_pos)], last_val) - 1
   return(list(start_pos, end_pos))
 }
 
@@ -102,20 +117,6 @@ find_first_line <- function(out_file, thread_path) {
   file_head <- map(out_file, ~ read_lines(thread_path%//%.x, n_max = 50))
   head_line <- map_int(file_head, ~ which(grepl("GIS", .x) & grepl("MON", .x)))
   return(head_line)
-}
-
-#' Helper function to find the fist position of white spaces in a text string
-#'
-#' @param string text string that contains words seperated by white spaces
-#'
-#' @importFrom dplyr %>%
-#' @keywords internal
-#'
-find_first_space <- function(string) {
-  single_char <- strsplit(string, "") %>% unlist(.)
-  space_pos <- which(single_char == " ")
-  space_pos_diff <- c(0,diff(space_pos))
-  space_pos[space_pos_diff != 1]
 }
 
 #' Helper function to convert file.cio entries to numerics
@@ -142,9 +143,16 @@ remove_units_2012 <- function(col_nm) {
   return(col_nm)
 }
 
+#' Split header line at the positions of units and return tidy header
+#'
+#' @param header Character string header line
+#' @importFrom stringr str_split
+#'
+#' @keywords internal
+#'
 split_by_units <- function(header) {
   unit <- "Mg\\/l|mg\\/L|mg\\/kg|mg|kg\\/ha|kg\\/h|kg|t\\/ha|mic\\/L|\\(mm\\)|kg|cms|tons|ton|mg|mg\\/|mm|km2|_tha|_kgha|\\_m|\\_kgN\\/ha|\\_kgP\\/ha|\\_m\\^3|ha\\-m|_k|mgps|degC|degc|ct|  "
-  strsplit(header, unit) %>%
+  str_split(header, unit) %>%
     unlist(.) %>%
     trimws() %>%
     gsub(" ", "_", .) %>%
