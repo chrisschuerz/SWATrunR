@@ -170,5 +170,6 @@ remove_units_plus <- function(col_nm) {
   unit <- "\\_ha\\-m|\\_ha|\\_tons|\\_mtons|\\_ton|\\_mg\\/|\\_mg|\\_kgN\\/ha|\\_kgP\\/ha|\\_kgP|\\_kgN|\\_kg|\\_k|_mgpst|\\_mgps|\\_m\\/m|\\_mm|\\_m|\\_m\\^3\\/s|\\_m\\^3|\\_sedm|\\_burym|\\_\\#cfu\\/100ml|\\_\\#cfu\\/100m|\\_degC|\\_degc|\\/deg|\\_tha|\\_kgha|\\_mj\\/m\\^2|\\_m\\/s|\\_frac"
   col_nm <- gsub(unit, "", col_nm) %>%
     gsub("\\_$", "", .)
+  return(col_nm)
   }
 

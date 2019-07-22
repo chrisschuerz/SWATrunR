@@ -19,9 +19,9 @@ read_swat2012_output <- function(output, thread_path) {
   ## Get the variable positions in all output files
   fwf_pos     <- map2(output_file, frst_pos, ~ get_fwf_positions(.x, thread_path, .y))
   ## Get the column header for all output files
-  file_header <- pmap(list(output_file, fwf_pos, frst_pos),
-                      function(out, fwf, frst, thread_path) {
-                        get_file_header(out, fwf, frst, thread_path)},
+  file_header <- pmap(list(output_file, frst_pos),
+                      function(out, frst, thread_path) {
+                        get_file_header(out, frst, thread_path)},
                       thread_path)
 
   ## Read all output files, assign column names and assign output file names
@@ -51,14 +51,13 @@ read_swat2012_output <- function(output, thread_path) {
 #' @param thread_path Path to respective thread where SWAT was executed
 #'
 #' @importFrom dplyr %>%
-#' @importFrom readr fwf_positions read_fwf
+#' @importFrom readr read_lines
 #' @keywords internal
 #'
-get_file_header <- function(output_i, fwf_pos, tbl_pos, thread_path) {
-  header <- read_fwf(file = thread_path%//%output_i, skip = tbl_pos - 1, n_max = 1,
-                     col_positions = fwf_positions(fwf_pos[[1]], fwf_pos[[2]])) %>%
-    gsub("Mg/l|mg/L|mg/kg|kg/ha|kg/h|t/ha|mic/L|\\(mm\\)|kg|cms|tons|mg|mm|km2|", "", .) %>%
-    gsub(" ", "_",.)
+get_file_header <- function(output_i, tbl_pos, thread_path) {
+  header <- read_lines(file = thread_path%//%output_i,
+                       skip = tbl_pos - 1, n_max = 1) %>%
+    split_by_units(.)
   header[1] <- "FILE"
   return(header)
 }
@@ -84,6 +83,8 @@ get_fwf_positions <- function(output_i, thread_path, tbl_pos) {
                    find_first_space(first_line)) %>%
     unique(.) %>%
     sort(.)
+  duplicates <- which(diff(start_pos) == 1)
+  start_pos <- start_pos[-duplicates]
   end_pos <- c((start_pos[2:length(start_pos)] - 1), nchar(header_line))
   return(list(start_pos, end_pos))
 }
@@ -135,7 +136,17 @@ cio_to_numeric <- function(cio_entry) {
 #' @keywords internal
 #'
 remove_units_2012 <- function(col_nm) {
-  unit <- "Mg/l$|mg\\/L$|mg\\/kg$|kg\\/ha$|kg\\/h$|t\\/ha$|mic\\/L$|\\(mm\\)$|kg$|cms$|tons$|ton$|mg$|mg\\/$|mm$|km2$|_tha$|_kgha$|\\_m$|\\_kgN\\/ha$|\\_kgP\\/ha$|\\_m\\^3$|ha\\-m$|_k$|mgps$| "
+  unit <- "Mg\\/l$|mg\\/L$|mg\\/kg$|mg|kg\\/ha$|kg\\/h$|kg|t\\/ha$|mic\\/L$|\\(mm\\)$|kg$|cms$|tons$|ton$|mg$|mg\\/$|mm$|km2$|_tha$|_kgha$|\\_m$|\\_kgN\\/ha$|\\_kgP\\/ha$|\\_m\\^3$|ha\\-m$|_k$|mgps$|  |"
   col_nm <- gsub(unit, "", col_nm) %>%
     gsub("\\_$", "", .)
+  return(col_nm)
+}
+
+split_by_units <- function(header) {
+  unit <- "Mg\\/l|mg\\/L|mg\\/kg|mg|kg\\/ha|kg\\/h|kg|t\\/ha|mic\\/L|\\(mm\\)|kg|cms|tons|ton|mg|mg\\/|mm|km2|_tha|_kgha|\\_m|\\_kgN\\/ha|\\_kgP\\/ha|\\_m\\^3|ha\\-m|_k|mgps|degC|degc|ct|  "
+  strsplit(header, unit) %>%
+    unlist(.) %>%
+    trimws() %>%
+    gsub(" ", "_", .) %>%
+    .[nchar(.) > 0]
 }
