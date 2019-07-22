@@ -1,3 +1,9 @@
+# SWATplusR 0.2.7.9001
+
+Development version that includes crucial fixes:
+- Fixed issue with reading outputs from SWAT2012 rev670. 
+- Fixed minor issue with table headers
+
 # SWATplusR 0.2.6
 
 Tested release that includes fixes from the development branch:
