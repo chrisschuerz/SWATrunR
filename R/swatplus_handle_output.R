@@ -15,9 +15,14 @@ read_swatplus_output <- function(output, thread_path, revision) {
   ## Get unique output files defined in output
   output_file <- map_chr(output,  ~ unique(.x$file)) %>% unique(.)
 
+  unit_names <- map(output_file, ~ read_table(thread_path%//%.x, skip = 2,
+                                              n_max = 1, col_names = F)) %>%
+    map(., ~ unlist(.x) %>% unname(.))
+
   col_names <- map(output_file, ~ read_table(thread_path%//%.x, skip = 1,
                                              n_max = 1, col_names = F)) %>%
-    map(., ~ unlist(.x) %>% unname(.))
+    map(., ~ unlist(.x) %>% unname(.)) %>%
+    map2(., unit_names, ~ replace_colname_na(.x, .y))
 
   if(revision < 56) {
     col_names <- map(col_names, remove_units_plus)
@@ -173,3 +178,14 @@ remove_units_plus <- function(col_nm) {
   return(col_nm)
   }
 
+#' Fix issues with shifted col_names in SWAT+ rev59.3
+#'
+#' @param col_nm Character vector with column names
+#' @param unit_nm Character vector with unit line from table
+#'
+#' @keywords internal
+#'
+replace_colname_na <- function(col_nm, unit_nm) {
+  col_nm[is.na(col_nm)] <- unit_nm[is.na(col_nm)]
+  return(col_nm)
+}
