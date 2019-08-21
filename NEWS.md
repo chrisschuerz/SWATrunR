@@ -1,3 +1,12 @@
+# SWATplusR 0.2.7
+
+Tested release that includes all previous crucial fixes
+
+# SWATplusR 0.2.7.9002
+
+Development version that includes crucial fixes:
+- Fixed issue with shifts in table headers that appear in SWAT+ rev59.3
+
 # SWATplusR 0.2.7.9001
 
 Development version that includes crucial fixes:

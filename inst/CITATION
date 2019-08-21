@@ -6,7 +6,7 @@ bibentry(
                 comment = c(ORCID = '0000-0002-7204-5828')),
   title   = "SWATplusR: Running SWAT2012 and SWAT+ Projects in R",
   year    = "2019",
-  note = "R package version 0.2.4",
-  doi = "10.5281/zenodo.2630510",
+  note = "R package version 0.2.7",
+  doi = "10.5281/zenodo.3373859",
   url     = "https://github.com/chrisschuerz/SWATplusR",
 )
