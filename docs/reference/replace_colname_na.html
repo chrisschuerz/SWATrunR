@@ -6,8 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Reads and modifies the SWAT+ projects' files that define the basic settings
-of the simulation and set them according tu respective input parameters — setup_swatplus • SWATplusR</title>
+<title>Fix issues with shifted col_names in SWAT+ rev59.3 — replace_colname_na • SWATplusR</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -31,11 +30,9 @@ of the simulation and set them according tu respective input parameters — setu
 
 
 
-<meta property="og:title" content="Reads and modifies the SWAT+ projects' files that define the basic settings
-of the simulation and set them according tu respective input parameters — setup_swatplus" />
+<meta property="og:title" content="Fix issues with shifted col_names in SWAT+ rev59.3 — replace_colname_na" />
 
-<meta property="og:description" content="Reads and modifies the SWAT+ projects' files that define the basic settings
-of the simulation and set them according tu respective input parameters" />
+<meta property="og:description" content="Fix issues with shifted col_names in SWAT+ rev59.3" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -129,50 +126,29 @@ of the simulation and set them according tu respective input parameters" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Reads and modifies the SWAT+ projects' files that define the basic settings
-of the simulation and set them according tu respective input parameters</h1>
-    <small class="dont-index">Source: <a href='https://github.com/chrisschuerz/SWATplusR/blob/master/R/swatplus_setup_run_files.R'><code>R/swatplus_setup_run_files.R</code></a></small>
-    <div class="hidden name"><code>setup_swatplus.Rd</code></div>
+    <h1>Fix issues with shifted col_names in SWAT+ rev59.3</h1>
+    <small class="dont-index">Source: <a href='https://github.com/chrisschuerz/SWATplusR/blob/master/R/swatplus_handle_output.R'><code>R/swatplus_handle_output.R</code></a></small>
+    <div class="hidden name"><code>replace_colname_na.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Reads and modifies the SWAT+ projects' files that define the basic settings
-of the simulation and set them according tu respective input parameters</p>
+    <p>Fix issues with shifted col_names in SWAT+ rev59.3</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>setup_swatplus</span>(<span class='no'>project_path</span>, <span class='no'>parameter</span>, <span class='no'>output</span>, <span class='no'>start_date</span>, <span class='no'>end_date</span>,
-  <span class='no'>output_interval</span>, <span class='no'>years_skip</span>, <span class='no'>soft_cal</span>)</pre>
+    <pre class="usage"><span class='fu'>replace_colname_na</span>(<span class='no'>col_nm</span>, <span class='no'>unit_nm</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>project_path</th>
-      <td><p>Path to the SWAT project folder (i.e. TxtInOut)</p></td>
+      <th>col_nm</th>
+      <td><p>Character vector with column names</p></td>
     </tr>
     <tr>
-      <th>start_date</th>
-      <td><p>Start date of the SWAT simulation. Provided as character
-string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are
-located</p></td>
-    </tr>
-    <tr>
-      <th>end_date</th>
-      <td><p>End date of the SWAT simulation. Provided as character string
-in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are located</p></td>
-    </tr>
-    <tr>
-      <th>output_interval</th>
-      <td><p>Time interval in which the SWAT model outputs are
-written. Provided either as character string ("d" for daily, "m" for
-monthly, "y" for yearly, or "a", for average annual).</p></td>
-    </tr>
-    <tr>
-      <th>years_skip</th>
-      <td><p>Integer value that provides the numbe of years to be
-skipped during writing the SWAT model outputs</p></td>
+      <th>unit_nm</th>
+      <td><p>Character vector with unit line from table</p></td>
     </tr>
     </table>
     
