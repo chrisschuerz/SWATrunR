@@ -116,9 +116,7 @@ define_output <- function(file, variable = NULL, unit = NULL,
 
   if((vers == "2012") & is.null(expression)){
     expression <- paste0("dplyr::filter(.[[2]] == ", unit, ") %>% ",
-                         "dplyr::filter(!is.na(MON)) %>% ",
-                         "dplyr::filter(MON > (quantile(MON, probs = 0.75, type = 3) - 300)) %>% ",
-                         "dplyr::filter(MON < (quantile(MON, probs = 0.75, type = 3) + 200)) %>% ",
+                         "dplyr::filter(filter_mon(MON)) %>% ",
                          "dplyr::select( ", variable, " )")
   } else {
     expression <- paste0("dplyr::filter(unit == ", unit, ") %>% ",
@@ -155,4 +153,31 @@ check_output <- function(output) {
     names(output) <- var_name
   }
   return(output)
+}
+
+
+#' Filter function to extract only relevant month entries in SWAT2012 outputs
+#'
+#' @param mon Month column from output table as vector
+#' @importFrom purrr map_dbl
+#'
+#' @keywords internal
+#'
+filter_mon <- function(mon) {
+  n_group <- which(diff(mon) != 0)[1]
+  n_chunk <- length(mon)/n_group
+  grp_var <- rep(1:n_chunk, each = n_group) %>% as.factor(.)
+  mon_split <- split(mon, grp_var)
+
+  mon_uni <- map_dbl(1:n_chunk, ~mon_split[[.x]][1])
+  jumps <- which(diff(mon_uni) != 1) + 1
+
+  chunk_exclude <- jumps[mon_uni[jumps] != 1]
+
+  keep_uni <- rep(TRUE, n_chunk)
+  keep_uni[chunk_exclude] <- FALSE
+
+  keep_mon <- rep(keep_uni, each = n_group)
+
+  return(keep_mon)
 }
