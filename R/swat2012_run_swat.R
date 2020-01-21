@@ -144,7 +144,8 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   }
 
   ## Read and modify the projects' file.cio, internal variable checks done.
-  model_setup <- setup_swat2012(project_path, start_date, end_date,
+  model_setup <- setup_swat2012(project_path, output,
+                                start_date, end_date,
                                 output_interval, years_skip,
                                 rch_out_var, sub_out_var,
                                 hru_out_var, hru_out_nr)

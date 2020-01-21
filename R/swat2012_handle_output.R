@@ -14,7 +14,7 @@ read_swat2012_output <- function(output, thread_path) {
   ## Get unique output files defined in output
   output_file <- map_chr(output,  ~ unique(.x$file)) %>% unique(.)
 
-  ## Find the first position of table i neach file
+  ## Find the first position of table in each file
   frst_pos <- find_first_line(output_file, thread_path)
   ## Get the column header for all output files
   file_header <- map2(output_file, frst_pos,
@@ -56,7 +56,9 @@ get_file_header <- function(output_i, tbl_pos, thread_path) {
   header <- read_lines(file = thread_path%//%output_i,
                        skip = tbl_pos - 1, n_max = 1) %>%
     split_by_units(.)
-  header <- c("FILE", header)
+  if(output_i != "output.hru") {
+    header <- c("FILE", header)
+  }
   return(header)
 }
 
@@ -89,9 +91,12 @@ get_fwf_positions <- function(output_i, thread_path, tbl_pos) {
   pos_split <- (str_locate_all(chr_mon_area, chr_split)[[1]] + pos_mon_area[1] - 1) %>%
     .[nrow(.),1] %>%
     unname(.)
-
-  last_val <- (str_locate_all(first_line, "E")[[1]][,1] + 4) %>%
-    .[length(.)]
+  if(output_i != "output.hru") {
+    last_val <- (str_locate_all(first_line, "E")[[1]][,1] + 4) %>%
+      .[length(.)]
+  } else {
+    last_val <- nchar(first_line)
+  }
 
   start_pos <- str_locate_all(first_line, " +")[[1]][,1] %>%
     .[!(. %in% pos_mon_area[1]:pos_mon_area[2])] %>%
@@ -146,13 +151,17 @@ remove_units_2012 <- function(col_nm) {
 #' Split header line at the positions of units and return tidy header
 #'
 #' @param header Character string header line
-#' @importFrom stringr str_split
+#' @importFrom stringr str_split str_replace_all
 #'
 #' @keywords internal
 #'
 split_by_units <- function(header) {
-  unit <- "Mg\\/l|mg\\/L|mg\\/kg|mg|kg\\/ha|kg\\/h|kg|t\\/ha|mic\\/L|\\(mm\\)|kg|cms|tons|ton|mg|mg\\/|mm|km2|_tha|_kgha|\\_m|\\_kgN\\/ha|\\_kgP\\/ha|\\_m\\^3|ha\\-m|_k|mgps|degC|degc|ct|  "
-  str_split(header, unit) %>%
+  unit <- "Mg\\/l|mg\\/L|mg\\/kg|mg|kg\\/ha|kg\\/h|kg|t\\/ha|mic\\/L|\\(mm\\)|kg|cms|tons|ton|mg|mg\\/|mm|km2|_tha|_kgha|\\_m|\\_kgN\\/ha|\\_kgP\\/ha|\\_m\\^3|ha\\-m|_k|mgps|degC|degc|dgC|ct|[:space:]|MJ/m2|m"
+  header %>%
+    str_replace_all(., "WTAB ", "WTAB_") %>%
+    str_replace_all(., "TOT ",  "TOT_") %>%
+    str_replace_all(., "LAT ",  "LAT_") %>%
+    str_split(., unit) %>%
     unlist(.) %>%
     trimws() %>%
     gsub(" ", "_", .) %>%

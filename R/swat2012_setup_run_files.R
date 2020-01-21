@@ -30,12 +30,12 @@
 #'   files possible!)
 #' @importFrom lubridate as_date int_end int_start interval yday year years ymd
 #' @importFrom dplyr case_when mutate select %>%
-#' @importFrom purrr map_chr set_names
+#' @importFrom purrr map map_chr map_dbl map_df set_names
 #' @importFrom readr read_lines read_table
 #' @importFrom stringr str_sub
 #' @keywords internal
 #'
-setup_swat2012 <- function(project_path,
+setup_swat2012 <- function(project_path, output,
                            start_date, end_date,
                            output_interval, years_skip,
                            rch_out_var, sub_out_var,
@@ -121,9 +121,9 @@ setup_swat2012 <- function(project_path,
     if(length(rch_out_var) > 20){
       stop("Maximum number of reach variables for custom outputs in file.cio is 20!")
     }
-    rch_out_var <- c(rch_out_var, rep(0, 20 - length(rch_out_var)))
-    file_cio[65] <- paste0(sprintf("%4d", rch_out_var), collapse = "")
   }
+  rch_out_var <- c(rch_out_var, rep(0, 20 - length(rch_out_var)))
+  file_cio[65] <- paste0(sprintf("%4d", rch_out_var), collapse = "")
 
   ## Overwrite custom subbasin variables if values are provided
   if(!is.null(sub_out_var)){
@@ -131,8 +131,38 @@ setup_swat2012 <- function(project_path,
     if(length(sub_out_var) > 15){
       stop("Maximum number of subbasin variables for custom outputs in file.cio is 15!")
     }
-    sub_out_var <- c(sub_out_var, rep(0, 15 - length(sub_out_var)))
-    file_cio[67] <- paste0(sprintf("%4d", sub_out_var), collapse = "")
+  }
+  sub_out_var <- c(sub_out_var, rep(0, 15 - length(sub_out_var)))
+  file_cio[67] <- paste0(sprintf("%4d", sub_out_var), collapse = "")
+
+  ## Consider the case of HRU output definition and the setting of the HRUs in file.cio
+  output_tbl <- map_df(output,  ~ .x)
+
+  if(("output.hru" %in% output_tbl$file)) {
+    hru_idx <- output_tbl %>%
+      filter(file == "output.hru") %>%
+      select(expr) %>%
+      unlist(.) %>%
+      map(., ~ str_split(.x, "%>%")) %>%
+      map(., ~ .x[[1]][1]) %>%
+      map(., ~ str_remove(.x, "dplyr\\:\\:filter\\(\\.\\[\\[2\\]\\] ==")) %>%
+      map(., ~ str_remove(.x, "\\)")) %>%
+      map_dbl(., ~ as.numeric(.x)) %>%
+      unique(.)
+
+    if(!is.null(hru_out_nr)) {
+      warning("HRU output definition overwrites 'hru_out_var'!")
+    }
+
+    if(length(hru_idx) <= 20) {
+      hru_out_nr <- hru_idx
+    } else {
+      hru_out_nr <- "all"
+    }
+
+  } else if (all(c(is.null(hru_out_nr), is.null(hru_out_var)))) {
+    hru_out_var <- 1
+    hru_out_nr  <- 1
   }
 
   ## Overwrite custom HRU variables if values are provided
@@ -141,12 +171,15 @@ setup_swat2012 <- function(project_path,
     if(length(hru_out_var) > 20){
       stop("Maximum number of HRU variables for custom outputs in file.cio is 20!")
     }
-    hru_out_var <- c(hru_out_var, rep(0, 20 - length(hru_out_var)))
-    file_cio[69] <- paste0(sprintf("%4d", hru_out_var), collapse = "")
   }
+  hru_out_var <- c(hru_out_var, rep(0, 20 - length(hru_out_var)))
+  file_cio[69] <- paste0(sprintf("%4d", hru_out_var), collapse = "")
+
 
   ## Overwrite HRU numbers for which HRU outputs are written if values are provided
-  if(!is.null(hru_out_nr)){
+  if(is.null(hru_out_nr)){
+    hru_out_nr <- rep(0, 20)
+  } else {
     if(is.numeric(hru_out_nr)){
       if(length(hru_out_nr) > 20){
         stop("Maximum number of HRUs for custom outputs in file.cio is 20!")
@@ -157,8 +190,8 @@ setup_swat2012 <- function(project_path,
     } else {
       stop("Input for 'hru_out_nr' must be either numeric vector or string 'all'!")
     }
-    file_cio[71] <- paste0(sprintf("%4d", hru_out_nr), collapse = "")
   }
+  file_cio[71] <- paste0(sprintf("%4d", hru_out_nr), collapse = "")
 
   model_setup$file.cio <- file_cio
 
