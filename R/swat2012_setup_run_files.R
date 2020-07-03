@@ -32,7 +32,7 @@
 #' @importFrom dplyr case_when mutate select %>%
 #' @importFrom purrr map map_chr map_dbl map_df set_names
 #' @importFrom readr read_lines read_table
-#' @importFrom stringr str_sub
+#' @importFrom stringr str_remove str_sub
 #' @keywords internal
 #'
 setup_swat2012 <- function(project_path, output,
