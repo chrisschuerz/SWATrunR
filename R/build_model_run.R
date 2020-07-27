@@ -78,7 +78,7 @@ build_model_run <- function(project_path, run_path, n_thread, os, swat_vers, qui
 
     # Batch file template required to run swat on Windows
     batch_temp <- c("@echo off",
-                    str_sub(run_path, 1, 2),
+                    "cd"%&&%str_sub(run_path, 1, 2),
                     "cd"%&&%run_path,
                     swat_exe,
                     "if %errorlevel% == 0 exit 0",
@@ -86,11 +86,11 @@ build_model_run <- function(project_path, run_path, n_thread, os, swat_vers, qui
 
   } else if(os == "unix") {
     swat_exe <- system("find"%&&%project_path%&&%"-executable -type f",
-                       intern = TRUE) %>%
+                        intern = T) %>%
       basename(.)
   }
 
-  # Make shure that there is exactly one executable in the SWAT project folder
+  # Make sure that there is exactly one executable in the SWAT project folder
   if(length(swat_exe) == 0) stop("No SWAT executable found in the project folder!")
   if(length(swat_exe) > 1) stop("Project folder contains more than one executable!")
 
@@ -163,7 +163,7 @@ get_os <- function() {
 #' @importFrom stringr str_sub
 #' @keywords internal
 #'
-check_revision <- function(project_path, run_path, os, swat_exe, swat_vers) {
+check_revision <- function(project_path, run_path, os, swat_exe) {
   dir.create(run_path%//%"tmp")
 
   swat_files <- dir(project_path, full.names = TRUE) %>%
@@ -174,7 +174,7 @@ check_revision <- function(project_path, run_path, os, swat_exe, swat_vers) {
   if(os == "win") {
     # Batch file template required to run swat on Windows
     batch_temp <- c("@echo off",
-                    str_sub(run_path, 1, 2),
+                    "cd"%&&%str_sub(run_path, 1, 2),
                     "cd"%&&%run_path%//%"tmp",
                     swat_exe,
                     "if %errorlevel% == 0 exit 0",
@@ -186,14 +186,16 @@ check_revision <- function(project_path, run_path, os, swat_exe, swat_vers) {
   } else if(os == "unix") {
     run_batch <- paste("cd", "cd"%&&%run_path%//%"tmp", "./"%&%swat_exe, sep = "; ")
   }
-
-  tmp_msg <- suppressWarnings(system(run_batch, intern = TRUE, timeout = 1)) %>%
+  #browser()
+  tmp_msg <- suppressWarnings(system2(file.path(run_batch), timeout = 2, stdout = T)) 
+  writeLines(tmp_msg,"revisonlogfile.txt")
+  tmp_msg <- tmp_msg %>%
     .[grepl("Revision", .)] %>%
     gsub("Revision", "", .) %>%
     trimws(.) %>%
     as.numeric(.)
-
-  Sys.sleep(1)
+  
+  #Sys.sleep(1)
 
   unlink(run_path%//%"tmp",recursive = TRUE, force = TRUE)
 
