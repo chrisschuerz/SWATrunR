@@ -131,14 +131,19 @@ get_hru_meta <- function(hru_file_i) {
 #' @importFrom tibble as_tibble
 #' @keywords internal
 #'
-read_par_list <- function(file_meta, file_suffix, project_path){
+read_par_list <- function(file_meta, file_suffix, project_path, n_row = NULL){
   file_sel <- filter(file_meta, file_name == file_suffix)
   if(nrow(file_sel) > 0) {
     tmp <- read_lines(file = project_path%//%file_sel$file[1])
+    tmp <- tmp[1:min(length(tmp), n_row)]
     par_pos <- is_par(tmp)
     par_name <- get_par_name(tmp, par_pos)
 
+
     files <- map(project_path%//%file_sel$file, read_lines)
+    if(!is.null(n_row)) {
+      files <- map(files, ~.x[1:n_row])
+    }
     par_table <- map_dfc(files, ~ get_value(.x, par_pos)) %>%
       t(.) %>%
       as_tibble(.) %>%
@@ -230,7 +235,7 @@ read_sol <- function(file_meta, project_path) {
 #' @keywords internal
 #'
 read_mgt <- function(file_meta, project_path) {
-  file_list <- read_par_list(file_meta, "mgt", project_path)
+  file_list <- read_par_list(file_meta, "mgt", project_path, n_row = 27)
 
   file_sel <- filter(file_meta, file_name == "mgt")
   col_pos   <-  c(1, 4, 7, 16, 19, 24, 28, 31, 44, 51, 63, 68, 75, 81)
