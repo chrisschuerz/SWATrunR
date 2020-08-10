@@ -168,6 +168,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   swat_exe <- manage_model_run(project_path, run_path, n_thread, os,
                                "plus", refresh, quiet)
   swat_rev <- check_revision(project_path, run_path, os, swat_exe)
+  cat("swat revision is ",swat_rev,"\n")
   output <- translate_outfile_names(output, model_setup$output_interval, swat_rev)
 #-------------------------------------------------------------------------------
   # Write files
@@ -217,7 +218,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     thread_path <- run_path%//%thread_id
     # thread_path <- run_path%//%"thread_1"
 
-    ## Modify model parameters if parameter set was provided and write
+        ## Modify model parameters if parameter set was provided and write
     ## calibration file. If no parameters provided write empty calibration file
     if(is.null(parameter)) {
       if(file.exists(thread_path%//%"calibration.cal")) {
@@ -234,8 +235,9 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     } else if (os == "unix") {
       run_batch <- paste("cd", "cd"%&&%thread_path, "./"%&%swat_exe, sep = "; ")
     }
-    run_msg <- system(run_batch, intern = TRUE)
-
+    #browser()
+    run_msg <- system(file.path(run_batch), intern = T)
+    #writeLines(run_msg,"batchrunlog.txt")
     ## Read defined model outputs
     model_output <- read_swatplus_output(output, thread_path, swat_rev) %>%
       extract_output(output, .)
