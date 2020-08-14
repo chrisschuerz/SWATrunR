@@ -141,9 +141,9 @@ read_par_list <- function(file_meta, file_suffix, project_path, n_row = NULL){
 
 
     files <- map(project_path%//%file_sel$file, read_lines)
-    if(!is.null(n_row)) {
-      files <- map(files, ~.x[1:n_row])
-    }
+    # if(!is.null(n_row)) {
+    #   files <- map(files, ~.x[1:n_row])
+    # }
     par_table <- map_dfc(files, ~ get_value(.x, par_pos)) %>%
       t(.) %>%
       as_tibble(.) %>%

@@ -155,7 +155,7 @@ write_sol <- function(file_meta, thread_parameter, thread_path) {
 #'
 write_mgt <- function(file_meta, thread_parameter, thread_path) {
   file_sel <- filter(file_meta, file_name == "mgt")
-  par_pos <- which(is_par(thread_parameter$mgt$file[[1]]))
+  par_pos <- which(is_par(thread_parameter$mgt$file[[1]][1:27]))
 
   par_files <- thread_parameter$mgt$value %>%
     select(-idx, -file_code) %>%
