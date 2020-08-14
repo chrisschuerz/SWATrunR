@@ -24,8 +24,7 @@
 #'   project are located
 #' @param output_interval (optional) Time interval in which the SWAT model
 #'   outputs are written. Provided either as character string ("d" for daily,
-#'   "m" for monthly, or "y" for yearly) or as SWAT input values (0 for monthly,
-#'   1 for daily, 2 for yearly).
+#'   "m" for monthly, or "y" for yearly, and "a" for average annual)
 #' @param years_skip (optional) Integer value to define the number of simulation
 #'   years that are skipped before writing SWAT model outputs.
 #' @param run_index (optional) Numeric vector (e.g.\code{run_index = c(1:100,
@@ -236,7 +235,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
       run_batch <- paste("cd", "cd"%&&%thread_path, "./"%&%swat_exe, sep = "; ")
     }
     #browser()
-    run_msg <- system(file.path(run_batch), intern = T)
+    run_msg <- system2(file.path(run_batch))
     #writeLines(run_msg,"batchrunlog.txt")
     ## Read defined model outputs
     model_output <- read_swatplus_output(output, thread_path, swat_rev) %>%
