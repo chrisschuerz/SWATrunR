@@ -81,16 +81,28 @@ get_fwf_positions <- function(output_i, thread_path, tbl_pos) {
   # Workaround to split MON and AREA flexibly
   pos_mon_area <- c(str_locate(header_line, "MON")[1],
                     str_locate(header_line, "AREA")[2])
-  chr_mon_area <- str_sub(first_line, pos_mon_area[1], pos_mon_area[2])
 
-  chr_split <- chr_mon_area %>%
-    trimws(.) %>%
-    str_detect(., " ") %>%
-    ifelse(., " +", "\\.")
+  if(any(is.na(pos_mon_area))) {
+    start_pos <- c(1, str_locate_all(first_line, " +")[[1]][,1])
 
-  pos_split <- (str_locate_all(chr_mon_area, chr_split)[[1]] + pos_mon_area[1] - 1) %>%
-    .[nrow(.),1] %>%
-    unname(.)
+  } else {
+    chr_mon_area <- str_sub(first_line, pos_mon_area[1], pos_mon_area[2])
+
+    chr_split <- chr_mon_area %>%
+      trimws(.) %>%
+      str_detect(., " ") %>%
+      ifelse(., " +", "\\.")
+
+    pos_split <- (str_locate_all(chr_mon_area, chr_split)[[1]] + pos_mon_area[1] - 1) %>%
+      .[nrow(.),1] %>%
+      unname(.)
+
+    start_pos <- str_locate_all(first_line, " +")[[1]][,1] %>%
+      .[!(. %in% pos_mon_area[1]:pos_mon_area[2])] %>%
+      c(1, pos_split, .) %>%
+      sort(.)
+  }
+
   if(output_i != "output.hru") {
     last_val <- (str_locate_all(first_line, "E")[[1]][,1] + 4) %>%
       .[length(.)]
@@ -98,10 +110,6 @@ get_fwf_positions <- function(output_i, thread_path, tbl_pos) {
     last_val <- nchar(first_line)
   }
 
-  start_pos <- str_locate_all(first_line, " +")[[1]][,1] %>%
-    .[!(. %in% pos_mon_area[1]:pos_mon_area[2])] %>%
-    c(1, pos_split, .) %>%
-    sort(.)
 
   start_pos <- start_pos[start_pos < last_val]
 
@@ -120,7 +128,7 @@ get_fwf_positions <- function(output_i, thread_path, tbl_pos) {
 #'
 find_first_line <- function(out_file, thread_path) {
   file_head <- map(out_file, ~ read_lines(thread_path%//%.x, n_max = 50))
-  head_line <- map_int(file_head, ~ which(grepl("GIS", .x) & grepl("MON", .x)))
+  head_line <- map_int(file_head, ~ which(grepl("MON", .x)))
   return(head_line)
 }
 
@@ -142,7 +150,7 @@ cio_to_numeric <- function(cio_entry) {
 #' @keywords internal
 #'
 remove_units_2012 <- function(col_nm) {
-  unit <- "Mg\\/l$|mg\\/L$|mg\\/kg$|mg|kg\\/ha$|kg\\/h$|kg|t\\/ha$|mic\\/L$|\\(mm\\)$|kg$|cms$|tons$|ton$|mg$|mg\\/$|mm$|km2$|_tha$|_kgha$|\\_m$|\\_kgN\\/ha$|\\_kgP\\/ha$|\\_m\\^3$|ha\\-m$|_k$|mgps$|  |"
+  unit <- "ppm|mg\\/m3|m3|Mg\\/l$|mg\\/L$|mg\\/kg$|mg|kg\\/ha$|kg\\/h$|kg|t\\/ha$|mic\\/L$|\\(mm\\)$|kg$|cms$|tons$|ton$|mg$|mg\\/$|mm$|km2$|_tha$|_kgha$|\\_m$|\\_kgN\\/ha$|\\_kgP\\/ha$|\\_m\\^3$|ha\\-m$|_k$|mgps$|  |"
   col_nm <- gsub(unit, "", col_nm) %>%
     gsub("\\_$", "", .)
   return(col_nm)
@@ -156,7 +164,7 @@ remove_units_2012 <- function(col_nm) {
 #' @keywords internal
 #'
 split_by_units <- function(header) {
-  unit <- "Mg\\/l|mg\\/L|mg\\/kg|mg|kg\\/ha|kg\\/h|kg|t\\/ha|mic\\/L|\\(mm\\)|kg|cms|tons|ton|mg|mg\\/|mm|km2|_tha|_kgha|\\_m|\\_kgN\\/ha|\\_kgP\\/ha|\\_m\\^3|ha\\-m|_k|mgps|degC|degc|dgC|ct|[:space:]|MJ/m2|m"
+  unit <- "ppm|mg\\/m3|m3|Mg\\/l|mg\\/L|mg\\/kg|mg|kg\\/ha|kg\\/h|kg|t\\/ha|mic\\/L|\\(mm\\)|kg|cms|tons|ton|mg|mg\\/|mm|km2|_tha|_kgha|\\_m|\\_kgN\\/ha|\\_kgP\\/ha|\\_m\\^3|ha\\-m|_k|mgps|degC|degc|dgC|ct|[:space:]|MJ/m2|m"
   header %>%
     str_replace_all(., "WTAB ", "WTAB_") %>%
     str_replace_all(., "TOT ",  "TOT_") %>%

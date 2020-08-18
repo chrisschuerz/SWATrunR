@@ -103,7 +103,7 @@ define_output <- function(file, variable = NULL, unit = NULL,
   file_check <- file %>%
     str_sub(., (nchar(.) - 2), nchar(.))
 
-  vers <- ifelse(file_check %in% c("rch", "sub", "hru", "sed"), "2012", "plus")
+  vers <- ifelse(file_check %in% c("rch", "sub", "hru", "sed", "rsv"), "2012", "plus")
 
   if(vers == "2012") {
     file <- "output"%.%file_check
