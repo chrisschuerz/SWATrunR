@@ -261,7 +261,9 @@ read_mgt <- function(file_meta, project_path) {
 #'
 is_par <- function(chr) {
   num <- chr %>% str_sub(., 1, 16) %>% as_num(.)
-  return(!is.na(num))
+  has_par_name <- grepl("\\:", chr) & grepl("\\:", chr)
+  is_par <- !is.na(num) & has_par_name
+  return(is_par)
 }
 
 #' Extract the parameter name from one line in a list parameter file
