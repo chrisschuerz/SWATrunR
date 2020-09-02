@@ -144,10 +144,8 @@ read_par_list <- function(file_meta, file_suffix, project_path, n_row = NULL){
     # if(!is.null(n_row)) {
     #   files <- map(files, ~.x[1:n_row])
     # }
-    par_table <- map_dfc(files, ~ get_value(.x, par_pos)) %>%
-      t(.) %>%
-      as_tibble(.) %>%
-      set_names(., par_name) %>%
+    par_table <- map(files, ~ get_value(.x, par_pos)) %>%
+      map_df(., ~set_names(.x, par_name)) %>%
       mutate(file_code = file_sel$file_code) %>%
       mutate(idx = 1:nrow(.))
 
@@ -175,8 +173,7 @@ read_chm <- function(file_meta, project_path) {
   par_name  <-  c("LAYER","SOL_NO3", "SOL_ORGN",
                   "SOL_LABP", "SOL_SOLP", "SOL_ORGP")
 
-  par_table <- map(files, ~ get_table(.x, table_pos, col_pos)) %>%
-    map(., ~ set_names(.x, par_name)) %>%
+  par_table <- map(files, ~ get_table(.x, table_pos, col_pos, par_name, cbind)) %>%
     map2(., file_sel$file_code, ~ mutate(.x, file_code = .y)) %>%
     bind_rows(.) %>%
     mutate(idx = 1:nrow(.))
@@ -212,8 +209,7 @@ read_sol <- function(file_meta, project_path) {
                   "CLAY", "SILT", "SAND", "ROCK", "SOL_ALB", "USLE_K",
                   "SOL_EC", "SOL_PH", "SOL_CACO3")
 
-  par_table <-  map(files, ~ get_table(.x, table_pos, col_pos)) %>%
-    map(., ~ set_names(.x, par_name)) %>%
+  par_table <-  map(files, ~ get_table(.x, table_pos, col_pos, par_name, cbind)) %>%
     map(., ~ mutate(.x, LAYER = 1:nrow(.x))) %>%
     map2(., file_sel$file_code, ~ mutate(.x, file_code = .y)) %>%
     bind_rows(.) %>%
@@ -239,14 +235,11 @@ read_mgt <- function(file_meta, project_path) {
 
   file_sel <- filter(file_meta, file_name == "mgt")
   col_pos   <-  c(1, 4, 7, 16, 19, 24, 28, 31, 44, 51, 63, 68, 75, 81)
-  par_name  <- c("MON", "DAY", "HU", "MGT_OP", "MGT"%&%1:9, "file_code")
+  par_name  <- c("MON", "DAY", "HU", "MGT_OP", "MGT"%&%1:9)
 
-  par_table <- map(file_list$file, ~ get_table(.x, 31:length(.x), col_pos)) %>%
-    map(., t) %>%
-    map(., as_tibble) %>%
+  par_table <- map(file_list$file, ~ get_table(.x, 31:length(.x), col_pos, par_name, rbind)) %>%
     map2(., file_sel$file_code, ~ mutate(.x, file_code = .y)) %>%
     bind_rows(.) %>%
-    set_names(., par_name) %>%
     mutate(idx = 1:nrow(.))
 
   file_list$mgt_table <- par_table
@@ -298,14 +291,18 @@ get_value <- function(file_i, par_pos) {
 #' @param file_i The i'th parameter file for a file suffix
 #' @param table_pos Index vector indicating which lines belong to the table
 #' @param col_pos Index vector that separates the individual table columns
-#' @importFrom purrr map_dfc
+#' @importFrom purrr map reduce
+#' @importFrom tibble as_tibble
 #' @keywords internal
 #'
-get_table <- function(file_i, table_pos, col_pos) {
+get_table <- function(file_i, table_pos, col_pos, col_names, fun) {
   col_start <- col_pos[1:(length(col_pos)-1)]
   col_end   <- col_pos[2:length(col_pos)] - 1
   file_i[table_pos] %>%
-    map_dfc(., ~ split_line(.x, col_start, col_end))
+    map(., ~ split_line(.x, col_start, col_end)) %>%
+    reduce(., fun) %>%
+    set_colnames(., col_names) %>%
+    as_tibble(.)
 }
 
 #' Split one line in a parameter file into the individual values of the table
@@ -320,4 +317,15 @@ get_table <- function(file_i, table_pos, col_pos) {
 split_line <- function(chr, start, end) {
   map2_chr(start, end, ~ str_sub(chr, .x, .y)) %>%
     as.numeric(.)
+}
+
+#' Set the column names of a matrix
+#'
+#' @param mtx The matrix
+#' @param col_names Character vector with column names
+#' @keywords internal
+#'
+set_colnames <- function(mtx, col_names) {
+  colnames(mtx) <- col_names
+  return(mtx)
 }

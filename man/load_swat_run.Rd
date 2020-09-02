@@ -4,8 +4,13 @@
 \alias{load_swat_run}
 \title{Load saved SWAT simulations}
 \usage{
-load_swat_run(save_dir, variable = NULL, run = NULL,
-  add_parameter = TRUE, add_date = TRUE)
+load_swat_run(
+  save_dir,
+  variable = NULL,
+  run = NULL,
+  add_parameter = TRUE,
+  add_date = TRUE
+)
 }
 \arguments{
 \item{save_dir}{Character string or vector of character strings that provide

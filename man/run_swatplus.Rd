@@ -4,12 +4,26 @@
 \alias{run_swatplus}
 \title{Run SWAT+}
 \usage{
-run_swatplus(project_path, output, parameter = NULL, start_date = NULL,
-  end_date = NULL, output_interval = NULL, years_skip = NULL,
-  run_index = NULL, run_path = NULL, n_thread = NULL,
-  save_path = NULL, save_file = NULL, return_output = TRUE,
-  add_parameter = TRUE, add_date = TRUE, refresh = TRUE,
-  keep_folder = FALSE, quiet = FALSE)
+run_swatplus(
+  project_path,
+  output,
+  parameter = NULL,
+  start_date = NULL,
+  end_date = NULL,
+  output_interval = NULL,
+  years_skip = NULL,
+  run_index = NULL,
+  run_path = NULL,
+  n_thread = NULL,
+  save_path = NULL,
+  save_file = NULL,
+  return_output = TRUE,
+  add_parameter = TRUE,
+  add_date = TRUE,
+  refresh = TRUE,
+  keep_folder = FALSE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{project_path}{Character string that provides the path to the SWAT project
@@ -34,8 +48,7 @@ project are located}
 
 \item{output_interval}{(optional) Time interval in which the SWAT model
 outputs are written. Provided either as character string ("d" for daily,
-"m" for monthly, or "y" for yearly) or as SWAT input values (0 for monthly,
-1 for daily, 2 for yearly).}
+"m" for monthly, or "y" for yearly, and "a" for average annual)}
 
 \item{years_skip}{(optional) Integer value to define the number of simulation
 years that are skipped before writing SWAT model outputs.}

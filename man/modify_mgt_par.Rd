@@ -4,8 +4,7 @@
 \alias{modify_mgt_par}
 \title{Modify parameters that are provided in the management table format}
 \usage{
-modify_mgt_par(parameter, model_parameter, file_meta, i_par, run_index,
-  i_run)
+modify_mgt_par(parameter, model_parameter, file_meta, i_par, run_index, i_run)
 }
 \arguments{
 \item{parameter}{List providing the parameter table and the parameter

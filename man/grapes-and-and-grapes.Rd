@@ -7,6 +7,6 @@
 a \%&&\% b
 }
 \description{
-\%&&\% pastes two strings by " ".
+\\%&&\\% pastes two strings by " ".
 }
 \keyword{internal}

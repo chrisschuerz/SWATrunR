@@ -4,8 +4,15 @@
 \alias{manage_model_run}
 \title{Generate folder structure for parallel SWAT execution}
 \usage{
-manage_model_run(project_path, run_path, n_thread, os, swat_vers, refresh,
-  quiet)
+manage_model_run(
+  project_path,
+  run_path,
+  n_thread,
+  os,
+  swat_vers,
+  refresh,
+  quiet
+)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}

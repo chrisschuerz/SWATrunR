@@ -4,7 +4,7 @@
 \alias{get_table}
 \title{Extract the parameter values that are provided in tabular form in a file}
 \usage{
-get_table(file_i, table_pos, col_pos)
+get_table(file_i, table_pos, col_pos, col_names, fun)
 }
 \arguments{
 \item{file_i}{The i'th parameter file for a file suffix}

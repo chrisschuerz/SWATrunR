@@ -4,7 +4,7 @@
 \alias{read_par_list}
 \title{Read parameters that are arranged in a simple list (1 parameter per row)}
 \usage{
-read_par_list(file_meta, file_suffix, project_path)
+read_par_list(file_meta, file_suffix, project_path, n_row = NULL)
 }
 \arguments{
 \item{file_meta}{Table that provides the file meta data}

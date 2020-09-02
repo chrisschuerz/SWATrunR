@@ -4,13 +4,30 @@
 \alias{run_swat2012}
 \title{Run a SWAT2012 project}
 \usage{
-run_swat2012(project_path, output, parameter = NULL, start_date = NULL,
-  end_date = NULL, output_interval = NULL, years_skip = NULL,
-  rch_out_var = NULL, sub_out_var = NULL, hru_out_var = NULL,
-  hru_out_nr = NULL, run_index = NULL, run_path = NULL,
-  n_thread = NULL, save_path = NULL, save_file = NULL,
-  return_output = TRUE, add_parameter = TRUE, add_date = TRUE,
-  refresh = TRUE, keep_folder = FALSE, quiet = FALSE)
+run_swat2012(
+  project_path,
+  output,
+  parameter = NULL,
+  start_date = NULL,
+  end_date = NULL,
+  output_interval = NULL,
+  years_skip = NULL,
+  rch_out_var = NULL,
+  sub_out_var = NULL,
+  hru_out_var = NULL,
+  hru_out_nr = NULL,
+  run_index = NULL,
+  run_path = NULL,
+  n_thread = NULL,
+  save_path = NULL,
+  save_file = NULL,
+  return_output = TRUE,
+  add_parameter = TRUE,
+  add_date = TRUE,
+  refresh = TRUE,
+  keep_folder = FALSE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{project_path}{Character string that provides the path to the SWAT project
