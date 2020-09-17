@@ -197,10 +197,10 @@ read_sol <- function(file_meta, project_path) {
 
   files <- map(project_path%//%file_sel$file, read_lines)
 
-  par_list <- map_dfc(files, ~ gsub(".*\\:","", .x[4:6]) %>% as.numeric(.)) %>%
-    t(.) %>%
+  par_list <- map(files, ~ gsub(".*\\:","", .x[4:6]) %>% as.numeric(.)) %>%
+    reduce(., rbind) %>%
+    set_colnames(., c("SOL_ZMX", "ANION_EXCL", "SOL_CRK")) %>%
     as_tibble(.) %>%
-    set_names(., c("SOL_ZMX", "ANION_EXCL", "SOL_CRK")) %>%
     mutate(., file_code = file_sel$file_code)
 
   table_pos <-  8:21

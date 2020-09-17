@@ -59,6 +59,9 @@
 #'   \code{Default = FALSE}
 #' @param quiet (optional) Logical. If \code{quiet = TRUE} no messages are
 #'   written.  \code{Default = FALSE}
+#' @param revision (optional) Numeric. If \code{revision} is defined
+#' \code{run_swatplus()} uses the input revision number (e.g. \code{revision = 59.3}.
+#' Otherwise the revision number is acquired from the SWAT executable.
 #'
 #' @section Examples:
 #'   To learn the basics on how to use \code{SWATplusR} see the
@@ -85,7 +88,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                          save_file = NULL, return_output = TRUE,
                          add_parameter = TRUE, add_date = TRUE,
                          refresh = TRUE, keep_folder = FALSE,
-                         quiet = FALSE) {
+                         quiet = FALSE, revision = NULL) {
 
 #-------------------------------------------------------------------------------
 
@@ -166,9 +169,11 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## Manage the handling of the '.model_run' folder structure.
   swat_exe <- manage_model_run(project_path, run_path, n_thread, os,
                                "plus", refresh, quiet)
-  swat_rev <- check_revision(project_path, run_path, os, swat_exe)
-  cat("swat revision is ",swat_rev,"\n")
-  output <- translate_outfile_names(output, model_setup$output_interval, swat_rev)
+  if(is.null(revision)){
+    revision <- check_revision(project_path, run_path, os, swat_exe)
+  }
+  # cat("SWAT revision is ",swat_rev,"\n")
+  output <- translate_outfile_names(output, model_setup$output_interval, revision)
 #-------------------------------------------------------------------------------
   # Write files
   ## Write model setup: Files that define the time range etc. of the SWAT
@@ -238,7 +243,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     run_msg <- system2(file.path(run_batch))
     #writeLines(run_msg,"batchrunlog.txt")
     ## Read defined model outputs
-    model_output <- read_swatplus_output(output, thread_path, swat_rev) %>%
+    model_output <- read_swatplus_output(output, thread_path, revision) %>%
       extract_output(output, .)
 
     if(!is.null(save_path)) {
