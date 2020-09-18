@@ -72,10 +72,8 @@ setup_swat2012 <- function(project_path, output,
     start_jdn  <- cio_to_numeric(file_cio[10])
     end_jdn    <- cio_to_numeric(file_cio[11])
 
-    start_date <- as_date(x = start_year%//%start_jdn,
-                          tz ="UTC", format = "%Y/%j")
-    end_date   <- as_date(x = end_year%//%end_jdn,
-                          tz ="UTC", format = "%Y/%j")
+    start_date <- as_date(x = start_year%//%start_jdn, format = "%Y/%j")
+    end_date   <- as_date(x = end_year%//%end_jdn, format = "%Y/%j")
   }
 
   model_setup$start_date <- start_date

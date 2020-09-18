@@ -64,10 +64,8 @@ setup_swatplus <- function(project_path, parameter, output,
     is_leap <- leap_year(end_year)
     end_day <- ifelse(t_sim[3] > 0, t_sim[3], ifelse(is_leap, 366, 365))
 
-    start_date <- as_date(x = start_year%//%start_day,
-                          tz ="UTC", format = "%Y/%j")
-    end_date   <- as_date(x = end_year%//%end_day,
-                          tz ="UTC", format = "%Y/%j")
+    start_date <- as_date(x = start_year%//%start_day, format = "%Y/%j")
+    end_date   <- as_date(x = end_year%//%end_day, format = "%Y/%j")
   }
   model_setup$start_date <- start_date
   model_setup$end_date   <- end_date
