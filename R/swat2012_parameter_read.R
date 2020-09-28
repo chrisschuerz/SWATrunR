@@ -298,11 +298,23 @@ get_value <- function(file_i, par_pos) {
 get_table <- function(file_i, table_pos, col_pos, col_names, fun) {
   col_start <- col_pos[1:(length(col_pos)-1)]
   col_end   <- col_pos[2:length(col_pos)] - 1
-  file_i[table_pos] %>%
-    map(., ~ split_line(.x, col_start, col_end)) %>%
-    reduce(., fun) %>%
-    set_colnames(., col_names) %>%
-    as_tibble(.)
+
+  if(length(file_i) < table_pos) {
+    tbl_out <- matrix(data = NA, nrow = 1, ncol = length(col_names)) %>%
+      as_tibble(., .name_repair = "minimal") %>%
+      set_names(col_names)
+  } else if(length(file_i) == table_pos) {
+    tbl_out <- matrix(data = split_line(file_i[table_pos], col_start, col_end),
+                      nrow = 1, ncol = length(col_names)) %>%
+      as_tibble(., .name_repair = "minimal") %>%
+      set_names(col_names)
+  } else {
+    file_i[table_pos] %>%
+      map(., ~ split_line(.x, col_start, col_end)) %>%
+      reduce(., fun) %>%
+      set_colnames(., col_names) %>%
+      as_tibble(.)
+  }
 }
 
 #' Split one line in a parameter file into the individual values of the table
