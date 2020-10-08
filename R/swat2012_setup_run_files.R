@@ -113,6 +113,18 @@ setup_swat2012 <- function(project_path, output,
 
   model_setup$output_interval <- output_interval
 
+  ## Number of records that should be in output
+
+  if(output_interval %in% c("d", "m", "y")) {
+    n_row <- seq(start_date, end_date, by = output_interval) %>%
+      floor_date(., unit = output_interval) %>%
+      length(.)
+  } else {
+    n_row <- 1
+  }
+
+  model_setup$output_nrow
+
   ## Overwrite custom reach variables if values are provided
   if(!is.null(rch_out_var)){
     if(!is.numeric(rch_out_var)) stop("'rch_out_var' must be numeric!")

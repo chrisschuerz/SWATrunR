@@ -150,6 +150,9 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                                 rch_out_var, sub_out_var,
                                 hru_out_var, hru_out_nr)
 
+  # Check if weather inputs accord with start and end date
+  check_dates(project_path, model_setup)
+
   ## Convert output to named list in case single unnamed output was defined
   output <- check_output(output)
 #-------------------------------------------------------------------------------

@@ -153,6 +153,9 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                                 start_date, end_date,
                                 output_interval, years_skip, soft_cal)
 
+  # Check if weather inputs accord with start and end date
+  check_dates(project_path, model_setup)
+
 #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
   ## Identify the required number of parallel threads to build.

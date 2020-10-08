@@ -201,3 +201,35 @@ check_revision <- function(project_path, run_path, os, swat_exe) {
 
   return(tmp_msg)
 }
+
+
+#' Check if input start and end dates are given in the weather inputs
+#'
+#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param model_setup list of model setup features
+#'
+#' @importFrom dplyr %>%
+#' @importFrom lubridate year
+#' @importFrom readr read_lines
+#' @importFrom stringr str_sub
+#' @keywords internal
+#'
+check_dates <- function(project_path, model_setup) {
+  pcp_files <- list.files(project_path, pattern = ".pcp")
+  pcp <- read_lines(project_path%//%pcp_files[1])
+  start_year <- suppressWarnings(as.numeric(str_sub(pcp[4:6],1,4))) %>%
+    median(., na.rm = TRUE)
+  end_year <- suppressWarnings(as.numeric(str_sub(pcp[(length(pcp)-20):length(pcp)],1,4))) %>%
+    max(., na.rm = TRUE)
+
+  start_sim <- year(model_setup$start_date)
+  end_sim   <- year(model_setup$end_date)
+
+  if(start_sim < start_year) {
+    stop("Defined 'start_date' is earlier than available weather input time series.")
+  }
+
+  if(end_sim > end_year) {
+    stop("Defined 'end_date' is later than available weather input time series.")
+  }
+}
