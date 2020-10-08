@@ -242,16 +242,28 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     } else if (os == "unix") {
       run_batch <- paste("cd", "cd"%&&%thread_path, "./"%&%swat_exe, sep = "; ")
     }
-    #browser()
-    run_msg <- system2(file.path(run_batch))
-    #writeLines(run_msg,"batchrunlog.txt")
-    ## Read defined model outputs
-    model_output <- read_swatplus_output(output, thread_path, revision) %>%
-      extract_output(output, .)
+    system2(file.path(run_batch),
+            stdout = thread_path%//%"run_msg.txt",
+            stderr = thread_path%//%"err_msg.txt",)
+    err_msg <- read_lines(thread_path%//%"err_msg.txt")
+    file.remove(thread_path%//%"run_msg.txt")
+    file.remove(thread_path%//%"err_msg.txt")
 
-    if(!is.null(save_path)) {
-      save_run(save_path, model_output, parameter, run_index, i_run, thread_id)
+    if(length(err_msg) == 0) {
+      ## Read defined model outputs
+      model_output <- read_swatplus_output(output, thread_path, revision) %>%
+        extract_output(output, .)
+
+      if(!is.null(save_path)) {
+        save_run(save_path, model_output, parameter, run_index, i_run, thread_id)
+      }
+    } else {
+      model_output <- err_msg
+      if(!is.null(save_path)) {
+        # save_error_log(save_path, model_output, parameter, run_index, i_run, thread_id)
+      }
     }
+
     if(return_output) {
       return(model_output)
     }
