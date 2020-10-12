@@ -39,9 +39,16 @@ extract_output <- function(output, model_output) {
 #'
 tidy_results <- function(sim_result, parameter, date, add_parameter,
                          add_date, run) {
+
   if(length(sim_result) == 1) {
     sim_result <- sim_result[[1]]
     is_result <- is.data.frame(sim_result)
+    if(!is_result) {
+      error_report <- sim_result
+      sim_result <- NULL
+    } else {
+      error_report <- NULL
+    }
   } else {
     if(!is.null(parameter)) {
       n_digit <- nrow(parameter$values) %>% as.character(.) %>% nchar(.)
@@ -54,22 +61,26 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
     is_result <- map_lgl(sim_result, is.list)
 
     if(!all(is_result)) {
-      err_report <- sim_result[!is_result] %>%
+      error_report <- sim_result[!is_result] %>%
         enframe() %>%
         set_names(c("run", "message"))
-      err_report <- err_report %>%
+      error_report <- error_report %>%
         add_column(. ,error = map_chr(.$message, ~.x[1]), .after = "run") %>%
         add_column(. ,idx = as.numeric(str_remove(.$run, "run_")), .before = 1)
+    } else {
+      error_report <- NULL
     }
-
-    sim_result <- sim_result[is_result] %>%
-      transpose(.) %>%
-      map(., ~ as_tibble(.x))
+    if(!all(!is_result)) {
+      sim_result <- sim_result[is_result] %>%
+        transpose(.) %>%
+        map(., ~ as_tibble(.x))
+    } else {
+      sim_result <- NULL
+    }
   }
 
-  if(add_date & all(is_result)) {
+  if(add_date & !is.null(sim_result)) {
     sim_date <- date
-
     if(is.data.frame(sim_result)){
       sim_result <- bind_cols(sim_date, sim_result)
     } else {
@@ -82,12 +93,14 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
                        simulation = sim_result)
   }
 
-  if(!all(is_result) & !is.data.frame(sim_result) & !is.character(sim_result)) {
-    if(is.null(sim_result$simulation) & is.null(sim_result$simulation)) {
-      sim_result <- list(simulation = sim_result,
-                         error_report = err_report)
+  if(!is.null(error_report)) {
+    if(add_parameter & !is.null(parameter$value)) {
+      sim_result$error_report <- error_report
+    } else if (is.null(sim_result) & is.character(error_report)) {
+      sim_result <- error_report
     } else {
-      sim_result$error_report <- err_report
+      sim_result <- list(simulation = sim_result,
+                         error_report = error_report)
     }
   }
 
