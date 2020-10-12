@@ -33,6 +33,7 @@ extract_output <- function(output, model_output) {
 #'
 #' @importFrom dplyr bind_cols %>%
 #' @importFrom purrr map map_chr map_lgl set_names transpose
+#' @importFrom stringr str_remove
 #' @importFrom tibble add_column as_tibble enframe
 #' @keywords internal
 #'
@@ -56,9 +57,9 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
       err_report <- sim_result[!is_result] %>%
         enframe() %>%
         set_names(c("run", "message"))
-      err_report <- add_column(err_report,
-                               error = map_chr(err_report$message, ~.x[1]),
-                               .after = "run")
+      err_report <- err_report %>%
+        add_column(. ,error = map_chr(.$message, ~.x[1]), .after = "run") %>%
+        add_column(. ,idx = as.numeric(str_remove(.$run, "run_")), .before = 1)
     }
 
     sim_result <- sim_result[is_result] %>%

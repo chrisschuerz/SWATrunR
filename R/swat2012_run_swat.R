@@ -160,6 +160,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## Identify the required number of parallel threads to build.
   n_thread <- min(max(nrow(parameter$values),1),
                   max(n_thread,1),
+                  max(length(run_index),1),
                   detectCores())
 
   ## Set the .model_run folder as the run_path
