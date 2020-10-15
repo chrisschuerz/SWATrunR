@@ -151,13 +151,8 @@ setup_swat2012 <- function(project_path, output,
   if(("output.hru" %in% output_tbl$file)) {
     hru_idx <- output_tbl %>%
       filter(file == "output.hru") %>%
-      select(expr) %>%
+      select(unit) %>%
       unlist(.) %>%
-      map(., ~ str_split(.x, "%>%")) %>%
-      map(., ~ .x[[1]][1]) %>%
-      map(., ~ str_remove(.x, "dplyr\\:\\:filter\\(\\.\\[\\[2\\]\\] ==")) %>%
-      map(., ~ str_remove(.x, "\\)")) %>%
-      map_dbl(., ~ as.numeric(.x)) %>%
       unique(.)
 
     if(!is.null(hru_out_nr)) {
