@@ -80,9 +80,13 @@
 #'
 define_output <- function(file, variable = NULL, unit = NULL,
                           expression = NULL){
-  if(!is.null(expression) &
-     (!is.null(unit) | !is.null(variable))){
-    stop("If 'expression' is given, 'unit' and 'variable' must be NULL.")
+  if(!is.null(expression)) {
+    if(!is.null(variable)) {
+      stop("If 'expression' is given 'variable' must not be defined.")
+    }
+    if(is.null(unit)) {
+      stop("If 'expression' is given, 'unit' must be provided as well.")
+    }
   }
 
   if(is.null(expression) &
@@ -115,23 +119,21 @@ define_output <- function(file, variable = NULL, unit = NULL,
 
 
   if((vers == "2012") & is.null(expression)){
-    expression <- paste0("dplyr::filter(.[[2]] == ", unit, ") %>% ",
-                         "dplyr::filter(filter_mon(MON)) %>% ",
-                         "dplyr::select( ", variable, " )")
+    expression <- paste0("dplyr::filter(filter_mon(MON)) %>% ",
+                         "dplyr::select( 2, ", variable, " )")
   } else {
-    expression <- paste0("dplyr::filter(unit == ", unit, ") %>% ",
-                         "dplyr::select( ", variable, " )")
+    expression <- paste0("dplyr::select( 2, ", variable, " )")
   }
 
-  if(length(unit) > 1){
-    label_ind <- paste0("_",unit)
-  } else {
-    label_ind <- ""
-  }
+  # if(length(unit) > 1){
+  #   label_ind <- paste0("_",unit)
+  # } else {
+  #   label_ind <- ""
+  # }
 
-  return(tibble(file      = file,
-                expr      = expression,
-                label_ind = label_ind))
+  return(tibble(file = file,
+                expr = expression,
+                unit = list(unit)))
 }
 
 #' Check output if is a data.frame and convert in case to named list

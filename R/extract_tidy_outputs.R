@@ -6,21 +6,33 @@
 #' @param output Output defined to read from the SWAT model results
 #' @param model_output Output files read from the respective thread
 #'
-#' @importFrom dplyr bind_cols bind_rows mutate %>%
-#' @importFrom purrr map map2 pmap set_names
+#' @importFrom dplyr bind_cols %>%
+#' @importFrom purrr map2
 #' @keywords internal
 #'
 extract_output <- function(output, model_output) {
-  output %>%
-    map2(., names(.), ~mutate(.x, label_ind = paste0(.y, label_ind))) %>%
-    bind_rows(.) %>%
-    map(., ~.x) %>%
-    pmap(., function(file, expr, label_ind, mod_out){
-      mod_out[[file]] %>%
-        evaluate_expression(., expr) %>%
-        set_names(., label_ind)
-    }, mod_out = model_output) %>%
-    bind_cols(.)
+  map2(output, names(output), ~extract_out_i(.x, .y, model_output)) %>%
+    bind_cols()
+}
+
+#' Extract the variable i from the simulation outputs
+#'
+#' @param out_i The ith output defined to read from the SWAT model results
+#' @param out_i_name The name of the ith output variable
+#' @param mod_out Output files read from the respective thread
+#'
+#' @importFrom dplyr bind_cols %>%
+#' @importFrom purrr map map2 set_names
+#' @keywords internal
+#'
+extract_out_i <- function(out_i, out_i_name, mod_out) {
+  if(length(out_i$unit[[1]]) > 1) {
+    out_i_name <- paste(out_i_name, out_i$unit[[1]], sep = "_")
+  }
+  var <- evaluate_expression(mod_out[[out_i$file]], out_i$expr)
+  map(out_i$unit[[1]], ~var[var[,1] == .x, 2]) %>%
+    map2(., out_i_name, ~set_names(.x, .y)) %>%
+    bind_cols()
 }
 
 #' Tidy up simulation results before returning them

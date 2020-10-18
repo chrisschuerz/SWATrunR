@@ -55,7 +55,10 @@ read_swat2012_output <- function(output, thread_path) {
 get_file_header <- function(output_i, tbl_pos, thread_path) {
   header <- read_lines(file = thread_path%//%output_i,
                        skip = tbl_pos - 1, n_max = 1) %>%
-    split_by_units(.)
+    split_by_units(.) %>%
+    str_replace_all(., "-", "_") %>%
+    str_replace_all(., "#", "_")
+
   if(output_i != "output.hru") {
     header <- c("FILE", header)
   }
