@@ -5,7 +5,7 @@
 #' @importFrom dplyr %>% bind_cols bind_rows everything mutate one_of select
 #' @importFrom purrr map map2 map_lgl pmap set_names
 #' @importFrom tibble as_tibble tibble
-#' @importFrom stringr str_sub
+#' @importFrom stringr str_extract str_split str_sub
 #' @keywords internal
 #'
 translate_parameter_constraints <- function(par) {
@@ -15,7 +15,7 @@ translate_parameter_constraints <- function(par) {
 
   if(any(!has_change)) stop("Type of change must be provided for all parameters!")
 
-  bool_op <- "\\=|\\=\\=|\\!\\=|\\<|\\<\\=|\\>|\\>\\=|\\%in\\%"
+  bool_op <- "\\=\\=|\\!\\=|\\<\\=|\\>\\=|\\=|\\<|\\>|\\%in\\%"
 
   model_par <- tibble(par_name  = gsub("\\:\\:.*", "", par) %>% trimws(.),
                       parameter = gsub(".*\\:\\:|\\|.*","", par) %>% trimws(.)) %>%
@@ -69,14 +69,15 @@ translate_parameter_constraints <- function(par) {
   filter_expr <- par_clean %>%
     map(., ~ .x[2:length(.x)] %>% .[!grepl("change",.)])
 
-  filter_var <- map(filter_expr, ~ gsub("["%&%bool_op%&%"].*", "", .x)) %>%
-    map(., ~ trimws(.x)) %>%
-    map(., ~ tolower(.x))
-  filter_val <- map(filter_expr, ~ gsub(".*["%&%bool_op%&%"]", "", .x)) %>%
+  filter_var_val <- map(filter_expr, ~ str_split(.x, bool_op))
+  filter_var <- map(filter_var_val, ~unlist(.x)[1]) %>%
+    map(., trimws) %>%
+    map(., tolower)
+  filter_val <-  map(filter_var_val, ~unlist(.x)[2]) %>%
     map(., ~ gsub("c\\(|\\)", "", .x)) %>%
     map(., ~ add_quotes_if_chr(.x)) %>%
     map(., ~ concat_values(.x))
-  filter_op  <- map(filter_expr, ~ gsub("[^"%&%bool_op%&%"]", "", .x)) %>%
+  filter_op  <- map(filter_expr, ~ str_extract(.x, bool_op)) %>%
     map(., ~ trimws(.x)) %>%
     map(., ~ gsub("\\=", "\\=\\=", .x )) %>%
     map(., ~ gsub("\\=\\=\\=\\=", "\\=\\=", .x ))

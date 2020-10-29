@@ -146,7 +146,7 @@ setup_swat2012 <- function(project_path, output,
   file_cio[67] <- paste0(sprintf("%4d", sub_out_var), collapse = "")
 
   ## Consider the case of HRU output definition and the setting of the HRUs in file.cio
-  output_tbl <- map_df(output,  ~ .x)
+    output_tbl <- map_df(output,  ~ .x)
 
   if(("output.hru" %in% output_tbl$file)) {
     hru_idx <- output_tbl %>%

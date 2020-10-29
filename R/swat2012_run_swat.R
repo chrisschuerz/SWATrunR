@@ -143,6 +143,9 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   # it does not exist. Otherwise read boundary file from there and do check!
   }
 
+  ## Convert output to named list in case single unnamed output was defined
+  output <- check_output(output)
+
   ## Read and modify the projects' file.cio, internal variable checks done.
   model_setup <- setup_swat2012(project_path, output,
                                 start_date, end_date,
@@ -153,8 +156,6 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   # Check if weather inputs accord with start and end date
   check_dates(project_path, model_setup)
 
-  ## Convert output to named list in case single unnamed output was defined
-  output <- check_output(output)
 #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
   ## Identify the required number of parallel threads to build.

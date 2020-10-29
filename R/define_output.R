@@ -148,7 +148,7 @@ check_output <- function(output) {
       strsplit(., " %>%") %>%
       unlist(.) %>%
       .[[length(.)]] %>%
-      gsub("dplyr\\:\\:select\\(", "", .) %>%
+      gsub("dplyr\\:\\:select\\( 2,", "", .) %>%
       gsub("\\)", "", .) %>% trimws(., "both")
 
     output <- list(output)
