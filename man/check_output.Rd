@@ -4,7 +4,7 @@
 \alias{check_output}
 \title{Check output if is a data.frame and convert in case to named list}
 \usage{
-check_output(output)
+check_output(output, swat_vers)
 }
 \arguments{
 \item{output}{Defined output}

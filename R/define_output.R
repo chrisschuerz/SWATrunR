@@ -122,7 +122,7 @@ define_output <- function(file, variable = NULL, unit = NULL,
     expression <- paste0("dplyr::filter(filter_mon(MON)) %>% ",
                          "dplyr::select( 2, ", variable, " )")
   } else {
-    expression <- paste0("dplyr::select( 2, ", variable, " )")
+    expression <- paste0("dplyr::select( unit, ", variable, " )")
   }
 
   # if(length(unit) > 1){
@@ -142,14 +142,21 @@ define_output <- function(file, variable = NULL, unit = NULL,
 #'
 #' @keywords internal
 #'
-check_output <- function(output) {
+check_output <- function(output, swat_vers) {
   if(is.data.frame(output)) {
+    if(swat_vers == "2012") {
+      unit <- "2"
+    } else {
+      unit <- "unit"
+    }
+
     var_name <- output$expr[1] %>%
       strsplit(., " %>%") %>%
       unlist(.) %>%
       .[[length(.)]] %>%
-      gsub("dplyr\\:\\:select\\( 2,", "", .) %>%
-      gsub("\\)", "", .) %>% trimws(., "both")
+      gsub(paste0("dplyr\\:\\:select\\( ", unit, ","), "", .) %>%
+      gsub("\\)", "", .) %>%
+      trimws(., "both")
 
     output <- list(output)
     names(output) <- var_name

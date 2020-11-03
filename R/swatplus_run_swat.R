@@ -135,7 +135,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   }
 
   ## Convert output to named list in case single unnamed output was defined
-  output <- check_output(output)
+  output <- check_output(output, "plus")
 
   ## Check if soft_calibration was triggered by screen methods. If TRUE it
   ## forces the model setup to also write the average annula balances.

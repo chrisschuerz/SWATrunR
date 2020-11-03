@@ -144,7 +144,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   }
 
   ## Convert output to named list in case single unnamed output was defined
-  output <- check_output(output)
+  output <- check_output(output, "2012")
 
   ## Read and modify the projects' file.cio, internal variable checks done.
   model_setup <- setup_swat2012(project_path, output,
