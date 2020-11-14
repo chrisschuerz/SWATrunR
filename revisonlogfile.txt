@@ -1,0 +1,20 @@
+                   SWAT+               
+               Revision 60.5          
+      Soil & Water Assessment Tool    
+               PC Version             
+    Program reading . . . executing
+
+ reading from precipitation file         Time  14:57:48
+ reading from temperature file           Time  14:57:48
+ reading from solar radiation file       Time  14:57:49
+ reading from relative humidity file     Time  14:57:49
+ reading from wind file                  Time  14:57:49
+ reading from wgn file                   Time  14:57:49
+ reading from wx station file            Time  14:57:49
+  Original Simulation        1   1  2002 Yr    1 of    8 Time  14:57:50
+  Original Simulation        1   2  2002 Yr    1 of    8 Time  14:57:50
+  Original Simulation        1   3  2002 Yr    1 of    8 Time  14:57:50
+  Original Simulation        1   4  2002 Yr    1 of    8 Time  14:57:50
+  Original Simulation        1   5  2002 Yr    1 of    8 Time  14:57:50
+  Original Simulation        1   6  2002 Yr    1 of    8 Time  14:57:50
+  Original Simulation        1   7  2002 Yr    1 of    8 Time  14:57:50

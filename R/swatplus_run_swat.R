@@ -128,14 +128,15 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     run_index <- 1:max(nrow(parameter$values), 1)
   }
 
+  ## Convert output to named list in case single unnamed output was defined
+  output <- check_output(output, "plus")
+
   ## Define save_path and check if planned simulations already exist in save file
   if(!is.null(save_file)) {
     save_path <- set_save_path(project_path, save_path, save_file)
     check_saved_data(save_path, parameter, output, run_index)
   }
 
-  ## Convert output to named list in case single unnamed output was defined
-  output <- check_output(output, "plus")
 
   ## Check if soft_calibration was triggered by screen methods. If TRUE it
   ## forces the model setup to also write the average annula balances.

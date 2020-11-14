@@ -128,10 +128,13 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     run_index <- 1:max(nrow(parameter$values), 1)
   }
 
+  ## Convert output to named list in case single unnamed output was defined
+  output <- check_output(output, "2012")
+
   ## Define save_path and check if planned simulations already exist in save file
   if(!is.null(save_file)) {
     save_path <- set_save_path(project_path, save_path, save_file)
-    check_saved_data(save_path, parameter)
+    check_saved_data(save_path, parameter, output, run_index)
   }
 
   ## Read the meta information on the parameters and the required parameter files
@@ -143,8 +146,6 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   # it does not exist. Otherwise read boundary file from there and do check!
   }
 
-  ## Convert output to named list in case single unnamed output was defined
-  output <- check_output(output, "2012")
 
   ## Read and modify the projects' file.cio, internal variable checks done.
   model_setup <- setup_swat2012(project_path, output,

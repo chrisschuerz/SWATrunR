@@ -47,11 +47,14 @@ save_run <- function(save_path, model_output, parameter, run_index, i_run, i_thr
 #' @keywords internal
 #'
 set_save_path <- function(project_path, save_path, save_dir) {
-  if(is.null(save_path)) save_path <- project_path
-
+  if(is.null(save_path)) {
+    save_path <- project_path
+  }
   save_path <- save_path%//%save_dir
 
-  if(!dir.exists(save_path)) dir.create(save_path, recursive = TRUE)
+  if(!dir.exists(save_path)) {
+    dir.create(save_path, recursive = TRUE)
+  }
 
   return(save_path)
 }
@@ -502,34 +505,52 @@ convert_date <- function(date_tbl) {
 #' @keywords internal
 #'
 check_saved_data <- function(save_path, parameter, output, run_index) {
-  saved_data <- scan_save_files(save_path)
-
-  if(!is.null(saved_data$par_val)) {
-    if(!identical(as.matrix(parameter$values),
-                  as.matrix(saved_data$par_val[[1]]))) {
-      stop("Parameters of current SWAT simulations and the parameters"%&&%
-             "saved in 'save_file' differ!")
+  if(length(dir(save_path)) > 0) {
+    saved_data <- scan_save_files(save_path)
+    if(!is.null(saved_data$par_val)) {
+      if(!identical(as.matrix(parameter$values),
+                    as.matrix(saved_data$par_val[[1]]))) {
+        stop("Parameters of current SWAT simulations and the parameters"%&&%
+               "saved in 'save_file' differ!")
+      }
+      if(!identical(as.matrix(parameter$definition),
+                    as.matrix(saved_data$par_def[[1]]))) {
+        stop("Parameter definition of current SWAT simulation and the"%&&%
+               "parameter definition saved in 'save_file' differ!")
+      }
     }
-    if(!identical(as.matrix(parameter$definition),
-                  as.matrix(saved_data$par_def[[1]]))) {
-      stop("Parameter definition of current SWAT simulation and the"%&&%
-             "parameter definition saved in 'save_file' differ!")
+    if(nrow(saved_data$table_overview) > 0) {
+      out_name  <- names(output)
+      is_single <- map(output, ~length(unlist(.x$unit))) == 1
+      out_unit  <- map(output, ~ paste0("_", unlist(.x$unit)))
+      out_unit[is_single] <- ""
+      out_var   <- map2(names(output), out_unit, ~paste0(.x, .y)) %>%
+        unlist()
+
+      tbl_ovr <- saved_data$table_overview
+
+      sim_compl <- map(out_var, ~ tbl_ovr %>% filter(var == .x) %>% .$run_num) %>%
+        set_names(out_var) %>%
+        map(., ~ .x[.x %in% run_index])
+
+      sim_msg <- sim_compl %>%
+        map(., as.character) %>%
+        map(., ~ truncate(.x , 10)) %>%
+        map2(., names(.), ~ paste0("  ",.y, ": ", .x,  " \n")) %>%
+      unlist()
+
+      if(length(unlist(sim_compl)) > 0) {
+        stop("The following simulation runs are already saved in 'save_file': \n",
+             sim_msg, "\n Either change the 'run_index', or define a new 'save_file'.")
+      }
     }
   }
-  if(nrow(saved_data$table_overview) > 0) {
-    out_var_current <- output %>%
-      map2(., names(.), ~ paste0(.y, .x$label_ind))
-    tbl_ovr <- saved_data$table_overview
-    is_out_saved <- map(out_var_current,
-                        ~ any(tbl_ovr$run_num[tbl_ovr$var == .x] %in%
-                                run_index)) %>%
-      unlist(.)
+}
 
-    if(any(is_out_saved)) {
-      stop("Completed simulations for defined variables"%&&%
-             "and respective run_indices were found in save_file!\n"%&&%
-             "Please check with scan_swat_run() or define new 'save_file'" %&&%
-             "for the new simulations!")
-    }
+
+truncate <- function(x, n) {
+  if(!is.na(x[n])) {
+    x <- c(x[1:n],"...")
   }
+  paste(x, collapse = ", ")
 }
