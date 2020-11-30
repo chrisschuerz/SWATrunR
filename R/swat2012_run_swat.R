@@ -253,7 +253,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     } else {
       model_output <- err_msg
       if(!is.null(save_path)) {
-        # save_error_log(save_path, model_output, parameter, run_index, i_run, thread_id)
+        save_error_log(save_path, model_output, parameter, run_index, i_run)
       }
     }
 

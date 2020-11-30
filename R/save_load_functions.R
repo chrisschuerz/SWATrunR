@@ -37,6 +37,31 @@ save_run <- function(save_path, model_output, parameter, run_index, i_run, i_thr
   dbDisconnect(output_con)
 }
 
+save_error_log <- function(save_path, model_output, parameter, run_index, i_run) {
+  if(is.data.frame(parameter$values)) {
+    n_digit <- parameter$values %>%
+      nrow(.) %>%
+      as.character(.) %>%
+      nchar(.)
+  } else {
+    n_digit <- 1
+  }
+  run_name <- "run"%_%sprintf("%0"%&%n_digit%&%"d", run_index[i_run])
+
+  error_report <- tibble(idx = run_index[i_run],
+                         run = run_name,
+                         error = model_output[1],
+                         message = paste(model_output, collapse = '||'))
+
+  output_con <- dbConnect(SQLite(), save_path%//%"error_log"%.%"sqlite")
+  output_db <- src_dbi(output_con)
+
+  copy_to(dest = output_db, df = error_report,
+          name = run_name, temporary = FALSE)
+
+  dbDisconnect(output_con)
+}
+
 #' Set the save path to the sqlite data base file
 #'
 #' @param project_path Character string. Path of SWAT project
