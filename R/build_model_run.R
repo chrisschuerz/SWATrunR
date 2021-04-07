@@ -154,7 +154,7 @@ get_os <- function() {
 #' @keywords internal
 #'
 run_os <- function(exe, os) {
-  if(os == 'unix') exe <- .%//%exe
+  if(os == 'unix') exe <- '.'%//%exe
   return(exe)
 }
 
@@ -179,9 +179,10 @@ check_revision <- function(project_path, run_path, os, swat_exe) {
 
   tmp_msg <- run(run_os(swat_exe, os), wd = tmp_path, error_on_status = FALSE) %>%
     .$stdout %>%
-    str_split(., '\r\n', simplify = T) %>%
+    str_split(., '\r\n|\n', simplify = T) %>%
     .[2] %>%
     str_remove_all(., '[:alpha:]') %>%
+    str_extract(., '[:digit:]{1,}\\.[:digit:]') %>%
     as.numeric()
 
   unlink(tmp_path, recursive = TRUE, force = TRUE)
