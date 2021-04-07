@@ -50,7 +50,7 @@ save_error_log <- function(save_path, model_output, parameter, run_index, i_run)
 
   error_report <- tibble(idx = run_index[i_run],
                          run = run_name,
-                         error = model_output[1],
+                         error = model_output[which(model_output == 'Error:')+1],
                          message = paste(model_output, collapse = '||'))
 
   output_con <- dbConnect(SQLite(), save_path%//%"error_log"%.%"sqlite")

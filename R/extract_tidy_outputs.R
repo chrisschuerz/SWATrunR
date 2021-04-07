@@ -77,7 +77,7 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
         enframe() %>%
         set_names(c("run", "message"))
       error_report <- error_report %>%
-        add_column(. ,error = map_chr(.$message, ~.x[1]), .after = "run") %>%
+        add_column(. ,error = map_chr(.$message, ~.x[which(.x == 'Error:') + 1]), .after = "run") %>%
         add_column(. ,idx = as.numeric(str_remove(.$run, "run_")), .before = 1)
     } else {
       error_report <- NULL

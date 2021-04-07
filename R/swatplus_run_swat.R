@@ -77,7 +77,9 @@
 #' @importFrom foreach foreach %dopar%
 #' @importFrom lubridate now
 #' @importFrom parallel detectCores makeCluster parSapply stopCluster
+#' @importFrom processx run
 #' @importFrom purrr map
+#' @importFrom stringr str_split
 #' @importFrom tibble tibble
 #' @export
 run_swatplus <- function(project_path, output, parameter = NULL,
@@ -219,7 +221,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   }
 
   sim_result <- foreach(i_run = 1:n_run,
-    .packages = c("dplyr", "lubridate"), .options.snow = opts) %dopar% {
+  .packages = c("dplyr", "lubridate", "processx", "stringr"), .options.snow = opts) %dopar% {
     # for(i_run in 1:max(nrow(parameter), 1)) {
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
@@ -239,19 +241,9 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     }
 
     ## Execute the SWAT exe file located in the thread folder
-    if(os == "win") {
-      run_batch <- thread_path%//%"swat_run.bat"
-    } else if (os == "unix") {
-      run_batch <- paste("cd", "cd"%&&%thread_path, "./"%&%swat_exe, sep = "; ")
-    }
-    system2(file.path(run_batch),
-            stdout = thread_path%//%"run_msg.txt",
-            stderr = thread_path%//%"err_msg.txt",)
-    err_msg <- read_lines(thread_path%//%"err_msg.txt")
-    file.remove(thread_path%//%"run_msg.txt")
-    file.remove(thread_path%//%"err_msg.txt")
+    msg <- run(run_os(swat_exe, os), wd = thread_path, error_on_status = FALSE)
 
-    if(length(err_msg) == 0) {
+    if(nchar(msg$stderr) == 0) {
       ## Read defined model outputs
       model_output <- read_swatplus_output(output, thread_path, revision) %>%
         extract_output(output, .)
@@ -260,6 +252,10 @@ run_swatplus <- function(project_path, output, parameter = NULL,
         save_run(save_path, model_output, parameter, run_index, i_run, thread_id)
       }
     } else {
+      err_msg <- str_split(msg$stderr, '\r\n|\r|\n', simplify = TRUE)
+      out_msg <- str_split(msg$stdout, '\r\n|\r|\n', simplify = TRUE) %>%
+        .[max(1, length(.) - 10):length(.)]
+      err_msg <- c('Last output:', out_msg, 'Error:', err_msg)
       model_output <- err_msg
       if(!is.null(save_path)) {
         save_error_log(save_path, model_output, parameter, run_index, i_run)
