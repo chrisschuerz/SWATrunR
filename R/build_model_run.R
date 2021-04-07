@@ -167,7 +167,8 @@ run_os <- function(exe, os) {
 #' @param swat_exe Character string that gives the name of the SWAT executable.
 #'
 #' @importFrom dplyr %>%
-#' @importFrom stringr str_sub
+#' @importFrom processx run
+#' @importFrom stringr str_split str_remove_all
 #' @keywords internal
 #'
 check_revision <- function(project_path, run_path, os, swat_exe) {
