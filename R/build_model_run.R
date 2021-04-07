@@ -137,7 +137,6 @@ build_model_run <- function(project_path, run_path, n_thread, os, swat_vers, qui
 #' Identify the OS (provided by Gabor Csardi)
 #' @keywords internal
 #'
-
 get_os <- function() {
   if (.Platform$OS.type == "windows") {
     "win"
@@ -149,6 +148,14 @@ get_os <- function() {
   } else {
     stop("Unknown OS")
   }
+}
+
+#' Add './' to run the exe on unix systems
+#' @keywords internal
+#'
+run_os <- function(exe, os) {
+  if(os == 'unix') exe <- .%//%exe
+  return(exe)
 }
 
 #' Check the Revision of used SWAT+ executable
@@ -164,44 +171,22 @@ get_os <- function() {
 #' @keywords internal
 #'
 check_revision <- function(project_path, run_path, os, swat_exe) {
-  dir.create(run_path%//%"tmp")
+  tmp_path <- run_path%//%"tmp"
 
-  swat_files <- dir(project_path, full.names = TRUE) %>%
-    .[!grepl(".txt$|.csv$|.db$",.)]
+  dir.create(tmp_path, recursive = T)
+  file.copy(project_path%//%swat_exe, tmp_path)
 
-  file.copy(swat_files, run_path%//%"tmp")
+  tmp_msg <- run(run_os(swat_exe, os), wd = tmp_path, error_on_status = FALSE) %>%
+    .$stdout %>%
+    str_split(., '\r\n', simplify = T) %>%
+    .[2] %>%
+    str_remove_all(., '[:alpha:]') %>%
+    as.numeric()
 
-  if(os == "win") {
-    # Batch file template required to run swat on Windows
-    batch_temp <- c("@echo off",
-                    str_sub(run_path, 1, 2),
-                    "cd"%&&%run_path%//%"tmp",
-                    swat_exe,
-                    "if %errorlevel% == 0 exit 0",
-                    "echo.")
-
-    run_batch <- run_path%//%"tmp"%//%"swat_run.bat"
-    writeLines(batch_temp, con = run_batch)
-
-  } else if(os == "unix") {
-    run_batch <- paste("cd", "cd"%&&%run_path%//%"tmp", "./"%&%swat_exe, sep = "; ")
-  }
-  #browser()
-  tmp_msg <- suppressWarnings(system2(file.path(run_batch), timeout = 2, stdout = T))
-  writeLines(tmp_msg,"revisonlogfile.txt")
-  tmp_msg <- tmp_msg %>%
-    .[grepl("Revision", .)] %>%
-    gsub("Revision", "", .) %>%
-    trimws(.) %>%
-    as.numeric(.)
-
-  #Sys.sleep(1)
-
-  unlink(run_path%//%"tmp",recursive = TRUE, force = TRUE)
+  unlink(tmp_path, recursive = TRUE, force = TRUE)
 
   return(tmp_msg)
 }
-
 
 #' Check if input start and end dates are given in the weather inputs
 #'
