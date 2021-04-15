@@ -76,14 +76,6 @@ build_model_run <- function(project_path, run_path, n_thread, os, swat_vers, qui
     swat_exe <- list.files(project_path) %>%
       .[grepl(".exe$",.)]
 
-    # Batch file template required to run swat on Windows
-    batch_temp <- c("@echo off",
-                    str_sub(run_path, 1, 2),
-                    "cd"%&&%run_path,
-                    swat_exe,
-                    "if %errorlevel% == 0 exit 0",
-                    "echo.")
-
   } else if(os == "unix") {
     swat_exe <- system("find"%&&%project_path%&&%"-executable -type f",
                         intern = T) %>%
@@ -117,13 +109,6 @@ build_model_run <- function(project_path, run_path, n_thread, os, swat_vers, qui
     ## Copy all files from the project folder to the respective thread
     dir.create(run_path%//%"thread"%_%i)
     file.copy(swat_files, run_path%//%"thread"%_%i)
-    if(os == "win") {
-    ## Write the batch file that will be executed to call the SWAT exe when
-    ## executing SWAT in a later step
-    swat_bat <- batch_temp
-    swat_bat[3] <- swat_bat[3]%//%"thread"%_%i
-    writeLines(swat_bat, con = run_path%//%"thread"%_%i%//%"swat_run.bat")
-    }
     if(!quiet) {
       display_progress(i, n_thread, t0, "Thread")
     }
@@ -151,6 +136,8 @@ get_os <- function() {
 }
 
 #' Add './' to run the exe on unix systems
+#' @param exe Text string that defines the name of the executable file
+#' @param os Text string that defines the operating system
 #' @keywords internal
 #'
 run_os <- function(exe, os) {
