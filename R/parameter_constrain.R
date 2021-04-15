@@ -3,40 +3,41 @@
 #' @param par Character string vector providing parameters and constraints
 #'
 #' @importFrom dplyr %>% bind_cols bind_rows everything mutate one_of select
-#' @importFrom purrr map map2 map_lgl pmap set_names
+#' @importFrom purrr map map_lgl map_chr map_if map2 map2_chr pmap set_names
 #' @importFrom tibble as_tibble tibble
-#' @importFrom stringr str_extract str_split str_sub
+#' @importFrom stringr str_detect str_extract str_remove str_remove_all str_split str_sub
 #' @keywords internal
 #'
 translate_parameter_constraints <- function(par) {
 
-  has_par_name <- map_lgl(par, ~ grepl("\\:\\:", .x))
-  has_change   <- map_lgl(par, ~ grepl("change", .x))
+  has_par_name <- str_detect(par, "\\:\\:")
+  par_list <- str_split(par, '\\:\\:|\\|')
 
-  if(any(!has_change)) stop("Type of change must be provided for all parameters!")
+  has_change   <- map2_lgl(par_list, has_par_name, ~ str_detect(.x[2+.y], "change"))
+  if(any(!has_change)) {
+    stop("Type of change definition is incorrect for the following parameters:\n  ",
+         map_chr(par_list[!has_change], ~.x[1]) %>% paste(., collapse = ", "), "\n  ",
+         "The parameter change must be provided for all parameters at the second\n  ",
+         "position of the parameter name (after the first '|', e.g. 'par | change = abschg').")
+  }
 
-  bool_op <- "\\=\\=|\\!\\=|\\<\\=|\\>\\=|\\=|\\<|\\>|\\%in\\%"
+  par_name <- map(par_list, ~.x[1]) %>%
+    map_if(., !has_par_name, ~ str_remove(.x, '\\..*')) %>%
+    unlist()
+  parameter <- map2_chr(par_list, has_par_name, ~.x[1 + .y]) %>%
+    map_chr(., ~ str_remove(.x, '\\..*'))
+  file_name <- map2_chr(par_list, has_par_name, ~.x[1 + .y]) %>%
+    map_chr(., ~ str_remove(.x, '.*\\.'))
+  change <- par_list %>%
+    map2_chr(., has_par_name, ~ str_remove_all(.x[2+.y], 'change|\\=')) %>%
+    trimws(.)
+  model_par <- tibble(par_name, parameter, file_name, change)
 
-  model_par <- tibble(par_name  = gsub("\\:\\:.*", "", par) %>% trimws(.),
-                      parameter = gsub(".*\\:\\:|\\|.*","", par) %>% trimws(.)) %>%
-    mutate(file_name  = gsub(".*\\.","", parameter),
-           parameter  = gsub("\\..*","", parameter),
-           par_name   = ifelse(has_par_name, par_name, parameter),
-           change     = gsub(".*change|\\|.*", "", par) %>%
-             gsub(bool_op, "",.) %>%
-             trimws(.) %>%
-             str_sub(., 1, 6))
-
-  is_correct_change <- model_par$change %in% c("relchg", "pctchg", "abschg", "absval")
-  if(any(!is_correct_change)) {
+  if(any(!(change %in% c("relchg", "pctchg", "abschg", "absval")))) {
     stop("Wrong input for change type. Must be either"%&&%
          "'relchg', 'pctchg', 'abschg', or 'absval'.")
   }
-
-  # Here future!: add reading file_name frome par_lookup.csv --> check if file
-  # name is given or add if per name is not ambiguous!
-
-  is_correct_file <- model_par$file_name %in%
+  is_correct_file <- file_name %in%
     c("pnd", "rte", "sub", "swq", "hru", "gw", "sdr", "sep", "bsn", "wwq",
       "res", "ops", "sol", "mgt", "chm", "swq", "hlt", "plt", "pst", "cli", "aqu")
 
@@ -44,12 +45,18 @@ translate_parameter_constraints <- function(par) {
     stop(paste(model_par$file_name[!is_correct_file], collapse = ", ")%&&%
          "files are no valid file type!")
   }
-
-  unique_par <- table(model_par$par_name)
+  unique_par <- table(par_name)
   if(any(unique_par > 1)) {
     stop("Duplicated parameter names found! Define individual names with:\n"%&%
          "par_name::parameter|...")
   }
+
+  bool_op <- "\\=\\=|\\!\\=|\\<\\=|\\>\\=|\\=|\\<|\\>|\\%in\\%"
+
+
+  # Here future!: add reading file_name frome par_lookup.csv --> check if file
+  # name is given or add if per name is not ambiguous!
+
 
   file_expr <- "filter(., file_name == '"%&%model_par$file_name%&%"')"
 
