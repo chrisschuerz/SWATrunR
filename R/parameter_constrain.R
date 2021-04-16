@@ -2,10 +2,10 @@
 #'
 #' @param par Character string vector providing parameters and constraints
 #'
-#' @importFrom dplyr %>% bind_cols bind_rows everything mutate one_of select
-#' @importFrom purrr map map_lgl map_chr map_if map2 map2_chr pmap set_names
-#' @importFrom tibble as_tibble tibble
-#' @importFrom stringr str_detect str_extract str_remove str_remove_all str_split str_sub
+#' @importFrom dplyr %>% bind_cols last_col relocate select
+#' @importFrom purrr map map_chr map_df map_if map_lgl map2 map2_chr
+#' @importFrom tibble tibble
+#' @importFrom stringr str_detect str_extract str_remove str_remove_all str_split
 #' @keywords internal
 #'
 translate_parameter_constraints <- function(par, swat_vers) {
@@ -39,13 +39,13 @@ translate_parameter_constraints <- function(par, swat_vers) {
   }
 
   if(swat_vers == '2012') {
-    swat_files <- c("pnd", "rte", "sub", "swq", "hru", "gw", "sdr", "sep", "bsn", "wwq",
-        "res", "ops", "sol", "mgt", "chm", "swq", "hlt", "plt", "pst")
+    swat_files <- c("pnd", "rte", "sub", "swq", "hru", "gw", "mgt", "sol", "chm",
+                    "sdr", "sep", "bsn", "wwq", "res", "ops")
   } else {
     swat_files <- c("hru", "sol", "bsn", "swq", "rte", "res", "aqu", "hlt", "pst")
   }
 
-  if(any(!is_correct_file)) {
+  if(all(!(file_name %in% swat_files))) {
     stop(paste(model_par$file_name[!is_correct_file], collapse = ", ")%&&%
          "files are no valid file type!")
   }
@@ -57,145 +57,113 @@ translate_parameter_constraints <- function(par, swat_vers) {
 
   bool_op <- c("\\=\\=", "\\!\\=", "\\<\\=", "\\>\\=", "\\=", "\\<", "\\>", "\\%in\\%")
 
-  constraints <- map2(par_list, has_par_name, ~.x[(3 + .y):length(.x)]) %>%
-    map_df(., ~ build_constraint_tbl(.x, bool_op))
+  cons_list <- map2(par_list, has_par_name, ~.x[(3 + .y):length(.x)])
 
-  build_constraint_tbl <- function(cons_i, bool_op){
-    rex <- paste(bool_op%.%"*", collapse = "|")
-    cons_names <- str_remove(cons_i, rex) %>%
-      trimws()
+  constraints <- cons_list %>%
+    map_df(., ~ build_constraint_tbl(.x, bool_op)) %>%
+    remove_dummy() %>%
+    map_df(., ~map_chr(.x, ~ tidy_constraint(.x, bool_op)))
 
-  str_extract(cons_i, rex) %>%
-    set_names(., cons_names) %>%
-    map_df(., ~.x)
-  }
+  # is_constraint_var <- names(constraints) %in% c("sub", "hru", "luse", "soil", "slope")
 
+  # if (!) {
+  #   stop("The")
+  # }
 
-
-  # Here future!: add reading file_name frome par_lookup.csv --> check if file
-  # name is given or add if per name is not ambiguous!
-
-
-  par_clean <- par %>% strsplit(., "\\|")
-  chg_pos <- map(par_clean, ~ which(grepl("change", .x)))
-  sub_pos <- map(par_clean, ~ which(grepl("sub", .x))) %>%
-    map2(., chg_pos, ~ c(1:.y, .x)) %>%
-    map(., unique)
-
-  par_clean[is_bsn_par] <- map2(par_clean[is_bsn_par],chg_pos[is_bsn_par], ~.x[1:.y])
-  par_clean[is_sub_par] <- map2(par_clean[is_sub_par],sub_pos[is_sub_par], ~.x[.y])
-
-  filter_expr <- par_clean %>%
-    map(., ~ .x[2:length(.x)] %>% .[!grepl("change",.)])
-
-  filter_var_val <- map(filter_expr, ~ str_split(.x, bool_op))
-  filter_var <- map(filter_var_val, ~unlist(.x)[1]) %>%
-    map(., trimws) %>%
-    map(., tolower)
-  filter_val <-  map(filter_var_val, ~unlist(.x)[2]) %>%
-    map(., ~ gsub("c\\(|\\)", "", .x)) %>%
-    map(., ~ add_quotes_if_chr(.x)) %>%
-    map(., ~ concat_values(.x))
-  filter_op  <- map(filter_expr, ~ str_extract(.x, bool_op)) %>%
-    map(., ~ trimws(.x)) %>%
-    map(., ~ gsub("\\=", "\\=\\=", .x )) %>%
-    map(., ~ gsub("\\=\\=\\=\\=", "\\=\\=", .x ))
-
-  expressions <- pmap(list(filter_var, filter_val, filter_op), build_expr) %>%
-    map_df(., as_tibble) %>%
-    mutate(file_expression = paste(file_expr, file_expression, sep = " %>% ") %>%
-             gsub(" %>% $", "", .))
-
-  model_par <- map2(filter_op, filter_val, paste) %>%
-    map2(.,filter_var, ~ as.list(c(NA,.x)) %>% set_names(., c("idx",.y)) %>% as_tibble(.)) %>%
-    bind_rows(.) %>%
-    select(-idx) %>%
-    select(one_of("sub", "hru", "luse", "soil", "slope"), everything()) %>%
-    bind_cols(model_par, ., expressions)
+  model_par <- bind_cols(model_par, constraints) %>%
+    relocate(., full_name, .after = last_col())
 
   return(model_par)
 }
 
-#' Add quotes to character values of vector in filter expression
+
+
+#' Build the parameter constraint from the rules in the parameter names
 #'
-#' @param chr Character string providing values for filter variable
+#' @param cons_i Text string that defines the constraint i
+#' @param bool_op Vector of strings that define the different possible boolean operations
+#'
+#' @importFrom dplyr %>%
+#' @importFrom purrr map_df set_names
+#' @importFrom stringr str_extract str_remove
+#' @keywords internal
+#'
+build_constraint_tbl <- function(cons_i, bool_op){
+  if(all(is.na(cons_i))) {
+    tibble(dummy = NA)
+  } else {
+    rex <- paste(bool_op%.%"*", collapse = "|")
+    cons_names <- str_remove(cons_i, rex) %>%
+      trimws()
+
+    str_extract(cons_i, rex) %>%
+      set_names(., cons_names) %>%
+      map_df(., ~.x)
+  }
+}
+
+#' Apply a set of operations to the rule strings to check and clean the defined operations
+#'
+#' @param chr Text string that defines the constraint i
+#' @param bool_op Vector of strings that define the different possible boolean operations
 #'
 #' @importFrom dplyr %>%
 #' @importFrom purrr map map_chr map_lgl map_if
+#' @importFrom stringr str_extract str_remove str_remove_all str_split
 #' @keywords internal
 #'
-add_quotes_if_chr <- function(chr) {
-  is_chr <- chr %>%
-    strsplit(., ",|:") %>%
-    map(., ~ as_num(.x)) %>%
-    map_lgl(.,  ~ is.na(.x) %>% any(.))
+tidy_constraint <- function(chr, bool_op) {
+  rex <- paste(bool_op, collapse = "|")
+  op <- str_extract(chr, rex) %>%
+    ifelse(. == '=', '==', .)
+  chr_sep <- str_remove(chr, rex)
+  num_eval <- try(eval(parse(text = chr_sep)), silent = T)
+  is_num <- is.numeric(num_eval)
 
-  chr %>%
-    strsplit(., ",") %>%
-    map(., ~ trimws(.x)) %>%
-    map_if(., is_chr, ~ paste0("'",.x, "'")) %>%
-    map_chr(., ~ paste(.x, collapse = ", ")) %>%
-    gsub("\\'\\'", "\\'",.)
-}
-
-#' Helper function to wrap text string with "c(...)" to concatenate values
-#'
-#' @param x Text string
-#' @keywords internal
-#'
-concat_values <- function(x){
-  x[!grepl("c\\((.*?)\\)",x) & grepl("\\,", x)] <-
-    "c("%&%x[!grepl("c\\((.*?)\\)",x) & grepl("\\,", x)]%&%")"
-  return(x)
-}
-
-#' Build expresions used to filter parameter values in parameter modification
-#' step
-#'
-#' @param var List of filter variables
-#' @param val List of values for the respective filter variables
-#' @param op  List of logical operators for the respective filter variables
-#'
-#' @importFrom purrr pmap_chr
-#' @keywords internal
-#'
-build_expr <- function(var, val, op) {
-  is_file_var <- var %in% c("sub", "hru", "luse", "soil", "slope")
-
-  file_filter <- pmap_chr(list(var[is_file_var], val[is_file_var], op[is_file_var]),
-           build_filter) %>%
-    paste(., collapse = " %>% ")
-
-  var[!is_file_var] <- toupper(var[!is_file_var])
-  spec_filter <- pmap_chr(list(var[!is_file_var], val[!is_file_var], op[!is_file_var]),
-                          build_filter) %>%
-    paste(., collapse = " %>% ")
-
-  return(list(file_expression = file_filter, spec_expression = spec_filter))
-}
-
-#' Build filter expresions for one sequence of variable, operator and values
-#'
-#' @param var Character string providing the filter variable
-#' @param val Character string providing the values for the respective filter
-#'   variable
-#' @param op  Character string providing the logical operator for the filter
-#'   operation
-#'
-#' @importFrom purrr pmap
-#' @keywords internal
-#'
-build_filter <- function(var, val, op) {
-  if(grepl("\\,|\\:", val)){
-    if(op == "==" | op == "%in%") {
-      expr <- "filter(.,"%&&%var%&&%"%in%"%&&%val%&%")"
-    } else if (op == "!=") {
-      expr <- "filter(., !("%&%var%&&%"%in%"%&&%val%&%"))"
+  if(is.na(chr)){
+    cons_tidy <- NA
+  } else if(is_num) {
+    op_is_eq <- op %in% c('%in%', '==')
+    if(length(num_eval) == 1) {
+      cons_tidy <- paste0(op,chr_sep)
+    } else if (length(num_eval) > 1 & op_is_eq) {
+      cons_tidy <- paste0('%in%',chr_sep)
     } else {
-      stop("Operator"%&&%op%&&%"not valid together with multiple filter values.")
+      stop("The parameter constraint '", chr, "' is not well defined.")
     }
   } else {
-    expr <- "filter(.,"%&&%var%&&%op%&&%val%&%")"
+    is_op_chr <- op %in% c('%in%', '==', '!=')
+    if(!is_op_chr) {
+      stop("Selected boolean operation '", op, "' in '", chr, "' is not applicable to characters.")
+    }
+    chr_sep <- chr_sep %>%
+      str_remove(., rex) %>%
+      str_remove_all(., 'c\\(|\\)') %>%
+      trimws(.) %>%
+      str_split(., '[:space:]*,+[:space:]*| [:space:]+', simplify = T) %>%
+      str_remove_all(., "\'|\"") %>%
+      paste0("'",., "'")
+
+    if(length(chr_sep) == 1) {
+      cons_tidy <- paste0(op, chr_sep)
+    } else {
+      cons_tidy <- paste0('%in% ', 'c(', paste(chr_sep, collapse = ","), ')')
+    }
   }
-  return(expr)
+
+  return(cons_tidy)
+}
+
+#' Remove the generated dummy column that was required for the col bind
+#'
+#' @param tbl Tibble
+#' @importFrom dplyr select
+#' @keywords internal
+#'
+remove_dummy <- function(tbl) {
+  if('dummy' %in% names(tbl)) {
+    select(tbl, -dummy)
+  } else {
+    tbl
+  }
 }

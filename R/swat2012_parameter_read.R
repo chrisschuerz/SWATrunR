@@ -7,9 +7,9 @@
 #' @keywords internal
 #'
 format_swat2012_parameter <- function(parameter, swat_vers) {
-  if(!any(names(parameter) %in% c("values", "definition"))) {
-    par_constrain <- suppressWarnings(
-      translate_parameter_constraints(names(parameter), swat_vers))
+  par_names <- names(parameter)
+  if(!any(par_names %in% c("values", "definition"))) {
+    par_constrain <- translate_parameter_constraints(par_names, swat_vers)
     names(parameter) <- par_constrain$par_name
     if(!is.data.frame(parameter)) parameter <- map_dfc(parameter, ~.x)
     return(list(values = parameter, definition = par_constrain))
@@ -50,6 +50,9 @@ read_swat2012_files <- function(project_path, file_meta) {
 
   return(backup)
 }
+
+c("pnd", "rte", "sub", "swq", "hru", "gw", "mgt", "sol", "chm",
+  "sdr", "sep", "bsn", "wwq", "res", "ops")
 
 #' Read the meta information for the parameter files
 #'

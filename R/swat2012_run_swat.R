@@ -120,7 +120,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
   ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
   if(!is.null(parameter)) {
-    parameter <- format_swat2012_parameter(parameter)
+    parameter <- format_swat2012_parameter(parameter, '2012')
   }
 
   ## Check values provided with run_index and prepare run_index for simulation
