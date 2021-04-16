@@ -6,10 +6,10 @@
 #'
 #' @keywords internal
 #'
-format_swat2012_parameter <- function(parameter) {
+format_swat2012_parameter <- function(parameter, swat_vers) {
   if(!any(names(parameter) %in% c("values", "definition"))) {
     par_constrain <- suppressWarnings(
-      translate_parameter_constraints(names(parameter)))
+      translate_parameter_constraints(names(parameter), swat_vers))
     names(parameter) <- par_constrain$par_name
     if(!is.data.frame(parameter)) parameter <- map_dfc(parameter, ~.x)
     return(list(values = parameter, definition = par_constrain))

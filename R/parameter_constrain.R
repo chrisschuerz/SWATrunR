@@ -8,7 +8,7 @@
 #' @importFrom stringr str_detect str_extract str_remove str_remove_all str_split str_sub
 #' @keywords internal
 #'
-translate_parameter_constraints <- function(par) {
+translate_parameter_constraints <- function(par, swat_vers) {
 
   has_par_name <- str_detect(par, "\\:\\:")
   par_list <- str_split(par, '\\:\\:|\\|')
@@ -31,15 +31,19 @@ translate_parameter_constraints <- function(par) {
   change <- par_list %>%
     map2_chr(., has_par_name, ~ str_remove_all(.x[2+.y], 'change|\\=')) %>%
     trimws(.)
-  model_par <- tibble(par_name, parameter, file_name, change)
+  model_par <- tibble(par_name, parameter, file_name, change, full_name = par)
 
   if(any(!(change %in% c("relchg", "pctchg", "abschg", "absval")))) {
     stop("Wrong input for change type. Must be either"%&&%
          "'relchg', 'pctchg', 'abschg', or 'absval'.")
   }
-  is_correct_file <- file_name %in%
-    c("pnd", "rte", "sub", "swq", "hru", "gw", "sdr", "sep", "bsn", "wwq",
-      "res", "ops", "sol", "mgt", "chm", "swq", "hlt", "plt", "pst", "cli", "aqu")
+
+  if(swat_vers == '2012') {
+    swat_files <- c("pnd", "rte", "sub", "swq", "hru", "gw", "sdr", "sep", "bsn", "wwq",
+        "res", "ops", "sol", "mgt", "chm", "swq", "hlt", "plt", "pst")
+  } else {
+    swat_files <- c("hru", "sol", "bsn", "swq", "rte", "res", "aqu", "hlt", "pst")
+  }
 
   if(any(!is_correct_file)) {
     stop(paste(model_par$file_name[!is_correct_file], collapse = ", ")%&&%
@@ -51,17 +55,25 @@ translate_parameter_constraints <- function(par) {
          "par_name::parameter|...")
   }
 
-  bool_op <- "\\=\\=|\\!\\=|\\<\\=|\\>\\=|\\=|\\<|\\>|\\%in\\%"
+  bool_op <- c("\\=\\=", "\\!\\=", "\\<\\=", "\\>\\=", "\\=", "\\<", "\\>", "\\%in\\%")
+
+  constraints <- map2(par_list, has_par_name, ~.x[(3 + .y):length(.x)]) %>%
+    map_df(., ~ build_constraint_tbl(.x, bool_op))
+
+  build_constraint_tbl <- function(cons_i, bool_op){
+    rex <- paste(bool_op%.%"*", collapse = "|")
+    cons_names <- str_remove(cons_i, rex) %>%
+      trimws()
+
+  str_extract(cons_i, rex) %>%
+    set_names(., cons_names) %>%
+    map_df(., ~.x)
+  }
+
 
 
   # Here future!: add reading file_name frome par_lookup.csv --> check if file
   # name is given or add if per name is not ambiguous!
-
-
-  file_expr <- "filter(., file_name == '"%&%model_par$file_name%&%"')"
-
-  is_sub_par <- model_par$file_name %in% c("pnd", "rte", "sub", "swq")
-  is_bsn_par <- model_par$file_name %in% c("bsn", "wwq", "res", "ops", "hlt", "plt", "pst", "cli")
 
 
   par_clean <- par %>% strsplit(., "\\|")

@@ -4,7 +4,7 @@
 \alias{translate_parameter_constraints}
 \title{Translate the parameter inputs and the set constraints into lookup table}
 \usage{
-translate_parameter_constraints(par)
+translate_parameter_constraints(par, swat_vers)
 }
 \arguments{
 \item{par}{Character string vector providing parameters and constraints}

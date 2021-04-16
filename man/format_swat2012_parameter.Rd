@@ -6,7 +6,7 @@
 table providing the file constraints and the filter expressions for the
 respective parameter}
 \usage{
-format_swat2012_parameter(parameter)
+format_swat2012_parameter(parameter, swat_vers)
 }
 \arguments{
 \item{parameter}{Model parameters as named vector or tibble}
