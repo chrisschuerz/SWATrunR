@@ -58,20 +58,21 @@ modify_parameter <- function(parameter, thread_parameter, file_meta, run_index,
 #'
 modify_gen_par <- function(parameter, model_parameter, file_meta,
                             i_par, run_index, i_run) {
-  par_i <- parameter$definition[i_par, ]
-  par_up_i <- parameter$values[[par_i$par_name]][run_index[i_run]]
-  file_code_i <- par_i$file_expression %>%
+  def_i <- parameter$definition[i_par, ]
+  par_tbl <- model_parameter[[def_i$file_name]][["value"]]
+
+  file_codes <- model_parameter[[def_i$file_name]][["value"]]$file_code
+  file_code_i <- def_i %>%
+    build_expression() %>%
     evaluate_expression(file_meta, .) %>%
     .[["file_code"]]
 
-  idx_i <- model_parameter[[par_i$file_name]][["value"]] %>%
-    filter(file_code %in% file_code_i) %>%
-    filter_spec_expr(., par_i$spec_expression) %>%
-    .[["idx"]]
+  par_up_i <- parameter$values[[def_i$par_name]][run_index[i_run]]
+  par_val  <- model_parameter[[def_i$file_name]][["value"]][[def_i$parameter]][file_codes %in% file_code_i]
 
-  model_parameter[[par_i$file_name]][["value"]][[par_i$parameter]] <-
-    model_parameter[[par_i$file_name]][["value"]][[par_i$parameter]] %>%
-    update_par(., par_up_i, par_i$change, idx_i)
+  par_val <- update_par(par_val, par_up_i, def_i$change)
+
+  model_parameter[[def_i$file_name]][["value"]][[def_i$parameter]][file_codes %in% file_code_i] <- par_val
 
   return(model_parameter)
 }
@@ -139,23 +140,25 @@ modify_mgt_par <- function(parameter, model_parameter, file_meta,
     "IFRT_FREQ",    14,          "MGT3",
     "CFRT_KG",      14,          "MGT4")
 
-  par_i <- parameter$definition[i_par, ]
-  par_up_i <- parameter$values[[par_i$par_name]][run_index[i_run]]
-  file_code_i <- par_i$file_expression %>%
+  def_i <- parameter$definition[i_par, ]
+
+  file_code_i <- def_i %>%
+    build_expression() %>%
     evaluate_expression(file_meta, .) %>%
     .[["file_code"]]
 
-  mgt_i <- filter(mgt_lookup, par == par_i$parameter)
+  par_up_i <- parameter$values[[def_i$par_name]][run_index[i_run]]
+  mgt_i <- filter(mgt_lookup, par == def_i$parameter)
 
   idx_i <- model_parameter$mgt$mgt_table %>%
     filter(file_code %in% file_code_i) %>%
     filter(MGT_OP == mgt_i[["mgt_op"]]) %>%
     .[["idx"]]
 
-  model_parameter$mgt$mgt_table[,mgt_i[["mgt_i"]]] <-
-    model_parameter$mgt$mgt_table[,mgt_i[["mgt_i"]]] %>%
-    .[[1]] %>%
-    update_par(., par_up_i, par_i$change, idx_i)
+  par_val <-  model_parameter$mgt$mgt_table[[mgt_i$mgt_i]][idx_i]
+  par_val <-  update_par(par_val, par_up_i, def_i$change)
+
+  model_parameter$mgt$mgt_table[[mgt_i$mgt_i]][idx_i] <- par_val
 
   return(model_parameter)
 }
@@ -166,33 +169,17 @@ modify_mgt_par <- function(parameter, model_parameter, file_meta,
 #' @param par Vector with parameter values that are updated
 #' @param par_up Value that is applied to the paramter values for updating
 #' @param change Type of change, either: abs', 'rep', or 'rel'
-#' @param to_chg Index vector that indicates the values of the parameter vector
-#'   that should be updated
 #'
 #' @importFrom dplyr case_when
 #'
 #' @keywords internal
 #'
-update_par <- function(par, par_up, change, to_chg){
-  par[to_chg] <- case_when(
-    change == "relchg" ~ par[to_chg] * (1 + par_up),
-    change == "pctchg" ~ par[to_chg] * (1 + par_up/100),
-    change == "abschg" ~ par[to_chg] + par_up,
+update_par <- function(par, par_up, change){
+  par <- case_when(
+    change == "relchg" ~ par * (1 + par_up),
+    change == "pctchg" ~ par * (1 + par_up/100),
+    change == "abschg" ~ par + par_up,
     change == "absval" ~ par_up
     )
   return(par)
-}
-
-#' Filter a parameter table for the specific expression if available
-#'
-#' @param par_table Parameter table
-#' @param expr Expression to evaluate
-#'
-#' @keywords internal
-#'
-filter_spec_expr <- function(par_table, expr) {
-  if(nchar(expr) > 0) {
-    par_table <- evaluate_expression(par_table, expr)
-  }
-  return(par_table)
 }

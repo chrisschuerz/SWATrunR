@@ -136,10 +136,13 @@ read_par_list <- function(file_meta, file_suffix, project_path, n_row = NULL){
 
 
     files <- map(project_path%//%file_sel$file, read_lines)
-    # if(!is.null(n_row)) {
-    #   files <- map(files, ~.x[1:n_row])
-    # }
-    par_table <- map(files, ~ get_value(.x, par_pos)) %>%
+    if(!is.null(n_row)) {
+      files_tbl <- map(files, ~.x[1:n_row])
+    } else {
+      files_tbl <- files
+    }
+
+    par_table <- map(files_tbl, ~ get_value(.x, par_pos)) %>%
       map_df(., ~set_names(.x, par_name)) %>%
       mutate(file_code = file_sel$file_code) %>%
       mutate(idx = 1:nrow(.))
@@ -248,9 +251,11 @@ read_mgt <- function(file_meta, project_path) {
 #' @keywords internal
 #'
 is_par <- function(chr) {
-  num <- chr %>% str_sub(., 1, 16) %>% as_num(.)
+  sep_pos <- str_locate(chr, '\\|')[,1]
+  num <- chr %>% str_sub(., 1, sep_pos-1) %>%
+    as_num(.)
   has_par_name <- grepl("\\:", chr) & grepl("\\:", chr)
-  is_par <- !is.na(num) & has_par_name
+  is_par <- !is.na(num) & has_par_name & !is.na(sep_pos)
   return(is_par)
 }
 
@@ -276,8 +281,9 @@ get_par_name <- function(chr, par_pos) {
 #'
 get_value <- function(file_i, par_pos) {
   par_pos <- par_pos[1:min(length(file_i), length(par_pos))]
+  sep_pos <- str_locate(file_i, '\\|')[par_pos,1]
   file_i[c(par_pos, rep(FALSE, (length(file_i) - length(par_pos))))] %>%
-    str_sub(., 1, 16) %>%
+    str_sub(., 1, sep_pos - 1) %>%
     as_num(.)
 }
 

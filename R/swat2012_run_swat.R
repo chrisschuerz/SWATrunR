@@ -214,15 +214,15 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     opts <- list()
   }
 
- sim_result <- foreach(i_run = 1:n_run,
-                       .packages = c("dplyr", "lubridate", "stringr", "processx"),
-                       .options.snow = opts) %dopar% {
-   # for(i_run in 1:max(nrow(parameter$values), 1)) {
-    ## Identify worker of the parallel process and link it with respective thread
+ # sim_result <- foreach(i_run = 1:n_run,
+ #                       .packages = c("dplyr", "lubridate", "stringr", "processx"),
+ #                       .options.snow = opts) %dopar% {
+   for(i_run in 1:max(nrow(parameter$values), 1)) {
+   # Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
     thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
     thread_path <- run_path%//%thread_id
-    # thread_path <- run_path%//%"thread_1"
+    thread_path <- run_path%//%"thread_1"
 
     ## Modify model parameters if parameter set was provided
     if(!is.null(parameter)) {

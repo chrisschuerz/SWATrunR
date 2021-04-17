@@ -3,7 +3,7 @@
 #' @param par Character string vector providing parameters and constraints
 #'
 #' @importFrom dplyr %>% bind_cols last_col relocate select
-#' @importFrom purrr map map_chr map_df map_if map_lgl map2 map2_chr
+#' @importFrom purrr map map_chr map_df map_if map2_lgl map2 map2_chr
 #' @importFrom tibble tibble
 #' @importFrom stringr str_detect str_extract str_remove str_remove_all str_split
 #' @keywords internal
