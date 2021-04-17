@@ -42,17 +42,35 @@ finish_progress <- function(nmax, t0, word) {
       cat("\r","Completed",nmax, word%&%plural(nmax), "in", ., "\n")
 }
 
+#' Build filter expressions from the parameter constraint table'
+#'
+#' @param constraints Constraint table
+#'
+#' @importFrom dplyr %>% mutate select
+#' @importFrom purrr map map_chr map2_chr
+#' @keywords internal
+#'
+build_expression <- function(constraints) {
+  constraints %>%
+    mutate(file_name = paste0("== '", file_name, "'")) %>%
+    select(-par_name, -parameter, - change, - full_name) %>%
+    transpose() %>%
+    map(., ~.x[!is.na(.)]) %>%
+    map(., ~map2_chr(.x, names(.), ~ paste0('filter(., ',.y, .x, ')'))) %>%
+    map(., ~ c("table", .x)) %>%
+    map_chr(., ~ paste(.x, collapse = " %>% "))
+}
+
 #' Evaluate the expression defined for a variable in 'output'
 #'
 #' @param table Table to which dplyr expression should be applied
-#' @param expression Expression to be applied to table
+#' @param expr Expression to be applied to table
 #'
 #' @importFrom dplyr %>%
 #' @keywords internal
 #'
-evaluate_expression <- function(table, expression){
-  paste("table", expression, sep = " %>% ") %>%
-    parse(text = .) %>%
+evaluate_expression <- function(table, expr){
+    parse(text = expr) %>%
     eval(.)
 }
 

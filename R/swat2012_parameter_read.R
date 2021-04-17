@@ -58,30 +58,22 @@ c("pnd", "rte", "sub", "swq", "hru", "gw", "mgt", "sol", "chm",
 #'
 #' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
 #'
-#' @importFrom dplyr %>% left_join mutate
+#' @importFrom dplyr %>% distinct left_join mutate
 #' @importFrom purrr map_df
 #' @importFrom tibble tibble
-#' @importFrom stringr str_sub
+#' @importFrom stringr str_remove str_sub
 #' @keywords internal
 #'
 read_file_meta <- function(project_path, par_constrain) {
-  file_meta <- tibble(file = list.files(project_path) %>%
-                               .[!grepl("output", .)],
-                      file_code = gsub("\\..*$", "", file),
-                      file_name  = gsub(".*\\.","", file)) %>%
+  file_meta <- tibble(file = list.files(project_path),
+                      file_code = str_remove(file, "\\..*$"),
+                      file_name  = str_remove(file, ".*\\.")) %>%
     left_join(., read_hru(project_path), by = "file_code") %>%
-    mutate(idx = 1:nrow(.),
-           sub = str_sub(file_code, 1,5) %>% as_num(.),
+    mutate(sub = str_sub(file_code, 1,5) %>% as_num(.),
            sub = ifelse(sub > 0, sub, NA))
-
-  idx_sel <- map(par_constrain$file_expression,
-                 ~ evaluate_expression(file_meta, .x) %>% .[["idx"]]) %>%
-    unlist(.) %>%
-    unique(.)
-
-  file_meta %>%
-    filter(., idx %in% idx_sel) %>%
-    select(-idx)
+  build_expression(par_constrain) %>%
+  map_df(., ~ evaluate_expression(file_meta, .x)) %>%
+    distinct(., file, .keep_all = T)
 }
 
 #' Read all '.hru' files in the project_path and extract the meta data from

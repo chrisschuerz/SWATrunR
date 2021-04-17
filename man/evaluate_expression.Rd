@@ -4,12 +4,12 @@
 \alias{evaluate_expression}
 \title{Evaluate the expression defined for a variable in 'output'}
 \usage{
-evaluate_expression(table, expression)
+evaluate_expression(table, expr)
 }
 \arguments{
 \item{table}{Table to which dplyr expression should be applied}
 
-\item{expression}{Expression to be applied to table}
+\item{expr}{Expression to be applied to table}
 }
 \description{
 Evaluate the expression defined for a variable in 'output'

@@ -57,21 +57,34 @@ translate_parameter_constraints <- function(par, swat_vers) {
 
   bool_op <- c("\\=\\=", "\\!\\=", "\\<\\=", "\\>\\=", "\\=", "\\<", "\\>", "\\%in\\%")
 
-  cons_list <- map2(par_list, has_par_name, ~.x[(3 + .y):length(.x)])
+  cons_list <- map2(par_list, has_par_name, ~.x[-(1:(2+.y))])
 
   constraints <- cons_list %>%
     map_df(., ~ build_constraint_tbl(.x, bool_op)) %>%
     remove_dummy() %>%
     map_df(., ~map_chr(.x, ~ tidy_constraint(.x, bool_op)))
 
+  if(ncol(constraints) > 0) {
+    if(swat_vers == '2012') {
+      cons_var <- c("sub", "hru", "luse", "soil", "slope")
+    } else {
+      stop('Parameter constraints not yet implemented!')
+      cons_var <- c("hru", "sol", "bsn", "swq", "rte", "res", "aqu", "hlt", "pst")
+    }
+    if(any(!(names(constraints) %in% cons_var))) {
+      stop('The parameter constraints: ', paste(names(constraints)[!(names(constraints)
+                                            %in% cons_var)], collapse = ", "),
+           " are not valid!")
+    }
+    model_par <- bind_cols(model_par, constraints) %>%
+      relocate(., full_name, .after = last_col())
+  }
   # is_constraint_var <- names(constraints) %in% c("sub", "hru", "luse", "soil", "slope")
 
   # if (!) {
   #   stop("The")
   # }
 
-  model_par <- bind_cols(model_par, constraints) %>%
-    relocate(., full_name, .after = last_col())
 
   return(model_par)
 }
