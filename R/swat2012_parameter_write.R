@@ -34,8 +34,9 @@ write_parameter <- function(file_meta, thread_parameter, thread_path) {
 #' @param thread_path Path to the thread folder where model is executed
 #'
 #' @importFrom dplyr %>% filter select
-#' @importFrom purrr map map2 map_df walk2
+#' @importFrom purrr map map2 map2_df transpose walk2
 #' @importFrom readr write_lines
+#' @importFrom stringr str_sub
 #' @importFrom tibble as_tibble
 #'
 #' @keywords internal
@@ -47,10 +48,14 @@ write_par_list <- function(file_meta, file_suffix,
 
   par_files <- thread_parameter[[file_suffix]]$value %>%
     select(-idx, -file_code) %>%
-    map_df(., ~sprintf("%16s", .x)) %>%
-    t(.) %>%
-    as_tibble(.) %>%
-    map(., ~.x) %>%
+    map2_df(., thread_parameter[[file_suffix]]$val_pos,
+            ~sprintf(paste0("%",.y,"s"), .x)) %>%
+    map2_df(., thread_parameter[[file_suffix]]$val_pos,
+            ~str_sub(.x, 1, .y)) %>%
+    map2_df(., thread_parameter[[file_suffix]]$par_txt,
+            paste0) %>%
+    transpose() %>%
+    map(., unlist) %>%
     map2(., thread_parameter[[file_suffix]]$file,
          function(x, y, pos){y[pos] <- x
                              return(y)}, par_pos)
@@ -147,8 +152,9 @@ write_sol <- function(file_meta, thread_parameter, thread_path) {
 #' @param thread_path Path to the thread folder where model is executed
 #'
 #' @importFrom dplyr %>% filter select
-#' @importFrom purrr map map2 map_df walk2
+#' @importFrom purrr map map2 map2_df transpose walk2
 #' @importFrom readr write_lines
+#' @importFrom stringr str_sub
 #' @importFrom tibble as_tibble
 #'
 #' @keywords internal
@@ -157,12 +163,17 @@ write_mgt <- function(file_meta, thread_parameter, thread_path) {
   file_sel <- filter(file_meta, file_name == "mgt")
   par_pos <- which(is_par(thread_parameter$mgt$file[[1]][1:27]))
 
-  par_files <- thread_parameter$mgt$value %>%
+
+  par_files <- thread_parameter[["mgt"]]$value %>%
     select(-idx, -file_code) %>%
-    map_df(., ~sprintf("%16s", .x)) %>%
-    t(.) %>%
-    as_tibble(.) %>%
-    map(., ~.x) %>%
+    map2_df(., thread_parameter[["mgt"]]$val_pos,
+            ~sprintf(paste0("%",.y,"s"), .x)) %>%
+    map2_df(., thread_parameter[["mgt"]]$val_pos,
+            ~str_sub(.x, 1, .y)) %>%
+    map2_df(., thread_parameter[["mgt"]]$par_txt,
+            paste0) %>%
+    transpose() %>%
+    map(., unlist) %>%
     map2(., thread_parameter$mgt$file,
          function(x, y, pos){y[pos] <- x
          return(y[1:30])}, par_pos)

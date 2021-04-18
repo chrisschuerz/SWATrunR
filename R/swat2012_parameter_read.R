@@ -133,7 +133,13 @@ read_par_list <- function(file_meta, file_suffix, project_path, n_row = NULL){
     tmp <- tmp[1:min(length(tmp), n_row)]
     par_pos <- is_par(tmp)
     par_name <- get_par_name(tmp, par_pos)
-
+    sep_pos <- str_locate(tmp[par_pos], '\\|')[,2]
+    val_pos <- tmp[par_pos] %>%
+      str_sub(., 1, sep_pos-1) %>%
+      str_locate_all(., '[:digit:]') %>%
+      map_int(., max)
+    par_txt <- tmp[par_pos] %>%
+      str_sub(., val_pos+1, nchar(.))
 
     files <- map(project_path%//%file_sel$file, read_lines)
     if(!is.null(n_row)) {
@@ -147,7 +153,7 @@ read_par_list <- function(file_meta, file_suffix, project_path, n_row = NULL){
       mutate(file_code = file_sel$file_code) %>%
       mutate(idx = 1:nrow(.))
 
-    return(list(file = files, value = par_table))
+    return(list(file = files, value = par_table, par_txt = par_txt, val_pos = val_pos))
   }
 }
 
