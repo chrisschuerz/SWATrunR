@@ -6,7 +6,7 @@
 #' @param thread_path Path to respective thread where SWAT was executed
 #'
 #' @importFrom dplyr %>%
-#' @importFrom purrr map map2 map_chr set_names
+#' @importFrom purrr map map2 map_chr pmap set_names
 #' @importFrom readr fwf_positions read_fwf
 #' @keywords internal
 #'

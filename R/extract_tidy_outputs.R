@@ -29,7 +29,9 @@ extract_out_i <- function(out_i, out_i_name, mod_out) {
   if(length(out_i$unit[[1]]) > 1) {
     out_i_name <- paste(out_i_name, out_i$unit[[1]], sep = "_")
   }
-  var <- evaluate_expression(mod_out[[out_i$file]], out_i$expr)
+  var <- out_i$expr %>%
+    paste0('table %>% ', .) %>%
+    evaluate_expression(mod_out[[out_i$file]], .)
   map(out_i$unit[[1]], ~var[var[,1] == .x, 2]) %>%
     map2(., out_i_name, ~set_names(.x, .y)) %>%
     bind_cols()
