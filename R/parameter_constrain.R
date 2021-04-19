@@ -23,11 +23,14 @@ translate_parameter_constraints <- function(par, swat_vers) {
 
   par_name <- map(par_list, ~.x[1]) %>%
     map_if(., !has_par_name, ~ str_remove(.x, '\\..*')) %>%
-    unlist()
+    unlist() %>%
+    trimws(.)
   parameter <- map2_chr(par_list, has_par_name, ~.x[1 + .y]) %>%
-    map_chr(., ~ str_remove(.x, '\\..*'))
+    map_chr(., ~ str_remove(.x, '\\..*')) %>%
+    trimws(.)
   file_name <- map2_chr(par_list, has_par_name, ~.x[1 + .y]) %>%
-    map_chr(., ~ str_remove(.x, '.*\\.'))
+    map_chr(., ~ str_remove(.x, '.*\\.')) %>%
+    trimws(.)
   change <- par_list %>%
     map2_chr(., has_par_name, ~ str_remove_all(.x[2+.y], 'change|\\=')) %>%
     trimws(.)

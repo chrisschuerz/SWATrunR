@@ -120,16 +120,19 @@ get_hru_meta <- function(hru_file_i) {
 #'   read
 #' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
 #'
-#' @importFrom dplyr %>% filter
-#' @importFrom purrr map map_dfc set_names
-#' @importFrom readr read_lines
+#' @importFrom dplyr %>% filter mutate
+#' @importFrom purrr map map_df map_int set_names
+#' @importFrom readr guess_encoding locale read_lines
+#' @importFrom stringr str_locate str_locate_all str_sub
 #' @importFrom tibble as_tibble
 #' @keywords internal
 #'
 read_par_list <- function(file_meta, file_suffix, project_path, n_row = NULL){
   file_sel <- filter(file_meta, file_name == file_suffix)
   if(nrow(file_sel) > 0) {
-    tmp <- read_lines(file = project_path%//%file_sel$file[1])
+    enc <- guess_encoding( project_path%//%file_sel$file[1])
+    tmp <- read_lines(file = project_path%//%file_sel$file[1],
+                      locale = locale(encoding = enc[[1]][1]))
     tmp <- tmp[1:min(length(tmp), n_row)]
     par_pos <- is_par(tmp)
     par_name <- get_par_name(tmp, par_pos)
@@ -138,8 +141,7 @@ read_par_list <- function(file_meta, file_suffix, project_path, n_row = NULL){
       str_sub(., 1, sep_pos-1) %>%
       str_locate_all(., '[:digit:]') %>%
       map_int(., max)
-    par_txt <- tmp[par_pos] %>%
-      str_sub(., val_pos+1, nchar(.))
+    par_txt <- str_sub(tmp[par_pos], val_pos+1, str_length(tmp[par_pos]))
 
     files <- map(project_path%//%file_sel$file, read_lines)
     if(!is.null(n_row)) {
@@ -269,13 +271,16 @@ is_par <- function(chr) {
 #'
 #' @param chr Character string
 #' @param par_pos Logical vector that provides if a row holds a parameter or not
+#'
+#' @importFrom stringr str_remove str_remove_all
 #' @keywords internal
 #'
 get_par_name <- function(chr, par_pos) {
-  gsub("\\:.*$", "", chr) %>%
-    gsub(".*\\|","", .) %>%
+  chr[par_pos] %>%
+    str_remove(., ".*\\|") %>%
     trimws(.) %>%
-    .[par_pos]
+    str_remove(., "[:space:]+.*") %>%
+    str_remove_all(., "\\:.*$")
 }
 
 #' Extract the parameter values from a list parameter file
