@@ -45,8 +45,8 @@ translate_parameter_constraints <- function(par, swat_vers) {
     swat_files <- c("hru", "sol", "bsn", "swq", "rte", "res", "aqu", "hlt", "pst")
   }
 
-  if(all(!(file_name %in% swat_files))) {
-    stop(paste(model_par$file_name[!is_correct_file], collapse = ", ")%&&%
+  if(any(!(file_name %in% swat_files))) {
+    stop(paste(file_name[!(file_name %in% swat_files)], collapse = ", ")%&&%
          "files are no valid file type!")
   }
   unique_par <- table(par_name)
