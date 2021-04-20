@@ -123,7 +123,7 @@ get_hru_meta <- function(hru_file_i) {
 #' @importFrom dplyr %>% filter mutate
 #' @importFrom purrr map map_df map_int set_names
 #' @importFrom readr guess_encoding locale read_lines
-#' @importFrom stringr str_locate str_locate_all str_sub
+#' @importFrom stringr str_length str_locate str_locate_all str_sub
 #' @importFrom tibble as_tibble
 #' @keywords internal
 #'
