@@ -65,7 +65,9 @@ c("pnd", "rte", "sub", "swq", "hru", "gw", "mgt", "sol", "chm",
 #' @keywords internal
 #'
 read_file_meta <- function(project_path, par_constrain) {
-  file_meta <- tibble(file = list.files(project_path),
+  files <- list.files(project_path) %>%
+    .[!grepl('output',.)]
+  file_meta <- tibble(file = files,
                       file_code = str_remove(file, "\\..*$"),
                       file_name  = str_remove(file, ".*\\.")) %>%
     left_join(., read_hru(project_path), by = "file_code") %>%
