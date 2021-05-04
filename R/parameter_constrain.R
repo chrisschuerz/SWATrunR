@@ -69,7 +69,7 @@ translate_parameter_constraints <- function(par, swat_vers) {
 
   if(ncol(constraints) > 0) {
     if(swat_vers == '2012') {
-      cons_var <- c("sub", "hru", "luse", "soil", "slope")
+      cons_var <- c("sub", "hru", "luse", "soil", "slope", 'layer')
     } else {
       stop('Parameter constraints not yet implemented!')
       cons_var <- c("hru", "sol", "bsn", "swq", "rte", "res", "aqu", "hlt", "pst")

@@ -62,6 +62,7 @@ c("pnd", "rte", "sub", "swq", "hru", "gw", "mgt", "sol", "chm",
 #' @importFrom purrr map_df
 #' @importFrom tibble tibble
 #' @importFrom stringr str_remove str_sub
+#' @importFrom tidyselect any_of
 #' @keywords internal
 #'
 read_file_meta <- function(project_path, par_constrain) {
@@ -73,8 +74,9 @@ read_file_meta <- function(project_path, par_constrain) {
     left_join(., read_hru(project_path), by = "file_code") %>%
     mutate(sub = str_sub(file_code, 1,5) %>% as_num(.),
            sub = ifelse(sub > 0, sub, NA))
-  build_expression(par_constrain) %>%
-  map_df(., ~ evaluate_expression(file_meta, .x)) %>%
+  par_constrain %>%
+    build_expression(.) %>%
+    map_df(., ~ evaluate_expression(file_meta, .x)) %>%
     distinct(., file, .keep_all = T)
 }
 

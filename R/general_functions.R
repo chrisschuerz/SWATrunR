@@ -48,12 +48,13 @@ finish_progress <- function(nmax, t0, word) {
 #'
 #' @importFrom dplyr %>% mutate select
 #' @importFrom purrr map map_chr map2_chr
+#' @importFrom tidyselect any_of
 #' @keywords internal
 #'
 build_expression <- function(constraints) {
   constraints %>%
     mutate(file_name = paste0("== '", file_name, "'")) %>%
-    select(-par_name, -parameter, - change, - full_name) %>%
+    select(-par_name, -parameter, - change, - full_name, - any_of('layer')) %>%
     transpose() %>%
     map(., ~.x[!is.na(.)]) %>%
     map(., ~map2_chr(.x, names(.), ~ paste0('filter(., ',.y, .x, ')'))) %>%

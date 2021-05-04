@@ -61,18 +61,27 @@ modify_gen_par <- function(parameter, model_parameter, file_meta,
   def_i <- parameter$definition[i_par, ]
   par_tbl <- model_parameter[[def_i$file_name]][["value"]]
 
-  file_codes <- model_parameter[[def_i$file_name]][["value"]]$file_code
   file_code_i <- def_i %>%
     build_expression() %>%
     evaluate_expression(file_meta, .) %>%
     .[["file_code"]]
+  idx <- filter(par_tbl ,file_code %in% file_code_i)
+
+  if ('layer' %in% names(def_i)) {
+    if (!is.na(def_i$layer)) {
+      if (!('LAYER' %in% names(idx))) {
+        stop("The parameter condition 'layer' is not available for '", def_i$file_name,"' files.")
+      }
+      idx <- evaluate_expression(idx, paste0('table %>% ', 'filter(LAYER ', def_i$layer,')'))
+    }
+  }
 
   par_up_i <- parameter$values[[def_i$par_name]][run_index[i_run]]
-  par_val  <- model_parameter[[def_i$file_name]][["value"]][[def_i$parameter]][file_codes %in% file_code_i]
+  par_val  <- par_tbl[[def_i$parameter]][idx$idx]
 
   par_val <- update_par(par_val, par_up_i, def_i$change)
 
-  model_parameter[[def_i$file_name]][["value"]][[def_i$parameter]][file_codes %in% file_code_i] <- par_val
+  model_parameter[[def_i$file_name]][["value"]][[def_i$parameter]][idx$idx] <- par_val
 
   return(model_parameter)
 }
