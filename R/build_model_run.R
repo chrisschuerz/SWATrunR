@@ -193,7 +193,7 @@ check_dates <- function(project_path, model_setup) {
   pcp <- read_lines(project_path%//%pcp_files[1])
   start_year <- suppressWarnings(as.numeric(str_sub(pcp[4:6],1,4))) %>%
     median(., na.rm = TRUE)
-  end_year <- suppressWarnings(as.numeric(str_sub(pcp[(length(pcp)-20):length(pcp)],1,4))) %>%
+  end_year <- suppressWarnings(as.numeric(str_sub(pcp[(length(pcp)-3):length(pcp)],1,4))) %>%
     max(., na.rm = TRUE)
 
   start_sim <- year(model_setup$start_date)
