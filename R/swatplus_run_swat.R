@@ -116,6 +116,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   if(!is.null(parameter)) {
     parameter <- format_swatplus_parameter(parameter)
     check_swatplus_parameter(project_path, parameter)
+    unit_cons <- read_unit_conditions(project_path)
 
     # here would also be clever to implement parameter boundary checkup keep
     # parameter boundary file in R package and write to project folder when it

@@ -82,3 +82,68 @@ check_swatplus_parameter <- function(project_path, parameter) {
     stop("The file 'cal_parms.cal is missing in SWAT+ project!")
   }
 }
+
+#' Read the unit numbers (for hru, aqu, cha, res) and the textures etc for later
+#' parameter conditioning.
+#'
+#' @param project_path Path to the SWAT+ project
+#'
+#' @importFrom dplyr %>%
+#' @importFrom purrr map
+#' @importFrom readr read_lines
+#'
+#' @keywords internal
+#'
+read_unit_conditions <- function(project_path) {
+  cha_file <- list.files(project_path, pattern = 'channel.*\\.cha')[1] # maybe removed when clear which the final channel file is.
+  units <- list(hru = get_tbl_column(project_path%//%'hru-data.hru', 'id'),
+                sol = get_tbl_column(project_path%//%'hru-data.hru', 'id'),
+                #swq Not yet considered,
+                cha = get_tbl_column(project_path%//%cha_file, 'id'),
+                res = get_tbl_column(project_path%//%'reservoir.res', 'id'),
+                aqu = get_tbl_column(project_path%//%'aquifer.aqu', 'id')
+                # Remaining two object types hlt and pst also not yet implemented.
+                )
+  conds <- list(hsg = LETTERS[1:4],
+                texture = get_sol_texture(project_path%//%'soils.sol'),
+                plant   = get_tbl_column(project_path%//%'plants.plt', 'name') %>% unique(),
+                landuse = get_tbl_column(project_path%//%'landuse.lum', 'plnt_com') %>% unique()
+  )
+  return(list(units = units, conds = conds))
+}
+
+
+#' Acquire the object indices of from the respective object file.
+#'
+#' @param file Path to the object file
+#'
+#' @importFrom dplyr %>%
+#' @importFrom readr read_table2 cols col_character col_double
+#'
+#' @keywords internal
+#'
+get_tbl_column <- function(file, col_i) {
+  suppressWarnings(read_table2(file, skip = 1,
+              col_types = cols(id = col_double(),
+                               .default = col_character()))) %>%
+    .[[col_i]]
+}
+
+#' Acquire the object indices of from the respective object file.
+#'
+#' @param file Path to the object file
+#'
+#' @importFrom dplyr %>%
+#' @importFrom readr read_table cols col_character
+#' @importFrom stringr str_subset
+#'
+#' @keywords internal
+#'
+get_sol_texture <- function(file) {
+  read_table(file, skip = 1,
+              col_types = cols(.default = col_character())) %>%
+    .[['texture']] %>%
+    unique() %>%
+    str_subset(., '[:graph:]')
+}
+
