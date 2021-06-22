@@ -150,6 +150,21 @@ setup_swatplus <- function(project_path, parameter, output,
   return(model_setup)
 }
 
+#' Setup the calibration.cal file and include all parameter conditions
+#' of the simulation and set them according to respective input parameters
+#'
+#' @param par_def Tibble with one line that includes the parameter definition of
+#'   parameter i
+#' @param unit_cons List of tibbles that contains the meta information of hru, aqu,
+#'   etc. units and constrain variables (e.g. texture, plant)
+#'
+#' @importFrom dplyr bind_rows select %>%
+#' @importFrom purrr map map2_df
+#' @importFrom tibble tibble
+#' @importFrom tidyselect any_of
+#'
+#' @keywords internal
+#'
 setup_calibration_cal <- function(par_def, unit_cons) {
   par_cal <- init_cal(par_def)
 
@@ -177,9 +192,11 @@ setup_calibration_cal <- function(par_def, unit_cons) {
 
   if(any(c('hsg', 'texture', 'plant', 'landuse') %in% names(par_def))) {
       soil_luse <- select(par_def, any_of(c('hsg', 'texture', 'plant', 'landuse'))) %>%
-        select(., !where(is.na)) %>%
+        select(., !tidyselect:::where(is.na)) %>% # will be replaced when where is in the tidyselect namespace
         map(., ~ .x)
       cond_tbl <- map2_df(soil_luse, names(soil_luse), ~ add_soil_luse(.x, .y, unit_cons$conds))
+  } else {
+    cond_tbl <- tibble()
   }
 
   if(any('slope' %in% names(par_def))) {
@@ -189,7 +206,7 @@ setup_calibration_cal <- function(par_def, unit_cons) {
     }
   }
 
-  if(any(c('hsg', 'texture', 'plant', 'landuse') %in% names(par_def))) {
+  if(any(c('hsg', 'texture', 'plant', 'landuse', 'slope') %in% names(par_def))) {
     par_cal$CONDS <- as.character(nrow(cond_tbl))
     par_cal <- bind_rows(par_cal, cond_tbl)
   }
@@ -197,6 +214,14 @@ setup_calibration_cal <- function(par_def, unit_cons) {
   return(par_cal)
 }
 
+#' Initialize the calibration.cal table
+#'
+#' @param par_def Tibble with one line that includes the parameter definition of
+#'   parameter i
+#' @importFrom dplyr mutate select %>%
+#' @importFrom purrr set_names
+#' @keywords internal
+#'
 init_cal <- function(par_def) {
   par_def %>%
   select(., parameter, change) %>%
@@ -205,6 +230,15 @@ init_cal <- function(par_def) {
            DAY1 = 0, DAY2 = 0, OBJ_TOT = 0)
 }
 
+#' Add the value range 'val' for the condition variable 'var' for a parameter to
+#' calibration.cal
+#'
+#' @param par_cal The calibration.cal tibble for the parameter i
+#' @param val Vector that defines the value range
+#' @param var Character string. Name of the variable
+#'
+#' @keywords internal
+#'
 add_value_range <- function(par_cal, val, var) {
   val_range <- get_value_range(val)
   par_cal[var%&%'1'] <- val_range[1]
@@ -212,20 +246,43 @@ add_value_range <- function(par_cal, val, var) {
   return(par_cal)
 }
 
-# add_year <- function(par_cal, yr) {
-#   yr_range <- get_value_range(yr)
-#   par_cal$YEAR1 <- yr_range[1]
-#   par_cal$YEAR2 <- yr_range[2]
-#   return(par_cal)
-# }
-#
-# add_day <- function(par_cal, day) {
-#   day_range <- get_value_range(day)
-#   par_cal$DAY1 <- day_range[1]
-#   par_cal$DAY2 <- day_range[2]
-#   return(par_cal)
-# }
+#' Get the value range from a condition in the par_def table
+#'
+#' @param condition Character string that defines a condition
+#'
+#' @importFrom dplyr %>%
+#' @importFrom stringr str_detect str_remove
+#' @importFrom purrr set_names
+#' @keywords internal
+#'
+get_value_range <- function(condition) {
+  if(str_detect(condition, '%in%')) {
+    condition <- condition %>%
+      str_remove(., '%in%') %>%
+      parse(text = .) %>%
+      eval(.)
+  } else if (str_detect(condition, '==')) {
+    condition <- condition %>%
+      str_remove(., '==') %>%
+      as.numeric(.)
+  } else {
+    stop("For parameter conditioning with 'lyr', 'year', and 'day' only single",
+         "values or upper lower bound implemented yet!")
+  }
+  return(c(min(condition), max(condition)))
+}
 
+#' Add the unit values for which objects the parameter change should be applied
+#'
+#' @param par_cal The calibration.cal tibble for the parameter i
+#' @param unit Character string that defines condition for the object units (ids of e.g. hru objects)
+#' @param unit_all List of vectors that define the unit ids of all object types.
+#'
+#' @importFrom dplyr bind_cols bind_rows %>%
+#' @importFrom purrr set_names
+#'
+#' @keywords internal
+#'
 add_obj <- function(par_cal, unit, unit_all) {
   eval_unit <- paste('unit_all', unit) %>%
   parse(text = .) %>%
@@ -244,6 +301,49 @@ add_obj <- function(par_cal, unit, unit_all) {
   return(par_cal)
 }
 
+#' Group sequences of units together for writing the OBJ columns in calibration.cal
+#'
+#' @param val Numeric vector with the unit values
+#'
+#' @importFrom dplyr %>%
+#' @importFrom purrr map map2 reduce
+#'
+#' @keywords internal
+#'
+identify_sequence <- function(val) {
+  split_end <- which(diff(val) > 1)
+  split_start <- c(1, split_end + 1)
+  split_end <- c(split_end, length(val))
+  map2(split_start, split_end, ~ val[.x:.y]) %>%
+  map(., ~ translate_sequence(.x)) %>%
+  reduce(., c)
+}
+
+#' Translate the unit sequences to calibration.cal syntax
+#'
+#' @param val_seq Numeric vector with the unit values
+#'
+#' @keywords internal
+#'
+translate_sequence <- function(val_seq) {
+  if (length(val_seq) > 1) {
+    val_seq <- c(min(val_seq), -max(val_seq))
+  }
+  return(val_seq)
+}
+
+#' Add condition lines based on soil and land use variables
+#'
+#' @param cond Character string that defines condition for the variable 'var'
+#' @param var Character string. Variable for which condition is applied
+#' @param cond_all List of vectors that define all possible values for the
+#'   condition variables.
+#'
+#' @importFrom dplyr %>%
+#' @importFrom tibble tibble
+#'
+#' @keywords internal
+#'
 add_soil_luse <- function(cond, var, cond_all) {
   eval_cond <- paste('cond_all[[var]]', cond) %>%
     parse(text = .) %>%
@@ -257,6 +357,17 @@ add_soil_luse <- function(cond, var, cond_all) {
   return(tbl)
 }
 
+#' Add condition lines based on slope
+#'
+#' @param cond Character string that defines condition for the variable 'var'
+#' @param cond_tbl Tibble with conditions defined based on soil and land use
+#'
+#' @importFrom dplyr bind_rows %>%
+#' @importFrom stringr str_extract str_remove str_sub str_trim
+#' @importFrom tibble tibble
+#'
+#' @keywords internal
+#'
 add_slope <- function(cond, cond_tbl) {
   cond_op  <- str_extract(cond, '<\\=|\\>\\=|\\=\\=|\\=|\\<|\\>')
   cond_val <- str_remove(cond, cond_op) %>% str_trim(.) %>% as.numeric()
@@ -272,38 +383,7 @@ add_slope <- function(cond, cond_tbl) {
   return(cond_tbl)
 }
 
-get_value_range <- function(condition) {
-  if(str_detect(condition, '%in%')) {
-    condition <- condition %>%
-      str_remove(., '%in%') %>%
-      parse(text = .) %>%
-      eval(.)
-  } else if (str_detect(condition, '==')) {
-    condition <- condition %>%
-      str_remove(., '==') %>%
-      as.numeric(.)
-  } else {
-    stop("For parameter conditioning with 'lyr', 'year', and 'day' only single",
-         "values or upper lower bound implemented yet!")
-  }
-  return(c(min(condition), max(condition)))
-}
 
-identify_sequence <- function(val) {
-  split_end <- which(diff(val) > 1)
-  split_start <- c(1, split_end + 1)
-  split_end <- c(split_end, length(val))
-  map2(split_start, split_end, ~ val[.x:.y]) %>%
-  map(., ~ translate_sequence(.x)) %>%
-  reduce(., c)
-}
-
-translate_sequence <- function(val_seq) {
-  if (length(val_seq) > 1) {
-    val_seq <- c(min(val_seq), -max(val_seq))
-  }
-  return(val_seq)
-}
 
 
 #' Write the updated file.cio to all parallel folders
