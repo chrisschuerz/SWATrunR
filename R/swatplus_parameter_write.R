@@ -34,21 +34,29 @@ format_swatplus_parameter <- function(parameter) {
 #'
 write_calibration <- function(thread_path, parameter, calibration, run_index,
                               i_run) {
-  calibration$VAL <- parameter$values[run_index[i_run],] %>%
-    map_dbl(., ~.x) %>%
-    set_names(., parameter$definition$parameter) %>%
-    .[calibration$NAME] %>%
-    sprintf("%.15s", .)
+  cal_pos <- which(is.na(calibration$VAL))
+  cal_names <- calibration$NAME[cal_pos]
 
-  col_format <- c("%-8s", "%8s", "%16s", rep("%8s", 8))
+  calibration$VAL[cal_pos] <- parameter$values[run_index[i_run],] %>%
+    unlist(.) %>%
+    # map_dbl(., ~.x) %>%
+    set_names(., parameter$definition$parameter) %>%
+    .[cal_names] # %>%
+    # sprintf("%.15s", .)
+
+  col_format <- c("%-8s", "%8s", "%16s", rep("%8s", ncol(calibration) - 3))
 
   col_names <- names(calibration) %>%
     sprintf(col_format, .) %>%
-    paste(., collapse = "")
+    paste(., collapse = "") %>%
+    str_remove_all(., 'OBJ\\_[:digit:]') %>%
+    str_trim(.)
 
-  calibration <- map2_df(calibration, col_format, ~sprintf(.y, .x)) %>%
+  calibration <- map2(calibration, col_format, ~sprintf(.y, .x)) %>%
+    map_df(., ~ str_replace_all(.x, 'NA', '')) %>%
     apply(., 1, paste, collapse = "") %>%
-    c("Number of parameters:", sprintf("%2d",length(.)), col_names, .)
+    c("Number of parameters:", sprintf("%2d",length(cal_pos)), col_names, .) %>%
+    str_trim(.)
 
   write_lines(calibration, thread_path%//%"calibration.cal")
 }
