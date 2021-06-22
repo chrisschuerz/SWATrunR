@@ -155,7 +155,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## skip, interval, etc.
   model_setup <- setup_swatplus(project_path, parameter, output,
                                 start_date, end_date,
-                                output_interval, years_skip, soft_cal)
+                                output_interval, years_skip, soft_cal, unit_cons)
 
   # Check if weather inputs accord with start and end date
   check_dates(project_path, model_setup)
@@ -220,7 +220,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   } else {
     opts <- list()
   }
-
+#
   sim_result <- foreach(i_run = 1:n_run,
   .packages = c("dplyr", "lubridate", "processx", "stringr"), .options.snow = opts) %dopar% {
     # for(i_run in 1:max(nrow(parameter), 1)) {
