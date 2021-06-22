@@ -13,7 +13,8 @@ setup_swatplus(
   end_date,
   output_interval,
   years_skip,
-  soft_cal
+  soft_cal,
+  unit_cons
 )
 }
 \arguments{
