@@ -5,7 +5,7 @@
 \title{Read the unit numbers (for hru, aqu, cha, res) and the textures etc for later
 parameter conditioning.}
 \usage{
-read_unit_conditions(project_path)
+read_unit_conditions(project_path, parameter)
 }
 \arguments{
 \item{project_path}{Path to the SWAT+ project}
