@@ -102,16 +102,27 @@ check_swatplus_parameter <- function(project_path, parameter) {
 #'
 #' @keywords internal
 #'
-read_unit_conditions <- function(project_path) {
-  cha_file <- list.files(project_path, pattern = 'channel.*\\.cha')[1] # maybe removed when clear which the final channel file is.
-  units <- list(hru = get_tbl_column(project_path%//%'hru-data.hru', 'id'),
-                sol = get_tbl_column(project_path%//%'hru-data.hru', 'id'),
-                #swq Not yet considered,
-                cha = get_tbl_column(project_path%//%cha_file, 'id'),
-                res = get_tbl_column(project_path%//%'reservoir.res', 'id'),
-                aqu = get_tbl_column(project_path%//%'aquifer.aqu', 'id')
-                # Remaining two object types hlt and pst also not yet implemented.
-                )
+read_unit_conditions <- function(project_path, parameter) {
+  file_name <- unique(parameter$definition$file_name)
+  units <- list()
+  if ('hru' %in% file_name) {
+    units$hru <- get_tbl_column(project_path%//%'hru-data.hru', 'id')
+  }
+  if ('sol' %in% file_name) {
+    units$sol <- get_tbl_column(project_path%//%'hru-data.hru', 'id')
+  }
+  if ('cha' %in% file_name) {
+    cha_file <- list.files(project_path, pattern = 'channel.*\\.cha')[1] # maybe removed when clear which the final channel file is.
+    units$cha <- get_tbl_column(project_path%//%cha_file, 'id')
+  }
+  if ('res' %in% file_name) {
+    units$res <- get_tbl_column(project_path%//%'reservoir.res', 'id')
+  }
+  if ('aqu' %in% file_name) {
+    units$aqu <- get_tbl_column(project_path%//%'aquifer.aqu', 'id')
+  }
+  #swq Not yet considered,
+  # Remaining two object types hlt and pst also not yet implemented.
   conds <- list(hsg = LETTERS[1:4],
                 texture = get_sol_texture(project_path%//%'soils.sol'),
                 plant   = get_tbl_column(project_path%//%'plants.plt', 'name') %>% unique(),
