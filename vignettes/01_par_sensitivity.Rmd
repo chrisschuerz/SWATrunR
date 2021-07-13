@@ -169,7 +169,7 @@ The method of Sobol is a reference method for GSA. To implement the SWAT model i
 
 ```{r, eval=FALSE}
 swat_sobol <- function(par, obs) {
-  q_sim <- run_swatplus(project_path = proj_path,
+  q_sim <- run_swatplus(project_path = path_plus,
                         output =list(q_sim = define_output(file = "channel",
                                      variable = "flo_out",
                                      unit = 1)),
@@ -205,7 +205,7 @@ x2 <- data.frame(matrix(runif(n_par * n_samp), nrow = n_samp)) %>%
 To perform the sensitivity analysis with using method of Sobol the following command has to be executed. In total 4000 model evaluations are necessary to analyze 7 parameters with 500 Sobol samples.
 
 ```{r, eval=FALSE}
-sens_sobol <- sobol(model = swat_nse, X1 = x1, X2 = x2, 
+sens_sobol <- sobol(model = swat_sobol, X1 = x1, X2 = x2, 
                     obs = q_obs$discharge, nboot = 100)
 ```
 
