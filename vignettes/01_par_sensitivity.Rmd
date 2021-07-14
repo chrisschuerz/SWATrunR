@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 ## R packages
 
 Several R packages provide methods for sensitivity analysis. Two of the widely implemented packages are `sensitivity` [@Iooss2018] and `fast` [@Reusser2015]. `fast` provides the Fourier Amplitude Sensitivity Test (FAST) as single method for sensitivity analysis. The implementation of FAST, however, is very well suited to implement it in a workflow with `SWATplusR`. `sensitivity` is a very comprehensive collection of methods for sensitivity analysis (it actually includes the FAST method as well). The implementation in a workflow with `SWATplusR` is, however, less flexible.
-In this example we will use two frequently applied methods for sensitivity analysis that are provided by these two R packages, the method of Solbol [-@Sobol1993] provided by `sensitivity` and FAST [@Cukier1973] provided by `fast`.
+In this example we will use two frequently applied methods for sensitivity analysis that are provided by these two R packages, the method of Sobol [-@Sobol1993] provided by `sensitivity` and FAST [@Cukier1973] provided by `fast`.
 Most methods for sensitivity analysis require a scalar model result to assess the sensitivity of that output variable to changes in the inputs. Multiple goodness-of-fit functions are available from literature to evaluate simulated time series with observed time series of that variable that result in scalar values. The `hydroGOF` package [@MZB2017] summarizes frequently used functions for the evaluation of time series of hydrological variables.
 
 ### Package installation
@@ -35,6 +35,7 @@ install.packages("hydroGOF")
 install.packages("sensitivity")
 install.packages("tidyr")
 install.packages("purrr")
+install.packages("lubridate")
 ```
 
 ### Loading R packages
@@ -168,7 +169,7 @@ The method of Sobol is a reference method for GSA. To implement the SWAT model i
 
 ```{r, eval=FALSE}
 swat_sobol <- function(par, obs) {
-  q_sim <- run_swatplus(project_path = proj_path,
+  q_sim <- run_swatplus(project_path = path_plus,
                         output =list(q_sim = define_output(file = "channel",
                                      variable = "flo_out",
                                      unit = 1)),
@@ -204,7 +205,7 @@ x2 <- data.frame(matrix(runif(n_par * n_samp), nrow = n_samp)) %>%
 To perform the sensitivity analysis with using method of Sobol the following command has to be executed. In total 4000 model evaluations are necessary to analyze 7 parameters with 500 Sobol samples.
 
 ```{r, eval=FALSE}
-sens_sobol <- sobol(model = swat_nse, X1 = x1, X2 = x2, 
+sens_sobol <- sobol(model = swat_sobol, X1 = x1, X2 = x2, 
                     obs = q_obs$discharge, nboot = 100)
 ```
 
@@ -214,7 +215,7 @@ sens_sobol <- readRDS(here::here("vignettes/datasets/sobol.rds"))
 
 ### Visualization of the Sobol analysis
 
-Similar to the visualization of the results with the FAST method the results of the GSA with the method of Solbol are plotted.
+Similar to the visualization of the results with the FAST method the results of the GSA with the method of Sobol are plotted.
 
 
 ```{r}
