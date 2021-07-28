@@ -41,10 +41,9 @@ write_calibration <- function(thread_path, parameter, calibration, run_index,
     unlist(.) %>%
     # map_dbl(., ~.x) %>%
     set_names(., parameter$definition$parameter) %>%
-    .[cal_names] %>%
     sprintf("%.15s", .)
 
-  col_format <- c("%-8s", "%8s", "%16s", rep("%8s", ncol(calibration) - 3))
+  col_format <- c("%-12s", "%8s", "%16s", "%16s", rep("%8s", ncol(calibration) - 4))
 
   col_names <- names(calibration) %>%
     sprintf(col_format, .) %>%
