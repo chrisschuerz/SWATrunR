@@ -30,9 +30,11 @@ setup_swatplus <- function(project_path, parameter, output,
   model_setup$time.sim <- read_lines(project_path%//%"time.sim")
   model_setup$print.prt <- read_lines(project_path%//%"print.prt")
 
-  print_table <- read_table(project_path%//%"print.prt", skip = 9,
-                            col_names = TRUE) %>%
-    set_names(., tolower(colnames(.)))
+  print_table <- model_setup$print.prt[- c(1:10)] %>%
+    str_trim(.) %>%
+    str_split(., pattern = '[:space:]+') %>%
+    map_df(., ~tibble(objects = .x[1], daily = .x[2],
+                      monthly = .x[3], yearly = .x[3], avann = .x[4]))
 
   ## Define simulation period
   if(xor(is.null(start_date), is.null(end_date))) {
