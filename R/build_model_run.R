@@ -169,7 +169,7 @@ check_revision <- function(project_path, run_path, os, swat_exe) {
     str_split(., '\r\n|\n', simplify = T) %>%
     .[2] %>%
     str_remove_all(., '[:alpha:]') %>%
-    str_extract(., '[:digit:]{1,}\\.[:digit:]') %>%
+    str_extract(., '[:digit:]{0,}\\.?[:digit:]') %>%
     as.numeric()
 
   unlink(tmp_path, recursive = TRUE, force = TRUE)
