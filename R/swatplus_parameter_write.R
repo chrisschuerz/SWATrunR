@@ -152,16 +152,18 @@ get_tbl_column <- function(file, col_i) {
 #' @param file Path to the object file
 #'
 #' @importFrom dplyr %>%
-#' @importFrom readr read_table cols col_character
-#' @importFrom stringr str_subset
+#' @importFrom purrr map_chr
+#' @importFrom readr read_lines
+#' @importFrom stringr str_split str_subset str_trim
 #'
 #' @keywords internal
 #'
 get_sol_texture <- function(file) {
-  read_table(file, skip = 1,
-              col_types = cols(.default = col_character())) %>%
-    .[['texture']] %>%
-    unique() %>%
-    str_subset(., '[:graph:]')
+  read_lines(file) %>%
+    .[-c(1,2)] %>%
+    str_subset(.,'^[:graph:]') %>%
+    str_trim(.) %>%
+    str_split(., '[:space:]+') %>%
+    map_chr(., ~.x[7])
 }
 
