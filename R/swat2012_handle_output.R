@@ -12,24 +12,25 @@
 #'
 read_swat2012_output <- function(output, thread_path) {
   ## Get unique output files defined in output
-  output_file <- map_chr(output,  ~ unique(.x$file)) %>% unique(.)
+  output_files <- map_chr(output,  ~ unique(.x$file)) %>%
+    unique(.)
 
   ## Find the first position of table in each file
-  frst_pos <- find_first_line(output_file, thread_path)
+  frst_pos <- find_first_line(output_files, thread_path)
   ## Get the column header for all output files
-  file_header <- map2(output_file, frst_pos,
+  file_header <- map2(output_files, frst_pos,
                         ~ get_file_header(.x, .y, thread_path))
   ## Get the variable positions in all output files
-  fwf_pos     <- map2(output_file, frst_pos, ~ get_fwf_positions(.x, thread_path, .y))
+  fwf_pos     <- map2(output_files, frst_pos, ~ get_fwf_positions(.x, thread_path, .y))
 
-  ## Read all output files, assign column names and assign output file names
-  out_tables <- pmap(list(output_file, fwf_pos, frst_pos),
+  # Read all output files, assign column names and assign output file names
+  out_tables <- pmap(list(output_files, fwf_pos, frst_pos),
                      function(out, fwf, frst, thread_path) {
                        read_fwf(file = thread_path%//%out,
                                 col_positions = fwf_positions(fwf[[1]], fwf[[2]]),
-                                skip = frst, guess_max = 3)}, thread_path) %>%
+                                skip = frst, guess_max = 3, lazy = FALSE)}, thread_path) %>%
     map2(., file_header, ~set_names(.x, .y)) %>%
-    set_names(., output_file)
+    set_names(., output_files)
 
   tables_nrow <- map(out_tables, ~nrow(.x)) %>% unlist(.)
   if(any(tables_nrow == 0)){
@@ -54,7 +55,7 @@ read_swat2012_output <- function(output, thread_path) {
 #'
 get_file_header <- function(output_i, tbl_pos, thread_path) {
   header <- read_lines(file = thread_path%//%output_i,
-                       skip = tbl_pos - 1, n_max = 1) %>%
+                       skip = tbl_pos - 1, n_max = 1, lazy = FALSE) %>%
     split_by_units(.) %>%
     str_replace_all(., "-", "_") %>%
     str_replace_all(., "#", "_")
@@ -77,9 +78,9 @@ get_file_header <- function(output_i, tbl_pos, thread_path) {
 #'
 get_fwf_positions <- function(output_i, thread_path, tbl_pos) {
   header_line <- read_lines(file = thread_path%//%output_i,
-                            skip = tbl_pos - 1, n_max = 1)
+                            skip = tbl_pos - 1, n_max = 1, lazy = FALSE)
   first_line <- read_lines(file = thread_path%//%output_i,
-                           skip = tbl_pos, n_max = 1)
+                           skip = tbl_pos, n_max = 1, lazy = FALSE)
 
   # Workaround to split MON and AREA flexibly
   pos_mon_area <- c(str_locate(header_line, "MON")[1],
@@ -130,7 +131,7 @@ get_fwf_positions <- function(output_i, thread_path, tbl_pos) {
 #' @keywords internal
 #'
 find_first_line <- function(out_file, thread_path) {
-  file_head <- map(out_file, ~ read_lines(thread_path%//%.x, n_max = 50))
+  file_head <- map(out_file, ~ read_lines(thread_path%//%.x, n_max = 50, lazy = FALSE))
   head_line <- map_int(file_head, ~ which(grepl("MON", .x)))
   return(head_line)
 }

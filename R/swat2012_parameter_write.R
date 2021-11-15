@@ -60,7 +60,7 @@ write_par_list <- function(file_meta, file_suffix,
          function(x, y, pos){y[pos] <- x
                              return(y)}, par_pos)
 
-  walk2(par_files, file_sel$file, ~ write_lines(.x, thread_path%//%.y))
+  walk2(par_files, file_sel$file, ~ writeLines(.x, thread_path%//%.y))
 }
 
 #' Write modified .chm SWAT parameter files due to their specific format
@@ -94,7 +94,7 @@ write_chm <- function(file_meta, thread_parameter, thread_path) {
     map(., ~paste0(line_name, .x)) %>%
     map2(., thread_parameter$chm$file, function(x, y, pos){y[pos] <- x
                                          return(y)}, table_pos)
-  walk2(par_files, file_sel$file, ~ write_lines(.x, thread_path%//%.y))
+  walk2(par_files, file_sel$file, ~ writeLines(.x, thread_path%//%.y))
 }
 
 #' Write modified .sol SWAT parameter files due to their specific format
@@ -141,7 +141,7 @@ write_sol <- function(file_meta, thread_parameter, thread_path) {
     map2(., par_file, function(x, y, pos){y[pos] <- x
     return(y)}, par_pos)
 
-  walk2(par_file, file_sel$file, ~ write_lines(.x, thread_path%//%.y))
+  walk2(par_file, file_sel$file, ~ writeLines(.x, thread_path%//%.y))
 }
 
 #' Write modified .mgt SWAT parameter files due to their specific format
@@ -186,7 +186,7 @@ write_mgt <- function(file_meta, thread_parameter, thread_path) {
     map(., ~apply(.x, 1, paste, collapse = " ")) %>%
     map2(par_files, ., ~c(.x, .y))
 
-  walk2(par_files, file_sel$file, ~ write_lines(.x, thread_path%//%.y))
+  walk2(par_files, file_sel$file, ~ writeLines(.x, thread_path%//%.y))
 }
 
 #' Format a line in the mgt table for writing in correct format to file
