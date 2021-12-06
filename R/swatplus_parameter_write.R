@@ -95,29 +95,38 @@ check_swatplus_parameter <- function(project_path, parameter) {
 #'
 #' @param project_path Path to the SWAT+ project
 #'
-#' @importFrom dplyr %>%
+#' @importFrom dplyr filter select %>%
 #' @importFrom purrr map
 #' @importFrom readr read_lines
 #'
 #' @keywords internal
 #'
 read_unit_conditions <- function(project_path, parameter) {
-  file_name <- unique(parameter$definition$file_name)
+  if('unit' %in% names(parameter$definition)) {
+    unit_cond <- parameter$definition %>%
+      select(file_name, unit) %>%
+      filter(!is.na(unit)) %>%
+      .$file_name %>%
+      unique(.)
+  } else {
+    unit_cond <- NULL
+  }
+
   units <- list()
-  if ('hru' %in% file_name) {
+  if ('hru' %in% unit_cond) {
     units$hru <- get_tbl_column(project_path%//%'hru-data.hru', 'id')
   }
-  if ('sol' %in% file_name) {
+  if ('sol' %in% unit_cond) {
     units$sol <- get_tbl_column(project_path%//%'hru-data.hru', 'id')
   }
-  if ('cha' %in% file_name) {
+  if ('cha' %in% unit_cond) {
     cha_file <- list.files(project_path, pattern = 'channel.*\\.cha')[1] # maybe removed when clear which the final channel file is.
     units$cha <- get_tbl_column(project_path%//%cha_file, 'id')
   }
-  if ('res' %in% file_name) {
+  if ('res' %in% unit_cond) {
     units$res <- get_tbl_column(project_path%//%'reservoir.res', 'id')
   }
-  if ('aqu' %in% file_name) {
+  if ('aqu' %in% unit_cond) {
     units$aqu <- get_tbl_column(project_path%//%'aquifer.aqu', 'id')
   }
   #swq Not yet considered,

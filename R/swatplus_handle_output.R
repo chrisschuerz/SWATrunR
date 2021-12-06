@@ -22,7 +22,8 @@ read_swatplus_output <- function(output, thread_path, revision) {
   col_names <- map(output_file, ~ read_table(thread_path%//%.x, skip = 1,
                                              n_max = 1, col_names = F)) %>%
     map(., ~ unlist(.x) %>% unname(.)) %>%
-    map2(., unit_names, ~ replace_colname_na(.x, .y))
+    map2(., unit_names, ~ replace_colname_na(.x, .y)) %>%
+    map(., ~ .x[!is.na(.x)])
 
   if(revision < 56) {
     col_names <- map(col_names, remove_units_plus)
