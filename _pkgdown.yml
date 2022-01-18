@@ -1,4 +1,32 @@
-url: ~
-template:
-  bootstrap: 5
+title: SWATplusR
 
+url: http://chrisschuerz.github.io/SWATplusR
+
+template:
+  params:
+    bootswatch: sandstone
+
+authors:
+  Christoph Schürz:
+    href: https://github.com/chrisschuerz
+
+home:
+  links:
+  - text: Demo data sets
+    href: http://github.com/chrisschuerz/SWATdata
+
+reference:
+  - title: Demo data
+    contents:
+    - load_demo
+
+  - title: Running SWAT
+    contents:
+    - run_swat2012
+    - run_swatplus
+    - define_output
+
+  - title: Load saved runs
+    contents:
+    - scan_swat_run
+    - load_swat_run
