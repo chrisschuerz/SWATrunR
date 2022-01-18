@@ -73,13 +73,19 @@ plot(q_obs, type = "l")
 ### Spatial data
 To visualize simulation results spatially, shape files of the subbasins, river network, and HRUs for the SWAT+ and the SWAT2012 demo setups are available from `SWATplusR`. For spatial data `load_demo()` only returns the paths to the shape files. As the spatial data for the two SWAT project setups looks different loading the data requires the definition of the SWAT `version`.
 
-```{r}
+```{r, eval=FALSE}
 # Path to the subbasin shape file
 sub_path <- load_demo(dataset = "subbasin", version = "plus")
 # Path to the subbasin shape file
 riv_path <- load_demo(dataset = "river", version = "plus")
 
 sub_path
+#> [1] "~/R/R-4.1.1/library/SWATdata/extdata/plus_shapes/sub.shp"
+```
+
+```{r, echo=FALSE}
+sub_path <- here::here("vignettes/datasets/shp/sub.shp")
+riv_path <- here::here("vignettes/datasets/shp/riv.shp")
 ```
 
 These paths you can use to load the spatial data with your preferred method. The package `sf` [@Pebesma2018a; @Pebesma2018b] provides a very elegant way to work with spatial vector objects in R that have a direct integration for plotting in `ggplot2` [@Wickham2016].
