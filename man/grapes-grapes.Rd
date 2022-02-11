@@ -2,11 +2,16 @@
 % Please edit documentation in R/general_functions.R
 \name{\%-\%}
 \alias{\%-\%}
+\alias{\%--\%}
 \title{Concatenate with a hyphen}
 \usage{
 a \%-\% b
+
+a \%--\% b
 }
 \description{
 \\%-\\% pastes two strings by "-".
+
+\\%-\\% pastes two strings by " - ".
 }
 \keyword{internal}

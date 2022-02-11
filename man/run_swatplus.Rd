@@ -12,6 +12,7 @@ run_swatplus(
   end_date = NULL,
   output_interval = NULL,
   years_skip = NULL,
+  start_date_print = NULL,
   run_index = NULL,
   run_path = NULL,
   n_thread = NULL,
@@ -40,12 +41,12 @@ are performed during the model execution accordingly. To learn how to
 modify parameters see the \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html}{Get started} page of \code{SWATplusR}.}
 
 \item{start_date}{(optional) Start date of the SWAT simulation. Provided as
-character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
-project are located.}
+character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
+in the form yyyymmdd, or in Date format.}
 
 \item{end_date}{(optional) End date of the SWAT simulation. Provided as
-character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
-project are located}
+character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
+in the form yyyymmdd, or in Date format.}
 
 \item{output_interval}{(optional) Time interval in which the SWAT model
 outputs are written. Provided either as character string ("d" for daily,
@@ -53,6 +54,11 @@ outputs are written. Provided either as character string ("d" for daily,
 
 \item{years_skip}{(optional) Integer value to define the number of simulation
 years that are skipped before writing SWAT model outputs.}
+
+\item{start_date_print}{(optional) Start date for printing of the simulation
+outputs. \code{start_date_print} overrules \code{years_skip}. Provided
+as character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
+in the form yyyymmdd, or in Date format.}
 
 \item{run_index}{(optional) Numeric vector (e.g.\code{run_index = c(1:100,
   110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL

@@ -12,8 +12,8 @@
 #'   monthly, "y" for yearly, or "a", for average annual).
 #' @param years_skip Integer value that provides the numbe of years to be
 #'   skipped during writing the SWAT model outputs
-#' @importFrom lubridate as_date int_end int_start interval leap_year yday year
-#'   years ymd
+#' @importFrom lubridate as_date ceiling_date int_end int_start interval
+#'   leap_year yday year years ymd
 #' @importFrom dplyr case_when mutate select %>%
 #' @importFrom purrr map_chr set_names
 #' @importFrom readr read_lines read_table
@@ -21,14 +21,20 @@
 #' @keywords internal
 #'
 setup_swatplus <- function(project_path, parameter, output,
-                           start_date, end_date,
-                           output_interval, years_skip,
-                           soft_cal, unit_cons) {
-  ## Read unmodified time.sim, calibration.cal and print.prt
+                           start_date, end_date, start_date_print,
+                           output_interval, years_skip, unit_cons) {
+  ## Read unmodified file.cio, print.prt, and time.sim
   options(readr.num_columns = 0)
   model_setup <- list()
-  model_setup$time.sim <- read_lines(project_path%//%"time.sim")
+  model_setup$file.cio <- read_lines(project_path%//%"file.cio")
   model_setup$print.prt <- read_lines(project_path%//%"print.prt")
+  model_setup$time.sim <- read_lines(project_path%//%"time.sim")
+
+  ## Add calibration.cal to the file.cio
+  ## This ensures that the calibration.cal that is added to indicate
+  ## parameter changes are read by SWAT+
+  model_setup$file.cio[22] <-
+    'chg               cal_parms.cal     calibration.cal   null              null              null              null              null              null              null'
 
   print_table <- model_setup$print.prt[- c(1:10)] %>%
     str_trim(.) %>%
@@ -75,24 +81,40 @@ setup_swatplus <- function(project_path, parameter, output,
   ## Check the numbers of years to skip with the simulation interval Overwrite
   ## number of years to skip if value was provided otherwise get value from
   ## print file
-  if(is.null(years_skip)) {
-    years_skip <- model_setup$print.prt[3] %>%
+  ## Other print options e.g. printing smaller time frame or other intervals
+  ## than 1 are omitted, as any information loss should be avoided. Filtering
+  ## of time windows can be done later in a modeling workflow
+  if(is.null(years_skip) & is.null(start_date_print)) {
+    print_time <- model_setup$print.prt[3] %>%
       strsplit(., "\\s+") %>%
       unlist(.) %>%
       .[nchar(.) > 0] %>%
-      .[1] %>%
       as.numeric(.)
+
+    years_skip <- print_time[1]
+    print_jdn  <- max(print_time[2], 1)
+    print_year <- max(print_time[3], year(start_date))
+    start_date_print <- as_date(x = print_year%//%print_jdn, format = "%Y/%j")
+
+  } else if(!is.null(start_date_print)){
+    start_date_print <- ymd(start_date_print)
+    if(start_date_print < start_date) {
+      stop("'start_date_print' is an earlier date than 'start_date'!")
+    }
+    years_skip <- year(start_date_print) - year(start_date)
+    print_jdn  <- yday(start_date_print)
+    print_year <- year(start_date_print)
+
   } else {
-    if(!is.numeric(years_skip)) stop("'years_skip' must be numeric!")
-    model_setup$print.prt[3] <- model_setup$print.prt[3] %>%
-      strsplit(., "\\s+") %>%
-      unlist(.) %>%
-      .[nchar(.) > 0] %>%
-      .[2:length(.)] %>%
-      sprintf("%-10s",. ) %>%
-      c(sprintf("%-12d", years_skip), .) %>%
-      paste(., collapse = "")
+    print_jdn  <- 0
+    print_year <- 0
+    start_date_print <- start_date + years_skip
   }
+
+  model_setup$print.prt[3] <-
+    c(years_skip, print_jdn, print_year, 0, 0, 1) %>%
+    sprintf("%-11d", .) %>%
+    paste(., collapse = '')
 
   years_sim <- interval(start_date, end_date)/years(1)
   if(years_skip >= years_sim) {
@@ -100,10 +122,19 @@ setup_swatplus <- function(project_path, parameter, output,
   }
 
   model_setup$years_skip <- as.numeric(years_skip)
+  model_setup$start_date_print <- start_date_print
 
   ## Output interval settings
   ## Set output_interval to 'daily' as default if not provided by user.
   if(is.null(output_interval)) output_interval <- "d"
+
+  if(output_interval == 'm') {
+    t_int <- seq(start_date_print, end_date, by = 'm')
+    if(length(t_int) == 1 & end_date != ceiling_date(end_date, unit = 'm')-1) {
+      stop('Monthly simulation outputs require a simulation period of ',
+           'at least one full month!')
+    }
+  }
 
   output_interval <- str_sub(output_interval, 1,1) %>% tolower(.)
   output_interval <-
@@ -120,11 +151,6 @@ setup_swatplus <- function(project_path, parameter, output,
   print_table[,2:5] <- "n"
   print_table[print_table$objects %in% object_names, output_interval] <- "y"
 
-  if(soft_cal) {
-    print_table[print_table$objects %in% c("basin_wb", "basin_nb"),
-                "avann"] <- "y"
-  }
-
   print_table <- print_table %>%
     mutate(objects = sprintf("%-16s", objects),
            daily   = sprintf("%14s", daily),
@@ -138,7 +164,7 @@ setup_swatplus <- function(project_path, parameter, output,
 
   # So far avoid any other output files to be written
   model_setup$print.prt[7] <- "n             n             n             "
-  model_setup$print.prt[7] <- "n             n             n             n             "
+  model_setup$print.prt[9] <- "n             n             n             n             "
 
   # Current implementation of parameter calibration does not allow any constraints!
   if(!is.null(parameter)) {
@@ -383,10 +409,7 @@ add_slope <- function(cond, cond_tbl) {
   return(cond_tbl)
 }
 
-
-
-
-#' Write the updated file.cio to all parallel folders
+#' Write the updated init files to all parallel folders
 #'
 #' @param run_path Path to the .model_run folder
 #' @param model_setup List of files that define the SWAT+ model setup
@@ -399,6 +422,7 @@ write_swatplus_setup <- function(run_path, model_setup) {
 
   ## Write modified file_cio into thread folder and respective Backup folder
   for(i in thread_i) {
+    writeLines(model_setup$file.cio, run_path%//%i%//%"file.cio")
     writeLines(model_setup$time.sim, run_path%//%i%//%"time.sim")
     writeLines(model_setup$print.prt, run_path%//%i%//%"print.prt")
   }

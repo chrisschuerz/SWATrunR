@@ -103,6 +103,13 @@ plural <- function(n) {
 #' @keywords internal
 '%-%' <- function(a, b) paste(a, b, sep = "-")
 
+#' Concatenate with a hyphen and space
+#'
+#' \%-\% pastes two strings by " - ".
+#' @keywords internal
+'%--%' <- function(a, b) paste(a, b, sep = " - ")
+
+
 #' Concatenate with a dot
 #'
 #' \%.\% pastes two strings by ".".

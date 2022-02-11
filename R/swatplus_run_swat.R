@@ -17,16 +17,20 @@
 #'   are performed during the model execution accordingly. To learn how to
 #'   modify parameters see the \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html}{Get started} page of \code{SWATplusR}.
 #' @param start_date (optional) Start date of the SWAT simulation. Provided as
-#'   character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
-#'   project are located.
+#'   character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
+#'   in the form yyyymmdd, or in Date format.
 #' @param end_date (optional) End date of the SWAT simulation. Provided as
-#'   character string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format
-#'   project are located
+#'   character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
+#'   in the form yyyymmdd, or in Date format.
 #' @param output_interval (optional) Time interval in which the SWAT model
 #'   outputs are written. Provided either as character string ("d" for daily,
 #'   "m" for monthly, or "y" for yearly, and "a" for average annual)
 #' @param years_skip (optional) Integer value to define the number of simulation
 #'   years that are skipped before writing SWAT model outputs.
+#' @param start_date_print (optional) Start date for printing of the simulation
+#'   outputs. \code{start_date_print} overrules \code{years_skip}. Provided
+#'   as character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
+#'   in the form yyyymmdd, or in Date format.
 #' @param run_index (optional) Numeric vector (e.g.\code{run_index = c(1:100,
 #'   110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL
 #'   all provided parameter sets are used in the simulation.
@@ -85,6 +89,7 @@
 run_swatplus <- function(project_path, output, parameter = NULL,
                          start_date = NULL, end_date = NULL,
                          output_interval = NULL, years_skip = NULL,
+                         start_date_print = NULL,
                          run_index = NULL, run_path = NULL,
                          n_thread = NULL, save_path = NULL,
                          save_file = NULL, return_output = TRUE,
@@ -140,22 +145,11 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     check_saved_data(save_path, parameter, output, run_index)
   }
 
-
-  ## Check if soft_calibration was triggered by screen methods. If TRUE it
-  ## forces the model setup to also write the average annula balances.
-  ## Not yet implemented thus set FALSE by default
-  # if("soft_calibration" %in% names(add_input)){
-  #   soft_cal <- eval(add_input$soft_calibration)
-  # } else {
-  #   soft_cal <- FALSE
-  # }
-  soft_cal <- FALSE
-
   ## Read and modify the projects' files defining simulation period years to
   ## skip, interval, etc.
   model_setup <- setup_swatplus(project_path, parameter, output,
-                                start_date, end_date,
-                                output_interval, years_skip, soft_cal, unit_cons)
+                                start_date, end_date, start_date_print,
+                                output_interval, years_skip, unit_cons)
 
   # Check if weather inputs accord with start and end date
   check_dates(project_path, model_setup)
@@ -281,7 +275,10 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ##Tidy up results if return_output is TRUE
   if(return_output) {
     ## Create date vector from the information in model_setup
-    date <- get_date_vector(model_setup)
+    if(add_date) {
+      date <- get_date_vector(output, run_path%//%'thread_1', model_setup,
+                              revision)
+    }
     ## Tidy up the simulation results and arrange them in clean tibbles before
     ## returning them
     sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
@@ -289,7 +286,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
   }
   ## Delete the parallel threads if keep_folder is not TRUE
-  if(!keep_folder)unlink(run_path, recursive = TRUE)
+  if(!keep_folder) unlink(run_path, recursive = TRUE)
 
   ## ...and return simulation results if return_output is TRUE
   if(return_output) return(sim_result)

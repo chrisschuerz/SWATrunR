@@ -2,7 +2,7 @@
 % Please edit documentation in R/swatplus_setup_run_files.R
 \name{write_swatplus_setup}
 \alias{write_swatplus_setup}
-\title{Write the updated file.cio to all parallel folders}
+\title{Write the updated init files to all parallel folders}
 \usage{
 write_swatplus_setup(run_path, model_setup)
 }
@@ -12,6 +12,6 @@ write_swatplus_setup(run_path, model_setup)
 \item{model_setup}{List of files that define the SWAT+ model setup}
 }
 \description{
-Write the updated file.cio to all parallel folders
+Write the updated init files to all parallel folders
 }
 \keyword{internal}

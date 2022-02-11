@@ -11,9 +11,9 @@ setup_swatplus(
   output,
   start_date,
   end_date,
+  start_date_print,
   output_interval,
   years_skip,
-  soft_cal,
   unit_cons
 )
 }

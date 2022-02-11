@@ -126,24 +126,25 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
 #' @param model_setup Model setup defined by run_swat input parameters and/of
 #'   the SWAT model input files
 #'
-#' @importFrom dplyr %>%
-#' @importFrom lubridate floor_date year
+#' @importFrom dplyr mutate select %>%
+#' @importFrom lubridate year years ymd
 #' @importFrom tibble tibble
 #' @importFrom stringr str_sub
 #' @keywords internal
 #'
-get_date_vector <- function(model_setup) {
+get_date_vector <- function(output, thread_path, model_setup, revision) {
   int <- model_setup$output_interval %>% str_sub(., 1, 1)
-  y_skip <-  model_setup$years_skip
-  sd  <- (model_setup$start_date + years(y_skip)) %>% floor_date(., unit = "y")
-  ed  <- model_setup$end_date
 
   if(int %in% c("d", "m", "y")) {
-    date <- seq(sd, ed, by = int) %>% floor_date(., unit = int)
+    date <- read_swatplus_output(output[1], thread_path, revision)[[1]] %>%
+      mutate(date = ymd(yr%//%mon%//%day)) %>%
+      select(date)
   } else {
-    date <- paste(year(sd), year(ed), sep = " - ")
+    y_skip <-  model_setup$years_skip
+    sd  <- model_setup$start_date + years(y_skip)
+    # %>% floor_date(., unit = "y")
+    ed  <- model_setup$end_date
+    date <- tibble(date = year(sd)%--%year(ed))
   }
-
-  date <- tibble(date = date)
   return(date)
 }

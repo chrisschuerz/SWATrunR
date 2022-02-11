@@ -4,7 +4,7 @@
 \alias{get_date_vector}
 \title{Create date vector from the date info in the model setup}
 \usage{
-get_date_vector(model_setup)
+get_date_vector(output, thread_path, model_setup, revision)
 }
 \arguments{
 \item{model_setup}{Model setup defined by run_swat input parameters and/of
