@@ -121,10 +121,12 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
   return(sim_result)
 }
 
-#' Create date vector from the date info in the model setup
-#'
-#' @param model_setup Model setup defined by run_swat input parameters and/of
+#' Create date vector from the date columns in the last SWAT+ simulation
+#' @param output Output definition that results from \code{define_output()}
+#' @param thread_path Chracter string that defines the path to thread_1
 #'   the SWAT model input files
+#' @param model_setup Model setup defined by run_swat input parameters and/of
+#' @param revision Numeric value that defines the SWAT+ revision
 #'
 #' @importFrom dplyr mutate select %>%
 #' @importFrom lubridate year years ymd
@@ -132,7 +134,7 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
 #' @importFrom stringr str_sub
 #' @keywords internal
 #'
-get_date_vector <- function(output, thread_path, model_setup, revision) {
+get_date_vector_plus <- function(output, thread_path, model_setup, revision) {
   int <- model_setup$output_interval %>% str_sub(., 1, 1)
 
   if(int %in% c("d", "m", "y")) {
@@ -146,5 +148,33 @@ get_date_vector <- function(output, thread_path, model_setup, revision) {
     ed  <- model_setup$end_date
     date <- tibble(date = year(sd)%--%year(ed))
   }
+  return(date)
+}
+
+#' Create date vector from the date info in the model setup of a SWAT2012 project
+#'
+#' @param model_setup Model setup defined by run_swat input parameters and/of
+#'   the SWAT model input files
+#'
+#' @importFrom dplyr %>%
+#' @importFrom lubridate floor_date year
+#' @importFrom tibble tibble
+#' @importFrom stringr str_sub
+#' @keywords internal
+#'
+get_date_vector_2012 <- function(model_setup) {
+  int <- model_setup$output_interval %>% str_sub(., 1, 1)
+
+  y_skip <-  model_setup$years_skip
+  sd  <- (model_setup$start_date + years(y_skip)) %>% floor_date(., unit = "y")
+  ed  <- model_setup$end_date
+
+  if(int %in% c("d", "m", "y")) {
+    date <- seq(sd, ed, by = int) %>% floor_date(., unit = int)
+  } else {
+    date <- paste(year(sd), year(ed), sep = " - ")
+  }
+
+  date <- tibble(date = date)
   return(date)
 }

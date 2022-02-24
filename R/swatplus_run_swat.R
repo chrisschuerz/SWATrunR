@@ -276,7 +276,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   if(return_output) {
     ## Create date vector from the information in model_setup
     if(add_date) {
-      date <- get_date_vector(output, run_path%//%'thread_1', model_setup,
+      date <- get_date_vector_plus(output, run_path%//%'thread_1', model_setup,
                               revision)
     }
     ## Tidy up the simulation results and arrange them in clean tibbles before

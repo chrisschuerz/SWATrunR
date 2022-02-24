@@ -28,8 +28,8 @@
 #'   numbers for which the HRU variables are written. Optional if hru_out_nr =
 #'   'all', HRU variables are written for all HRU (caution, very large output
 #'   files possible!)
-#' @importFrom lubridate as_date int_end int_start interval yday year years ymd
 #' @importFrom dplyr case_when mutate select %>%
+#' @importFrom lubridate as_date floor_date int_end int_start interval yday year years ymd
 #' @importFrom purrr map map_chr map_dbl map_df set_names
 #' @importFrom readr read_lines read_table
 #' @importFrom stringr str_remove str_sub
