@@ -1,3 +1,28 @@
+# SWATplusR 0.5.3
+### Critical fix
+The minor internal update of generating the date vector from SWAT+ simulation runs in version 0.5.2 caused now SWAT2012 runs to crash. This was pointed out in issue #55. This update fixes this issue.
+
+# SWATplusR 0.5.2
+### Major updates
+
+- New input argument `start_date_print` was introduced in `run_swat_plus()`. This input overrules `years_skip` when both input arguments are provided. `start_print_date` offers greater flexibility for writing simulation outputs, as `years_skip` skips the number of years and then starts with Jan. 1. after the skipped years. With `start_date_print` now a date can be defined when to start printing. The end date for printing is still controlled by the input argument `end_date`.
+
+- The pointer to `calibration.cal` that defines the parameter changes is now automatically written into the `file.cio`. This solves an old FAQ and frequent issue when no changes in the simulation outputs occur although parameter changes were defined.
+
+### Minor internal updates
+
+- The date vector for SWAT+ runs is now retrieved from the last simulation run. This fixes potential issues with outputs where not entire years were written and cases can occur where the generated date vector does not match the actual simulation outputs.
+
+- A potential `soft_cal` option was removed from the code, as there is no future plan to include soft calibration directly into `SWATplusR`.
+
+
+# SWATplusR 0.5.1
+### Fixed issues
+
+- Fixing issues running newer SWAT+ revisions (e.g. 60.5.4):
+  - Fixing issues in SWAT+ parameter conditioning routine that was caused due to missing `reservoir.res` file.
+  - Fixing issues with ouput files trailing NA values due to blanks in written SWAT+ output files.
+
 # SWATplusR 0.5
 
 ### Critical fix
