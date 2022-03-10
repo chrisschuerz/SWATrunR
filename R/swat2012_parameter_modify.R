@@ -134,7 +134,12 @@ modify_mgt_par <- function(parameter, model_parameter, file_meta,
     "BIO_TRMP",     9,           "MGT5",
     "MANURE_KG",    9,           "MGT6",
     "WSTRS_ID",     10,          "MGT1",
+    "IRR_SCA",      10,          "MGT2",
+    "IRR_NOA",      10,          "MGT3",
     "AUTO_WSTRS",   10,          "MGT4",
+    "IRR_EFF",      10,          "MGT5",
+    "IRR_MX",       10,          "MGT6",
+    "IRR_ASQ",      10,          "MGT7",
     "AFERT_ID",     11,          "MGT1",
     "AUTO_NSTRS",   11,          "MGT4",
     "AUTO_NAPP",    11,          "MGT5",
@@ -148,6 +153,18 @@ modify_mgt_par <- function(parameter, model_parameter, file_meta,
     "CFRT_ID",      14,          "MGT2",
     "IFRT_FREQ",    14,          "MGT3",
     "CFRT_KG",      14,          "MGT4")
+
+
+  1 20 23
+  2 25 27
+  3 29 30
+  4 32 43
+  5 45 50
+  6 52 62
+  7 64 67
+  8 69 74
+  9 76 80
+
 
   def_i <- parameter$definition[i_par, ]
 
