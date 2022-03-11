@@ -155,17 +155,6 @@ modify_mgt_par <- function(parameter, model_parameter, file_meta,
     "CFRT_KG",      14,          "MGT4")
 
 
-  1 20 23
-  2 25 27
-  3 29 30
-  4 32 43
-  5 45 50
-  6 52 62
-  7 64 67
-  8 69 74
-  9 76 80
-
-
   def_i <- parameter$definition[i_par, ]
 
   file_code_i <- def_i %>%
