@@ -1,3 +1,12 @@
+# SWATplusR 0.5.5
+### Fix
+- Fixes issue #58. Version 0.5.2 introduced a new way to read date vectors from SWAT+ simulations. There was a minor issue with multiple units when reading the date vector which is fixed now.
+
+
+# SWATplusR 0.5.4
+### Minor update
+- Added auto irrigation parameters in .mgt inputs files of SWAT2012 projects to parameters that can be calibrated.
+
 # SWATplusR 0.5.3
 ### Critical fix
 The minor internal update of generating the date vector from SWAT+ simulation runs in version 0.5.2 caused now SWAT2012 runs to crash. This was pointed out in issue #55. This update fixes this issue.

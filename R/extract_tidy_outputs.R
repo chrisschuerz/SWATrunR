@@ -140,6 +140,7 @@ get_date_vector_plus <- function(output, thread_path, model_setup, revision) {
   if(int %in% c("d", "m", "y")) {
     date <- read_swatplus_output(output[1], thread_path, revision)[[1]] %>%
       mutate(date = ymd(yr%//%mon%//%day)) %>%
+      filter(unit == unique(unit)[1]) %>%
       select(date)
   } else {
     y_skip <-  model_setup$years_skip
