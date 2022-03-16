@@ -1,3 +1,7 @@
+# SWATplusR 0.5.6
+### Fix
+- Set lazy loading to default in all readr functions.
+
 # SWATplusR 0.5.5
 ### Fix
 - Fixes issue #58. Version 0.5.2 introduced a new way to read date vectors from SWAT+ simulations. There was a minor issue with multiple units when reading the date vector which is fixed now.
