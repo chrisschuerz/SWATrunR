@@ -106,7 +106,7 @@ read_hru <- function(project_path) {
 #' @keywords internal
 #'
 get_hru_meta <- function(hru_file_i) {
-  hru_i <- read_lines(hru_file_i)
+  hru_i <- read_lines(hru_file_i, lazy = FALSE)
   hru_i_head <- unlist(strsplit(hru_i[1], "\\ |\\:|\\: "))
   tibble(file_code = (basename(hru_file_i) %>% gsub(".hru$", "", .)),
          hru       = as.numeric(hru_i_head[which(hru_i_head == "HRU")[1]+1]),
@@ -136,7 +136,8 @@ read_par_list <- function(file_meta, file_suffix, project_path, n_row = NULL){
   if(nrow(file_sel) > 0) {
     enc <- guess_encoding( project_path%//%file_sel$file[1])
     tmp <- read_lines(file = project_path%//%file_sel$file[1],
-                      locale = locale(encoding = enc[[1]][1]))
+                      locale = locale(encoding = enc[[1]][1]),
+                      lazy = FALSE)
     tmp <- tmp[1:min(length(tmp), n_row)]
     par_pos <- is_par(tmp)
     par_name <- get_par_name(tmp, par_pos)
@@ -147,7 +148,7 @@ read_par_list <- function(file_meta, file_suffix, project_path, n_row = NULL){
       map_int(., max)
     par_txt <- str_sub(tmp[par_pos], val_pos+1, str_length(tmp[par_pos]))
 
-    files <- map(project_path%//%file_sel$file, read_lines)
+    files <- map(project_path%//%file_sel$file, ~ read_lines(file = .x, lazy = FALSE))
     if(!is.null(n_row)) {
       files_tbl <- map(files, ~.x[1:n_row])
     } else {
@@ -176,7 +177,7 @@ read_par_list <- function(file_meta, file_suffix, project_path, n_row = NULL){
 read_chm <- function(file_meta, project_path) {
   file_sel <- filter(file_meta, file_name == "chm")
 
-  files <- map(project_path%//%file_sel$file, read_lines)
+  files <- map(project_path%//%file_sel$file, ~ read_lines(file = .x, lazy = FALSE))
 
   table_pos <-  3:8
   col_pos   <-  c(28 + (0:10)*rep(12))
@@ -205,7 +206,7 @@ read_chm <- function(file_meta, project_path) {
 read_sol <- function(file_meta, project_path) {
   file_sel <- filter(file_meta, file_name == "sol")
 
-  files <- map(project_path%//%file_sel$file, read_lines)
+  files <- map(project_path%//%file_sel$file, ~ read_lines(file = .x, lazy = FALSE))
 
   par_list <- map(files, ~ gsub(".*\\:","", .x[4:6]) %>% as.numeric(.)) %>%
     reduce(., rbind) %>%

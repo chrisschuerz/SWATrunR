@@ -190,7 +190,7 @@ check_revision <- function(project_path, run_path, os, swat_exe) {
 #'
 check_dates <- function(project_path, model_setup) {
   pcp_files <- list.files(project_path, pattern = ".pcp")
-  pcp <- read_lines(project_path%//%pcp_files[1])
+  pcp <- read_lines(project_path%//%pcp_files[1], lazy = FALSE)
   start_year <- suppressWarnings(as.numeric(str_sub(pcp[4:6],1,4))) %>%
     median(., na.rm = TRUE)
   end_year <- suppressWarnings(as.numeric(str_sub(pcp[(length(pcp)-20):length(pcp)],1,4))) %>%

@@ -26,9 +26,9 @@ setup_swatplus <- function(project_path, parameter, output,
   ## Read unmodified file.cio, print.prt, and time.sim
   options(readr.num_columns = 0)
   model_setup <- list()
-  model_setup$file.cio <- read_lines(project_path%//%"file.cio")
-  model_setup$print.prt <- read_lines(project_path%//%"print.prt")
-  model_setup$time.sim <- read_lines(project_path%//%"time.sim")
+  model_setup$file.cio <- read_lines(project_path%//%"file.cio", lazy = FALSE)
+  model_setup$print.prt <- read_lines(project_path%//%"print.prt", lazy = FALSE)
+  model_setup$time.sim <- read_lines(project_path%//%"time.sim", lazy = FALSE)
 
   ## Add calibration.cal to the file.cio
   ## This ensures that the calibration.cal that is added to indicate

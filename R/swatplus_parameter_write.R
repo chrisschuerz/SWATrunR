@@ -74,7 +74,7 @@ write_calibration <- function(thread_path, parameter, calibration, run_index,
 #'
 check_swatplus_parameter <- function(project_path, parameter) {
   if("cal_parms.cal" %in% list.files(project_path)) {
-    cal_parms <- read_lines(project_path%//%"cal_parms.cal", skip = 3) %>%
+    cal_parms <- read_lines(project_path%//%"cal_parms.cal", skip = 3, lazy = FALSE) %>%
       strsplit(., "\\s+") %>%
       map(., ~ .x[1]) %>%
       unlist(.)
@@ -168,7 +168,7 @@ get_tbl_column <- function(file, col_i) {
 #' @keywords internal
 #'
 get_sol_texture <- function(file) {
-  read_lines(file) %>%
+  read_lines(file, lazy = FALSE) %>%
     .[-c(1,2)] %>%
     str_subset(.,'^[:graph:]') %>%
     str_trim(.) %>%
