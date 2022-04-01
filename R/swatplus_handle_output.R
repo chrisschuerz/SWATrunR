@@ -35,6 +35,15 @@ read_swatplus_output <- function(output, thread_path, add_date, revision) {
   ## Read all output files, assign column names and assign output file names
   out_tables <- map2(output, col_names, ~ read_output_i(.x, .y, thread_path, date_cols))
 
+  if(add_date) {
+    date <- out_tables[[1]] %>%
+      filter(unit == out_tables[[1]]$unit[1]) %>%
+      mutate(date = ymd(paste(yr,mon,day, sep = '-'))) %>%
+      select(date)
+
+    out_tables <- map(out_tables, ~ select(.x, -yr, -mon, -day))
+  }
+
   return(out_tables)
 }
 
