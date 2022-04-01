@@ -99,10 +99,9 @@ translate_rev57 <- function(output, output_interval) {
               output_interval == "m" ~ "_mon",
               output_interval == "y" ~ "_yr",
               output_interval == "a" ~ "_aa")
-  out_files <- map(output, ~ paste0(.x$file[[1]], output_interval, ".txt"))
-  map2(output, out_files, function(out, out_file){
-    out$file <- out_file
-    return(out)})
+  output <- mutate(output, file = paste0(file, output_interval, '.txt'))
+
+  return(output)
 }
 
 

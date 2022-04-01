@@ -147,7 +147,7 @@ setup_swatplus <- function(project_path, parameter, output,
 
   # Set all outputs to no, except the output files defined in output and only
   # for the defined time interval
-  object_names <- map_chr(output, ~ .x[["file"]][1])
+  object_names <- unique(output$file)
   print_table[,2:5] <- "n"
   print_table[print_table$objects %in% object_names, output_interval] <- "y"
 
@@ -161,12 +161,10 @@ setup_swatplus <- function(project_path, parameter, output,
 
   model_setup$print.prt <- c(model_setup$print.prt[1:10], print_table)
 
-
   # So far avoid any other output files to be written
   model_setup$print.prt[7] <- "n             n             n             "
   model_setup$print.prt[9] <- "n             n             n             n             "
 
-  # Current implementation of parameter calibration does not allow any constraints!
   if(!is.null(parameter)) {
     model_setup$calibration.cal <- map(1:nrow(parameter$definition), ~ parameter$definition[.x,]) %>%
       map(., ~ setup_calibration_cal(.x, unit_cons)) %>%
