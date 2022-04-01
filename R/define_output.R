@@ -122,7 +122,7 @@ define_output <- function(file, variable = NULL, unit = NULL,
     expression <- paste0("dplyr::filter(filter_mon(MON)) %>% ",
                          "dplyr::select( 2, ", variable, " )")
   } else {
-    expression <- paste0("dplyr::select( unit, ", variable, " )")
+    expression <- variable
   }
 
   # if(length(unit) > 1){
@@ -161,8 +161,11 @@ check_output <- function(output, swat_vers) {
     output <- list(output)
     names(output) <- var_name
   }
+  output <- map2_df(output, names(output), ~ mutate(.x, name = .y, .before = 1))
+
   return(output)
 }
+
 
 
 #' Filter function to extract only relevant month entries in SWAT2012 outputs
