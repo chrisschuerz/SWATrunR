@@ -139,6 +139,8 @@ define_output <- function(file, variable = NULL, unit = NULL,
 #' Check output if is a data.frame and convert in case to named list
 #'
 #' @param output Defined output
+#' @importFrom dplyr mutate
+#' @importFrom purrr map2_df
 #'
 #' @keywords internal
 #'
