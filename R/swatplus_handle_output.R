@@ -11,53 +11,53 @@
 #' @importFrom readr fwf_positions read_fwf
 #' @keywords internal
 #'
-read_swatplus_output <- function(output, thread_path, revision) {
+read_swatplus_output <- function(output, thread_path, add_date, revision) {
   ## Get unique output files defined in output
-  output_file <- map_chr(output,  ~ unique(.x$file)) %>% unique(.)
+  ##
+  if(add_date){
+    date_cols <- c('yr', 'mon', 'day')
+  } else {
+    date_cols <- c()
+  }
+  output <- output %>% group_by(file) %>% group_split()
 
-  unit_names <- map(output_file, ~ read_table(thread_path%//%.x, skip = 2,
-                                              n_max = 1, col_names = F)) %>%
+  unit_names <- output %>%
+    map(., ~ fread(thread_path%//%.x$file[1], skip = 2, nrows = 1, header = F)) %>%
     map(., ~ unlist(.x) %>% unname(.))
 
-  col_names <- map(output_file, ~ read_table(thread_path%//%.x, skip = 1,
-                                             n_max = 1, col_names = F)) %>%
+  col_names <- output %>%
+    map(., ~ fread(thread_path%//%.x$file[1], skip = 1, nrows = 1, header = F)) %>%
     map(., ~ unlist(.x) %>% unname(.)) %>%
     map2(., unit_names, ~ replace_colname_na(.x, .y)) %>%
-    map(., ~ .x[!is.na(.x)])
-
-  if(revision < 56) {
-    col_names <- map(col_names, remove_units_plus)
-    line_skip <- rep(2, length(output_file))
-    except_files <- grepl("reservoir|wetland", output_file)
-    line_skip[except_files] <- 3
-  } else {
-    line_skip <- rep(3, length(output_file))
-  }
-
-  is_col_duplicate <- map(col_names, function(x){
-                                       duplicates <- table(x) %>%
-                                         .[. > 1] %>%
-                                         names(.)
-
-                                       x %in% duplicates})
+    map(., ~ .x[!is.na(.x)]) %>%
+    map(., ~add_suffix_to_duplicate(.x))
 
   ## Read all output files, assign column names and assign output file names
-  out_tables <- map2(output_file, line_skip, ~ read_table(file = thread_path%//%.x,
-                                                 col_names = FALSE, skip = .y, )) %>%
-    map2(., col_names, ~ .x[, 1:length(.y)]) %>%
-    map2(., col_names, ~ set_names(.x, .y)) %>%
-    map2(., is_col_duplicate, ~ .x[!.y]) %>%
-    set_names(., output_file)
-
-  tables_nrow <- map(out_tables, ~nrow(.x)) %>% unlist(.)
-  if(any(tables_nrow == 0)){
-    stop("\nOne of the SWAT runs was not successful!\n"%&&%
-         "A reason can be the defined model parameters.\n"%&&%
-         "Please check if any change in the model parametrization"%&&%
-         "caused any parameter to be out of bounds!")
-  }
+  out_tables <- map2(output, col_names, ~ read_output_i(.x, .y, thread_path, date_cols))
 
   return(out_tables)
+}
+
+read_output_i <- function(output_i, col_names_i, thread_path, date_cols) {
+  fread(thread_path%//%output_i$file[1], skip = 3) %>%
+    as_tibble(.) %>%
+    .[,1:length(col_names_i)] %>%
+    set_names(col_names_i) %>%
+    select(., all_of(c(date_cols, 'unit', output_i$expr))) %>%
+    filter(unit %in% (output_i$unit %>% unlist(.) %>% unique(.)))
+}
+
+add_suffix_to_duplicate <- function(col_name){
+  dupl <- table(col_name) %>%
+    .[. > 1]
+
+  if(length(dupl > 0)) {
+    for(i in 1:length(dupl)) {
+      col_name[col_name == names(dupl[i])] <- paste0(names(dupl[i]), c('', 1:(dupl[i]-1)))
+    }
+  }
+
+  return(col_name)
 }
 
 #' Translate the output file settings defined according to print.prt to the
