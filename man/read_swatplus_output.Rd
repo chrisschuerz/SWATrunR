@@ -4,7 +4,7 @@
 \alias{read_swatplus_output}
 \title{Read SWAT+ output files}
 \usage{
-read_swatplus_output(output, thread_path, revision)
+read_swatplus_output(output, thread_path, add_date, revision)
 }
 \arguments{
 \item{output}{Output defined to read from the SWAT model results}

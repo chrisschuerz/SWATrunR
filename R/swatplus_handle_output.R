@@ -12,8 +12,7 @@
 #' @keywords internal
 #'
 read_swatplus_output <- function(output, thread_path, add_date, revision) {
-  ## Get unique output files defined in output
-  ##
+
   if(add_date){
     date_cols <- c('yr', 'mon', 'day')
   } else {
@@ -44,9 +43,34 @@ read_swatplus_output <- function(output, thread_path, add_date, revision) {
     out_tables <- map(out_tables, ~ select(.x, -yr, -mon, -day))
   }
 
+  out_tables <- out_tables %>%
+    map(., ~ add_id(.x)) %>%
+    map2(., output, ~mutate_output_i(.x, .y)) %>%
+    bind_cols(.)
+
+  if(add_date) {
+    out_tables <- bind_cols(date, out_tables)
+  }
+
   return(out_tables)
 }
 
+
+#' Reading the i_th SWAT+ output file, filter required units and select variables.
+#'
+#' @param output_i i_th part from the output table which defines what to
+#'   read from the SWAT model results
+#' @param col_names_i Prepared and fixed column names of output file i
+#' @param thread_path String path to the thread where to read the output file
+#' @param date_cols If data should be read, vector of names of the date columns.
+#'
+#' @importFrom data.table fread
+#' @importFrom dplyr filter select %>%
+#' @importFrom purrr set_names
+#' @importFrom tibble as_tibble
+#' @importFrom tidyselect all_of
+#' @keywords internal
+#'
 read_output_i <- function(output_i, col_names_i, thread_path, date_cols) {
   fread(thread_path%//%output_i$file[1], skip = 3) %>%
     as_tibble(.) %>%
@@ -56,6 +80,14 @@ read_output_i <- function(output_i, col_names_i, thread_path, date_cols) {
     filter(unit %in% (output_i$unit %>% unlist(.) %>% unique(.)))
 }
 
+#' Add suffix value to duplicated column names of SWAT+ output files..
+#'
+#' @param col_name Vector of column names
+#'
+#' @importFrom dplyr %>%
+#'
+#' @keywords internal
+#'
 add_suffix_to_duplicate <- function(col_name){
   dupl <- table(col_name) %>%
     .[. > 1]
@@ -67,6 +99,46 @@ add_suffix_to_duplicate <- function(col_name){
   }
 
   return(col_name)
+}
+
+#' Add id column to output table
+#'
+#' @param tbl Output table
+#'   read from the SWAT model results
+#'
+#' @importFrom dplyr mutate
+#'
+#' @keywords internal
+#'
+add_id <- function(tbl){
+  mutate(tbl, id = rep(1:(nrow(tbl)/length(unique(unit))),
+                         each = length(unique(unit))),
+           .before = 1)
+}
+
+#' Transform extracted outputs into a wide table and add suffix to variable names.
+#'
+#' @param out_tbl_i i_th output table read from the SWAT+ outputs
+#' @param output_i i_th part from the output table which defines what to
+#'   read from the SWAT model results
+#'
+#' @importFrom dplyr bind_cols filter mutate select %>%
+#' @importFrom purrr map map2 map_lgl set_names
+#' @importFrom tidyr pivot_wider
+#' @keywords internal
+#'
+mutate_output_i <- function(out_tbl_i, output_i) {
+  is_multi_unit <- map_lgl(output_i$unit, ~ length(.x) > 1)
+
+  map(output_i$expr, ~ select(out_tbl_i, id, unit, .x)) %>%
+    map2(., output_i$unit, ~ filter(.x, unit %in% .y)) %>%
+    map2(., output_i$name, ~ set_names(.x, c('id', 'unit', .y))) %>%
+    map(., ~ mutate(.x, unit = paste0('_', unit))) %>%
+    map2(., is_multi_unit, ~ mutate(.x, unit = ifelse(rep(.y, nrow(.x)), unit, ''))) %>%
+    map(.,  ~ pivot_wider(.x, id_cols = id, names_from = unit, names_glue = "{.value}{unit}", values_from = 3)) %>%
+    map(., ~ select(.x, -id)) %>%
+    bind_cols()
+
 }
 
 #' Translate the output file settings defined according to print.prt to the

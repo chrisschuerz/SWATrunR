@@ -82,7 +82,7 @@
 #' @importFrom lubridate now
 #' @importFrom parallel detectCores makeCluster parSapply stopCluster
 #' @importFrom processx run
-#' @importFrom purrr map
+#' @importFrom purrr map map_if map_lgl
 #' @importFrom stringr str_split
 #' @importFrom tibble tibble
 #' @export
@@ -240,8 +240,10 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
     if(nchar(msg$stderr) == 0) {
       ## Read defined model outputs
-      model_output <- read_swatplus_output(output, thread_path, revision) %>%
-        extract_output(output, .)
+      # model_output <- read_swatplus_output(output, thread_path, revision) %>%
+      #   extract_output(output, .)
+
+      model_output <- read_swatplus_output(output, thread_path, add_date, revision)
 
       if(!is.null(save_path)) {
         save_run(save_path, model_output, parameter, run_index, i_run, thread_id)
@@ -276,8 +278,12 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   if(return_output) {
     ## Create date vector from the information in model_setup
     if(add_date) {
-      date <- get_date_vector_plus(output, run_path%//%'thread_1', model_setup,
-                              revision)
+      is_successful_run <- map_lgl(sim_result, ~ is.data.frame(.x))
+      first_successful_run <- which(is_successful_run)[1]
+      if(length(first_successful_run) > 0) {
+        date <- sim_result[[first_successful_run]]['date']
+        sim_result <- map_if(sim_result, is_successful_run, ~select(.x, -date))
+      }
     }
     ## Tidy up the simulation results and arrange them in clean tibbles before
     ## returning them
