@@ -1,3 +1,21 @@
+#' Get the number of digits that the run_XXX should have based on the number
+#' of rows in the parameter values table
+#'
+#' @param tbl Parameter values table
+#'
+#' @keywords internal
+#'
+get_digit <- function(tbl) {
+  if(is.data.frame(tbl)) {
+    n_digit <- tbl %>%
+      nrow(.) %>%
+      as.character(.) %>%
+      nchar(.)
+  } else {
+    n_digit <- 1
+  }
+}
+
 #' Display the progress if iterative processes
 #'
 #' @param n Iteration step

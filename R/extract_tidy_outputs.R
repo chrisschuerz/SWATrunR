@@ -67,7 +67,7 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
     }
   } else {
     if(!is.null(parameter)) {
-      n_digit <- nrow(parameter$values) %>% as.character(.) %>% nchar(.)
+      n_digit <- get_digit(parameter$values)
     } else {
       n_digit <- length(sim_result) %>% as.character(.) %>% nchar(.)
     }

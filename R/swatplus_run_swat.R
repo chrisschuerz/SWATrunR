@@ -142,7 +142,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## Define save_path and check if planned simulations already exist in save file
   if(!is.null(save_file)) {
     save_path <- set_save_path(project_path, save_path, save_file)
-    check_saved_data(save_path, parameter, output, run_index)
+    # check_saved_data(save_path, parameter, output, run_index)
   }
 
   ## Read and modify the projects' files defining simulation period years to
@@ -214,9 +214,9 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   } else {
     opts <- list()
   }
-#
-  sim_result <- foreach(i_run = 1:n_run,
-  .packages = c("dplyr", "lubridate", "processx", "stringr"), .options.snow = opts) %dopar% {
+
+sim_result <- foreach(i_run = 1:n_run,
+.packages = c("dplyr", "lubridate", "processx", "stringr"), .options.snow = opts) %dopar% {
     # for(i_run in 1:max(nrow(parameter), 1)) {
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")

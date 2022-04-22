@@ -6,46 +6,54 @@
 #' @param run_index Vector of the indices of runs that are performed
 #' @param i_run The i'th run of the SWAT simulation
 #'
-#' @importFrom dplyr copy_to src_sqlite %>%
-#' @importFrom dbplyr src_dbi
+#' @importFrom DBI dbConnect dbDisconnect dbWriteTable
+#' @importFrom dplyr mutate %>%
 #' @importFrom purrr map map2 set_names
-#' @importFrom RSQLite dbConnect dbDisconnect SQLite
-#' @importFrom tibble tibble
+#' @importFrom RSQLite SQLite
 #' @keywords internal
 #'
 save_run <- function(save_path, model_output, parameter, run_index, i_run, i_thread) {
-
-  if(is.data.frame(parameter$values)) {
-    n_digit <- parameter$values %>%
-      nrow(.) %>%
-      as.character(.) %>%
-      nchar(.)
-  } else {
-    n_digit <- 1
-  }
+  n_digit <- get_digit(parameter$values)
   run_name <- "run"%_%sprintf("%0"%&%n_digit%&%"d", run_index[i_run])
-  save_list <- map(model_output, ~.x) %>%
-    map(.,  ~tibble(.x) %>% set_names(.,run_name)) %>%
-    set_names(names(.)%&%"$$from$$"%&%run_name)
 
-  output_con <- dbConnect(SQLite(), save_path%//%"sim"%_%i_thread%.%"sqlite")
-  output_db <- src_dbi(output_con)
+  # Convert date to numeric if date column is in table
+  if('date' %in% colnames(model_output)) {
+    model_output <- mutate(model_output, date = as.integer(date))
+  }
+  # Splitting output table to 2000 column pieces due to column number limit
+  # of SQLite
+  #
+  ncol_max  <- 2000
+  col_split <- c(0:floor(ncol(model_output)/ncol_max)*ncol_max,
+                 ncol(model_output))
 
-  map2(save_list, names(save_list),
-       ~copy_to(dest = output_db, df = .x, name = .y, temporary = FALSE))
+  out_split <- map2(col_split[-length(col_split)] + 1, col_split[-1],
+                    ~ model_output[,.x:.y]) %>%
+    set_names(run_name%_%1:(length(col_split) - 1))
 
-  dbDisconnect(output_con)
+  output_db <- dbConnect(SQLite(), save_path%//%"sim"%_%i_thread%.%"sqlite")
+
+  map2(out_split, names(out_split), ~dbWriteTable(output_db, .y, .x))
+
+  dbDisconnect(output_db)
 }
 
+#' Save error report of model run i in error_log sql data base
+#'
+#' @param save_path Path of the sql data base
+#' @param model_output output of the i_run'th simulation as a tibble
+#' @param parameter Vector or tibble with parameter sets
+#' @param run_index Vector of the indices of runs that are performed
+#' @param i_run The i'th run of the SWAT simulation
+#'
+#' @importFrom DBI dbConnect dbDisconnect dbExecute dbWriteTable
+#' @importFrom purrr map map2 set_names
+#' @importFrom RSQLite SQLite
+#' @importFrom tibble tibble
+#' @keywords internal
+#'
 save_error_log <- function(save_path, model_output, parameter, run_index, i_run) {
-  if(is.data.frame(parameter$values)) {
-    n_digit <- parameter$values %>%
-      nrow(.) %>%
-      as.character(.) %>%
-      nchar(.)
-  } else {
-    n_digit <- 1
-  }
+  n_digit <- get_digit(parameter$values)
   run_name <- "run"%_%sprintf("%0"%&%n_digit%&%"d", run_index[i_run])
 
   error_report <- tibble(idx = run_index[i_run],
@@ -53,13 +61,12 @@ save_error_log <- function(save_path, model_output, parameter, run_index, i_run)
                          error = model_output[which(model_output == 'Error:')+1],
                          message = paste(model_output, collapse = '||'))
 
-  output_con <- dbConnect(SQLite(), save_path%//%"error_log"%.%"sqlite")
-  output_db <- src_dbi(output_con)
+  output_db <- dbConnect(SQLite(), save_path%//%"error_log"%.%"sqlite")
+  dbExecute(output_db, "PRAGMA busy_timeout = 10000")
 
-  copy_to(dest = output_db, df = error_report,
-          name = run_name, temporary = FALSE)
+  dbWriteTable(output_db, run_name, error_report)
 
-  dbDisconnect(output_con)
+  dbDisconnect(output_db)
 }
 
 #' Set the save path to the sqlite data base file
@@ -91,60 +98,59 @@ set_save_path <- function(project_path, save_path, save_dir) {
 #' @param model_setup List with files and variables that define the SWAT model
 #'   setup
 #'
-#' @importFrom dplyr collect copy_to mutate select src_sqlite tbl %>%
-#' @importFrom dbplyr src_dbi
+#' @importFrom DBI dbConnect dbDisconnect dbReadTable dbWriteTable
+#' @importFrom dplyr mutate select %>%
 #' @importFrom lubridate year month day hour minute second
-#' @importFrom RSQLite dbConnect dbDisconnect SQLite
+#' @importFrom purrr map_df map_dfc
+#' @importFrom RSQLite SQLite
 #' @keywords internal
 #'
 initialize_save_file <- function(save_path, parameter, model_setup) {
-  output_con <- dbConnect(SQLite(), save_path%//%"par_dat.sqlite")
-  output_db <- src_dbi(output_con)
-
-  table_names <- src_tbls(output_db)
+  output_db <- dbConnect(SQLite(), save_path%//%"par_dat.sqlite")
+  table_names <- dbListTables(output_db)
 
   if("parameter_values"%in% table_names) {
     if(is.null(parameter)) {
-      stop("No parameter set provided to current SWAT run."%&&%
-           "Parameter set however found in 'save_file'.")
+      stop("No parameter set provided to current SWAT run.",
+           "A parameter set was however found in 'save_file'.")
     }
-    par_val <- tbl(output_db, "parameter_values") %>% collect(.)
-    if(!identical(as.matrix(parameter$values), as.matrix(par_val))) {
-      stop("Parameters of current SWAT simulations and the parameters"%&&%
+    par_val_db <- dbReadTable(output_db, "parameter_values")
+    if(!identical(as.matrix(parameter$values), as.matrix(par_val_db))) {
+      stop("Parameters of current SWAT simulations and the parameters",
            "saved in 'save_file' differ!")
     }
-    par_def <- tbl(output_db, "parameter_definition") %>% collect(.)
-    if(!identical(as.matrix(parameter$definition), as.matrix(par_def))) {
-      stop("Parameter definition of current SWAT simulation and the"%&&%
+    par_def_db <- dbReadTable(output_db, "parameter_definition")
+    if(!identical(as.matrix(parameter$definition), as.matrix(par_def_db))) {
+      stop("Parameter definition of current SWAT simulation and the",
            "parameter definition saved in 'save_file' differ!")
     }
   } else {
     if(!is.null(parameter)){
-      if(!is.data.frame(parameter$values))
+      if(!is.data.frame(parameter$values)) {
         parameter$values <-  map_dfc(parameter$values, ~.x)
+      }
 
-      copy_to(dest = output_db, df = parameter$values,
-              name = "parameter_values", temporary = FALSE)
-
-      copy_to(dest = output_db, df = parameter$definition,
-              name = "parameter_definition", temporary = FALSE)
+      dbWriteTable(output_db,  "parameter_values", parameter$values)
+      dbWriteTable(output_db,  "parameter_definition", parameter$definition)
     }
   }
 
-  date <- get_date_vector(model_setup) %>%
-    convert_date(.)
+  date_config <- model_setup[c("start_date", "end_date", "years_skip",
+                               "start_date_print", "output_interval")] %>%
+    .[!is.na(names(.))] %>%
+    map_df(., ~ as.character(.x))
 
-  if("date"%in% table_names) {
-    date_db <- tbl(output_db, "date") %>% collect(.)
-    if(!identical(as.matrix(date), as.matrix(date_db))) {
-      stop("Date of current SWAT simulations and the date"%&&%
-           "saved in 'save_file' differ!")
+  if("date_config"%in% table_names) {
+    date_config_db <- dbReadTable(output_db, 'date_config')
+    if(!identical(as.matrix(date_config), as.matrix(date_config_db))) {
+      stop("Date settings in the  current SWAT simulations and the",
+           "saved date of the simulations in 'save_file' differ!")
     }
   } else {
-    copy_to(dest = output_db, df = date,
-            name = "date", temporary = FALSE)
+    dbWriteTable(output_db, 'date_config', date_config)
   }
-  dbDisconnect(output_con)
+
+  dbDisconnect(output_db)
 }
 
 #' Load saved SWAT simulations

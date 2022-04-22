@@ -1,4 +1,7 @@
-# SWATplusR 0.5.6
+# SWATplusR 0.6
+
+
+# SWATplusR 0.5.7
 ### Update
 - Restructured output file reading in `run_swatplus()`:
   - Moved from `readr` to `data.table::fread` to increase speed and fix some minor issues
