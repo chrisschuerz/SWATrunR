@@ -123,8 +123,6 @@ setup_swat2012 <- function(project_path, output,
     n_row <- 1
   }
 
-  model_setup$output_nrow
-
   ## Overwrite custom reach variables if values are provided
   if(!is.null(rch_out_var)){
     if(!is.numeric(rch_out_var)) stop("'rch_out_var' must be numeric!")
@@ -146,10 +144,8 @@ setup_swat2012 <- function(project_path, output,
   file_cio[67] <- paste0(sprintf("%4d", sub_out_var), collapse = "")
 
   ## Consider the case of HRU output definition and the setting of the HRUs in file.cio
-    output_tbl <- map_df(output,  ~ .x)
-
-  if(("output.hru" %in% output_tbl$file)) {
-    hru_idx <- output_tbl %>%
+  if(("output.hru" %in% output$file)) {
+    hru_idx <- output %>%
       filter(file == "output.hru") %>%
       select(unit) %>%
       unlist(.) %>%

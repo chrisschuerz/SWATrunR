@@ -11,7 +11,9 @@
 #' @keywords internal
 #'
 extract_output <- function(output, model_output) {
-  map2(output, names(output), ~extract_out_i(.x, .y, model_output)) %>%
+  output %>%
+    transpose(.) %>%
+    map(., ~extract_out_i(.x, model_output)) %>%
     bind_cols()
 }
 
@@ -25,15 +27,15 @@ extract_output <- function(output, model_output) {
 #' @importFrom purrr map map2 set_names
 #' @keywords internal
 #'
-extract_out_i <- function(out_i, out_i_name, mod_out) {
-  if(length(out_i$unit[[1]]) > 1) {
-    out_i_name <- paste(out_i_name, out_i$unit[[1]], sep = "_")
+extract_out_i <- function(out_i, mod_out) {
+  if(length(out_i$unit) > 1) {
+    out_i$name <- paste(out_i$name, out_i$unit, sep = "_")
   }
   var <- out_i$expr %>%
     paste0('table %>% ', .) %>%
     evaluate_expression(mod_out[[out_i$file]], .)
-  map(out_i$unit[[1]], ~var[var[,1] == .x, 2]) %>%
-    map2(., out_i_name, ~set_names(.x, .y)) %>%
+  map(out_i$unit, ~var[var[,1] == .x, 2]) %>%
+    map2(., out_i$name, ~set_names(.x, .y)) %>%
     bind_cols()
 }
 
@@ -119,37 +121,6 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
   }
 
   return(sim_result)
-}
-
-#' Create date vector from the date columns in the last SWAT+ simulation
-#' @param output Output definition that results from \code{define_output()}
-#' @param thread_path Chracter string that defines the path to thread_1
-#'   the SWAT model input files
-#' @param model_setup Model setup defined by run_swat input parameters and/of
-#' @param revision Numeric value that defines the SWAT+ revision
-#'
-#' @importFrom dplyr mutate select %>%
-#' @importFrom lubridate year years ymd
-#' @importFrom tibble tibble
-#' @importFrom stringr str_sub
-#' @keywords internal
-#'
-get_date_vector_plus <- function(output, thread_path, model_setup, revision) {
-  int <- model_setup$output_interval %>% str_sub(., 1, 1)
-
-  if(int %in% c("d", "m", "y")) {
-    date <- read_swatplus_output(output[1], thread_path, revision)[[1]] %>%
-      mutate(date = ymd(yr%//%mon%//%day)) %>%
-      filter(unit == unique(unit)[1]) %>%
-      select(date)
-  } else {
-    y_skip <-  model_setup$years_skip
-    sd  <- model_setup$start_date + years(y_skip)
-    # %>% floor_date(., unit = "y")
-    ed  <- model_setup$end_date
-    date <- tibble(date = year(sd)%--%year(ed))
-  }
-  return(date)
 }
 
 #' Create date vector from the date info in the model setup of a SWAT2012 project

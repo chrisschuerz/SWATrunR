@@ -239,10 +239,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     msg <- run(run_os(swat_exe, os), wd = thread_path, error_on_status = FALSE)
 
     if(nchar(msg$stderr) == 0) {
-      ## Read defined model outputs
-      # model_output <- read_swatplus_output(output, thread_path, revision) %>%
-      #   extract_output(output, .)
-
       model_output <- read_swatplus_output(output, thread_path, add_date, revision)
 
       if(!is.null(save_path)) {

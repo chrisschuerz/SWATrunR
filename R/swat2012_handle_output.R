@@ -12,8 +12,7 @@
 #'
 read_swat2012_output <- function(output, thread_path) {
   ## Get unique output files defined in output
-  output_files <- map_chr(output,  ~ unique(.x$file)) %>%
-    unique(.)
+  output_files <- unique(output$file)
 
   ## Find the first position of table in each file
   frst_pos <- find_first_line(output_files, thread_path)
