@@ -1,4 +1,13 @@
 # SWATplusR 0.5.6
+### Update
+- Restructured output file reading in `run_swatplus()`:
+  - Moved from `readr` to `data.table::fread` to increase speed and fix some minor issues
+  - Update date vector reading to provide a safer adding of dates to outputs
+  - Simplified internal structure of `define_output()` for SWAT+ outputs (Might be further restructured and extended in future).
+  - get rid of `get_date_vector_plus()` as this step is now included in `read_swatplus_output()`
+  - Update output reading in `run_swat2012()` to be compatible with the updated output reading.
+  
+# SWATplusR 0.5.6
 ### Fix
 - Set lazy loading to default in all readr functions.
 

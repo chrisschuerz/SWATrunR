@@ -4,14 +4,14 @@
 \alias{extract_out_i}
 \title{Extract the variable i from the simulation outputs}
 \usage{
-extract_out_i(out_i, out_i_name, mod_out)
+extract_out_i(out_i, mod_out)
 }
 \arguments{
 \item{out_i}{The ith output defined to read from the SWAT model results}
 
-\item{out_i_name}{The name of the ith output variable}
-
 \item{mod_out}{Output files read from the respective thread}
+
+\item{out_i_name}{The name of the ith output variable}
 }
 \description{
 Extract the variable i from the simulation outputs
