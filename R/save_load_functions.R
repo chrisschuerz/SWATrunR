@@ -31,7 +31,7 @@ save_run <- function(save_path, model_output, parameter, run_index, i_run, i_thr
                     ~ model_output[,.x:.y]) %>%
     set_names(run_name%_%1:(length(col_split) - 1))
 
-  output_db <- dbConnect(SQLite(), save_path%//%"sim"%_%i_thread%.%"sqlite")
+  output_db <- dbConnect(SQLite(), save_path%//%i_thread%.%"sqlite")
 
   map2(out_split, names(out_split), ~dbWriteTable(output_db, .y, .x))
 
@@ -98,7 +98,7 @@ set_save_path <- function(project_path, save_path, save_dir) {
 #' @param model_setup List with files and variables that define the SWAT model
 #'   setup
 #'
-#' @importFrom DBI dbConnect dbDisconnect dbReadTable dbWriteTable
+#' @importFrom DBI dbConnect dbDisconnect dbListTables dbReadTable dbWriteTable
 #' @importFrom dplyr mutate select %>%
 #' @importFrom lubridate year month day hour minute second
 #' @importFrom purrr map_df map_dfc
@@ -110,20 +110,17 @@ initialize_save_file <- function(save_path, parameter, model_setup) {
   table_names <- dbListTables(output_db)
 
   if("parameter_values"%in% table_names) {
+    par_val_db <- dbReadTable(output_db, "parameter_values")
+    par_def_db <- dbReadTable(output_db, "parameter_definition")
+
     if(is.null(parameter)) {
       stop("No parameter set provided to current SWAT run.",
            "A parameter set was however found in 'save_file'.")
     }
-    par_val_db <- dbReadTable(output_db, "parameter_values")
-    if(!identical(as.matrix(parameter$values), as.matrix(par_val_db))) {
-      stop("Parameters of current SWAT simulations and the parameters",
-           "saved in 'save_file' differ!")
-    }
-    par_def_db <- dbReadTable(output_db, "parameter_definition")
-    if(!identical(as.matrix(parameter$definition), as.matrix(par_def_db))) {
-      stop("Parameter definition of current SWAT simulation and the",
-           "parameter definition saved in 'save_file' differ!")
-    }
+
+    compare_parameter(parameter$values, par_val_db,
+                      parameter$definition, par_def_db)
+
   } else {
     if(!is.null(parameter)){
       if(!is.data.frame(parameter$values)) {
@@ -285,7 +282,7 @@ filter_not_empty <- function(dat_list) {
 #' @importFrom dplyr bind_cols %>%
 #' @importFrom purrr map walk walk2
 #' @importFrom RSQLite dbDisconnect
-#' @importFrom tibble tibble
+#' @importFrom tibble tibble as_tibble
 #' @export
 #'
 scan_swat_run <- function(save_dir) {
@@ -337,85 +334,99 @@ scan_swat_run <- function(save_dir) {
 #' @param save_dir Character string or vector of character strings that provide
 #'   the path/s to the save folder/s.
 #'
-#' @importFrom dplyr bind_rows collect filter mutate src_tbls tbl %>%
-#' @importFrom dbplyr src_dbi
-#' @importFrom purrr map map2
-#' @importFrom RSQLite dbConnect SQLite
-#' @importFrom tibble tibble
+#' @importFrom DBI dbConnect dbListFields dbListTables dbReadTable
+#' @importFrom dplyr bind_rows collect filter mutate %>%
+#' @importFrom purrr map map2 map2_df
+#' @importFrom RSQLite SQLite
+#' @importFrom stringr str_detect str_remove
+#' @importFrom tibble as_tibble tibble
 #' @keywords internal
 #'
 scan_save_files <- function(save_dir) {
   # Acquire the paths of all '.sqlite' in the provided save folder paths
   sq_file <- save_dir %>%
-    map(., ~list.files(path = .x, pattern = ".sqlite$", full.names = TRUE)) %>%
+    map(., ~list.files(path = .x, pattern = '.sqlite$', full.names = TRUE)) %>%
     unlist(.)
 
   # split the files into parameter/date files and simulation files
-  par_dat_file <- sq_file[grepl("par_dat.sqlite$", sq_file)]
-  sim_file <- sq_file[!grepl("par_dat.sqlite$", sq_file)]
+  par_dat_file <- sq_file[str_detect(sq_file, 'par_dat.sqlite$')]
+  sim_file <- sq_file[str_detect(sq_file, 'thread_[:digit:]+.sqlite$')]
+  err_file <- sq_file[str_detect(sq_file, 'error_log.sqlite$')]
 
-
-  par_dat_con <- map(par_dat_file, ~ dbConnect(SQLite(), .x))
-  par_dat_db <- map(par_dat_con, ~src_dbi(.x))
-  par_available <- map(par_dat_db, ~ "parameter_values" %in% src_tbls(.x)) %>%
+  par_dat_db <- map(par_dat_file, ~ dbConnect(SQLite(), .x))
+  par_available <- map(par_dat_db, ~ 'parameter_values' %in% dbListTables(.x)) %>%
     unlist(.) %>%
     any(.)
 
   if(par_available) {
-    par_val <- map(par_dat_con, ~tbl(.x, "parameter_values") %>% collect(.))
+    par_val <- map(par_dat_db, ~dbReadTable(.x, 'parameter_values'))
     if(!is_identical(par_val)) {
-      stop("The parameter sets in the provided save folders differ!")
+      stop('The parameter sets in the provided save folders differ!')
     }
 
-    par_def <- map(par_dat_con, ~tbl(.x, "parameter_definition") %>% collect(.))
+    par_def <- map(par_dat_db, ~dbReadTable(.x, 'parameter_definition'))
     if(!is_identical(par_def)) {
-      stop("The parameter definitions in the provided save folders differ!")
+      stop('The parameter definitions in the provided save folders differ!')
     }
+
+    par_val <- as_tibble(par_val[[1]])
+    par_def <- as_tibble(par_def[[1]])
+
+    # If parameter is available, date_config should be as well
+    date_available <- map(par_dat_db, ~ 'date_config' %in% dbListTables(.x)) %>%
+      unlist(.) %>%
+      any(.)
+
+    if(!date_available) {
+      stop("'date_config' is missing in 'save_file'. A reason can be that ",
+           "simulations were saved with a 'SWATplusR' version < 0.6. ",
+           "To read these simulations downgrade to an older version of ",
+           "'SWATplusR' (e.g. version 0.5)!")
+    }
+
+    date_config <- map(par_dat_db, ~dbReadTable(.x, 'date_config'))
+
+    if(!is_identical(date_config)) {
+      stop('The dates in the provided save folders differ!')
+    }
+
+    date_config <- as_tibble(date_config[[1]])
+
+    par_dat_db <- par_dat_db[[1]]
+
   }else {
     par_val <- NULL
     par_def  <- NULL
+    date_config <- NULL
+  }
+  if (length(sim_file) > 0) {
+    sim_db <- map(sim_file, ~ dbConnect(SQLite(), .x))
+    sim_tbl <- map(sim_db, ~tibble(tbl = dbListTables(.x))) %>%
+      map2_df(., 1:length(.), ~ mutate(.x, db_id = .y)) %>%
+      mutate(run = str_remove(tbl, '\\_[:digit:]+$'), .before = 1)
+
+    if(nrow(sim_tbl) > 0 ) {
+      first_run <- filter(sim_tbl, run == sim_tbl$run[1])
+      variables <-   map(first_run$tbl, ~ dbListFields(sim_db[[first_run$db_id[1]]], .x)) %>%
+        unlist(.) %>%
+        .[. != 'date']
+    } else {
+      variables <- NULL
+    }
+
+  } else {
+    sim_db <- NULL
+    sim_tbl <- NULL
   }
 
-  date_data <- map(par_dat_con, ~tbl(.x, "date") %>% collect(.))
-  if(!is_identical(date_data)) {
-    stop("The dates in the provided save folders differ!")
-  }
-
-  sim_con <- map(sim_file, ~ dbConnect(SQLite(), .x))
-  sim_db <- map(sim_con, ~src_dbi(.x))
-
-  table_overview <- map(sim_db, ~src_tbls(.x)) %>%
-    map(.,     ~tibble(tbl_name = .x,
-                       var       = strsplit(tbl_name, "\\$\\$from\\$\\$") %>%
-                         map(., ~.x[1]) %>%
-                         unlist(.),
-                       run_label = strsplit(tbl_name, "\\$\\$from\\$\\$") %>%
-                         map(., ~.x[2]) %>%
-                         unlist(.),
-                       run_num   = run_label %>%
-                         gsub("run_", "", .) %>%
-                         as.integer(.))) %>%
-    map2(., 1:length(.), ~ mutate(.x, con_number = .y)) %>%
-    bind_rows(.) %>%
-    filter(!is.na(run_num))
-
-
-  return(list(par_dat_file   = par_dat_file,
-              par_dat_con    = par_dat_con,
-              par_dat_db     = par_dat_db,
-              par_val        = par_val,
-              par_def        = par_def,
-              date_data      = date_data,
-              sim_file       = sim_file,
-              sim_con        = sim_con,
-              sim_db         = sim_db,
-              table_overview = table_overview))
+  return(list(par_val     = par_val,
+              par_def     = par_def,
+              date_config = date_config,
+              variables   = variables,
+              sim_tbl     = sim_tbl,
+              par_dat_db  = par_dat_db,
+              sim_db      = sim_db))
 }
-
-# merge_swat_run <- function(save_dir) {
-#
-# }
-
 
 #' Check if tables in a list are identical
 #'
@@ -535,21 +546,13 @@ convert_date <- function(date_tbl) {
 #' @importFrom purrr map map2
 #' @keywords internal
 #'
-check_saved_data <- function(save_path, parameter, output, run_index) {
+check_saved_data <- function(save_path, parameter, output, run_index, model_setup) {
   if(length(dir(save_path)) > 0) {
     saved_data <- scan_save_files(save_path)
-    if(!is.null(saved_data$par_val)) {
-      if(!identical(as.matrix(parameter$values),
-                    as.matrix(saved_data$par_val[[1]]))) {
-        stop("Parameters of current SWAT simulations and the parameters"%&&%
-               "saved in 'save_file' differ!")
-      }
-      if(!identical(as.matrix(parameter$definition),
-                    as.matrix(saved_data$par_def[[1]]))) {
-        stop("Parameter definition of current SWAT simulation and the"%&&%
-               "parameter definition saved in 'save_file' differ!")
-      }
-    }
+
+    compare_parameter(parameter$values, parameter$definition,
+                      saved_data$par_val, saved_data$par_def)
+
     if(nrow(saved_data$table_overview) > 0) {
       out_name  <- names(output)
       is_single <- map(output, ~length(unlist(.x$unit))) == 1
@@ -578,6 +581,31 @@ check_saved_data <- function(save_path, parameter, output, run_index) {
   }
 }
 
+
+#' Compare if parameters saved in the database and parameters of simulation
+#' match
+#'
+#' @param par_val Parameter values table in simulation
+#' @param par_val_db Parameter values table in data base
+#' @param par_def Parameter definition table in simulation
+#' @param par_def_db Parameter definition table in data base
+#'
+#' @keywords internal
+#'
+compare_parameter <- function(par_val, par_def, par_val_db, par_def_db) {
+  if(!is.null(par_val_db)) {
+    if(!identical(as.matrix(par_val),
+                  as.matrix(par_val_db))) {
+      stop("Parameters of current SWAT simulations and the parameters"%&&%
+             "saved in 'save_file' differ!")
+    }
+    if(!identical(as.matrix(par_def),
+                  as.matrix(par_def_db))) {
+      stop("Parameter definition of current SWAT simulation and the"%&&%
+             "parameter definition saved in 'save_file' differ!")
+    }
+  }
+}
 
 truncate <- function(x, n) {
   if(!is.na(x[n])) {

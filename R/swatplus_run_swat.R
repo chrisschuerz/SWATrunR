@@ -139,19 +139,19 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## Convert output to named list in case single unnamed output was defined
   output <- check_output(output, "plus")
 
-  ## Define save_path and check if planned simulations already exist in save file
-  if(!is.null(save_file)) {
-    save_path <- set_save_path(project_path, save_path, save_file)
-    # check_saved_data(save_path, parameter, output, run_index)
-  }
-
   ## Read and modify the projects' files defining simulation period years to
   ## skip, interval, etc.
   model_setup <- setup_swatplus(project_path, parameter, output,
                                 start_date, end_date, start_date_print,
                                 output_interval, years_skip, unit_cons)
 
-  # Check if weather inputs accord with start and end date
+  ## Define save_path and check if planned simulations already exist in save file
+  if(!is.null(save_file)) {
+    save_path <- set_save_path(project_path, save_path, save_file)
+    check_saved_data(save_path, parameter, output, run_index)
+  }
+
+    # Check if weather inputs accord with start and end date
   check_dates(project_path, model_setup)
 
 #-------------------------------------------------------------------------------

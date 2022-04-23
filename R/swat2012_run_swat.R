@@ -133,12 +133,6 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## Convert output to named list in case single unnamed output was defined
   output <- check_output(output, "2012")
 
-  ## Define save_path and check if planned simulations already exist in save file
-  if(!is.null(save_file)) {
-    save_path <- set_save_path(project_path, save_path, save_file)
-    check_saved_data(save_path, parameter, output, run_index)
-  }
-
   ## Read the meta information on the parameters and the required parameter files
   if(!is.null(parameter)) {
     file_meta <- read_file_meta(project_path, parameter$definition)
@@ -155,6 +149,12 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                                 output_interval, years_skip,
                                 rch_out_var, sub_out_var,
                                 hru_out_var, hru_out_nr)
+
+  ## Define save_path and check if planned simulations already exist in save file
+  if(!is.null(save_file)) {
+    save_path <- set_save_path(project_path, save_path, save_file)
+    check_saved_data(save_path, parameter, output, run_index, model_setup)
+  }
 
   # Check if weather inputs accord with start and end date
   check_dates(project_path, model_setup)
