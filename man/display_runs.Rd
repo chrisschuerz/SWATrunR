@@ -5,7 +5,7 @@
 \title{Convert the information on available runs for the simulated variables into
 strings that are printed}
 \usage{
-display_runs(tbl)
+display_runs(runs)
 }
 \arguments{
 \item{tbl}{overview table that provides meta data for all simulation runs for

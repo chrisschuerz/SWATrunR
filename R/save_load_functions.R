@@ -103,6 +103,7 @@ set_save_path <- function(project_path, save_path, save_dir) {
 #' @importFrom lubridate year month day hour minute second
 #' @importFrom purrr map_df map_dfc
 #' @importFrom RSQLite SQLite
+#' @importFrom tibble add_column
 #' @keywords internal
 #'
 initialize_save_file <- function(save_path, parameter, model_setup) {
@@ -118,8 +119,8 @@ initialize_save_file <- function(save_path, parameter, model_setup) {
            "A parameter set was however found in 'save_file'.")
     }
 
-    compare_parameter(parameter$values, par_val_db,
-                      parameter$definition, par_def_db)
+    compare_parameter(parameter$values, parameter$definition,
+                      par_val_db, par_def_db)
 
   } else {
     if(!is.null(parameter)){
@@ -136,6 +137,11 @@ initialize_save_file <- function(save_path, parameter, model_setup) {
                                "start_date_print", "output_interval")] %>%
     .[!is.na(names(.))] %>%
     map_df(., ~ as.character(.x))
+
+  if(!('start_date_print' %in% names(date_config))) {
+    date_config <- add_column(date_config, start_date_print = NA,
+                              .after = 'years_skip')
+  }
 
   if("date_config"%in% table_names) {
     date_config_db <- dbReadTable(output_db, 'date_config')
@@ -166,54 +172,67 @@ initialize_save_file <- function(save_path, parameter, model_setup) {
 #' @param add_date Logical. If \code{add_date = TRUE} a date column is added to
 #'   the simulation results of each variable
 #'
-#' @importFrom dplyr filter %>%
+#' @importFrom DBI dbConnect dbDisconnect dbListFields
+#' @importFrom dplyr filter group_by group_split mutate %>%
+#' @importFrom lubridate ymd
 #' @importFrom purrr map walk
-#' @importFrom RSQLite dbDisconnect
+#' @importFrom RSQLite SQLite
 #' @export
 #'
 load_swat_run <- function(save_dir, variable = NULL, run = NULL,
                           add_parameter = TRUE, add_date = TRUE) {
   save_list <- scan_save_files(save_dir)
 
-  if(is.null(variable)) {variable <- unique(save_list$table_overview$var)}
-  if(is.null(run)) {run <- unique(save_list$table_overview$run_num) %>% sort(.)}
+  if(add_date) {
+    db <- dbConnect(save_list$sim_db[[save_list$sim_tbl$db_id[1]]])
+    col_names <- dbListFields(db, save_list$sim_tbl$tbl[1])
+    dbDisconnect(db)
 
-  if(add_date){
-    date <- convert_date(save_list$date_data[[1]])
+    if ('date' %in% col_names) {
+      date <- collect_cols('date', save_list$sim_tbl$tbl[1],
+                   save_list$sim_db[[save_list$sim_tbl$db_id[1]]]) %>%
+        mutate(date = ymd(19700101) + date)
+    } else {
+      date_config <- save_list$date_config %>%
+        mutate(start_date = ymd(start_date),
+               end_date   = ymd(end_date))
+      date <- get_date_vector_2012(date_config)
+    }
   }
 
-  parameter <- list(values = save_list$par_val[[1]],
-                    definition = save_list$par_def[[1]])
+  if(is.null(variable)) {
+    variable <- save_list$variables
+  } else if (any(!(variable %in% save_list$variables))) {
+      no_var <- variable[which(!(variable %in% save_list$variables))]
+      stop("The following variables wer not simulated and saved in 'save_dir':\n  ",
+           paste(no_var, collapse = ', '))
+  }
 
-  run_list <- run %>%
-    map(., ~ filter(save_list$table_overview, run_num %in% .x)) %>%
-    filter_not_empty(.)
+  if(is.null(run)) {
+    run <- sort(unique(save_list$sim_tbl$run_idx))
+  } else if (any(!(run %in% 1:nrow(save_list$par_val)))) {
+    no_run <- run[which(!(run %in% 1:nrow(save_list$par_val)))]
+    stop("The following runs are not defined for this simulation project:\n  ",
+         paste(no_run, collapse = ', '))
+  } else if (any(!(run %in% save_list$sim_tbl$run_idx))) {
+    no_run <- run[which(!(run %in% save_list$sim_tbl$run_idx))]
+    stop("The following runs are not saved in 'save_dir':\n  ",
+         paste(no_run, collapse = ', '))
+  }
 
-  run_avail <- map_dbl(run_list, ~.x$run_num[1])
+  parameter <- list(values = save_list$par_val,
+                    definition = save_list$par_def)
 
-  sim_results <- run_list %>%
-    map(., ~ filter(., var %in% variable)) %>%
-    map(., ~ split(.x, 1:nrow(.x))) %>%
-    map(., ~ collect_sim_run(.x, save_list), save_list) %>%
-    tidy_results(., parameter, date, add_parameter, add_date, run_avail)
+  sim_tbl_col <- filter(save_list$sim_tbl, run_idx %in% run)
 
-  # if(is.list(sim_results)) {
-  #   if(add_parameter) {
-  #     run_load <- map(sim_results$simulation, ~ names(.x))
-  #   } else {
-  #     run_load <- map(sim_results, ~ names(.x))
-  #   }
-  #   run_load <- run_load %>%
-  #     map(., ~.x[ .x != "date"]) %>%
-  #     map(., ~ gsub("run_", "", .x)) %>%
-  #     map(., ~ as.numeric(.x))
-  #
-  #   run_in_loaded <- map(run_load, ~ run %in% .x)
-  #   if(any(!map_lgl(run_in_loaded, all))) {
-  #     cat("Here comes more...")
-  #   }
-  # }
-
+  sim_results <- sim_tbl_col %>%
+    group_by(run_name) %>%
+    group_split() %>%
+    map(., ~ group_by(.x, tbl)) %>%
+    map(., ~ group_split(.x)) %>%
+    map(., ~ map(.x, ~ collect_cols(variable,.x$tbl, save_list$sim_db[[.x$db_id]]))) %>%
+    map(., bind_cols) %>%
+    tidy_results(., parameter, date, add_parameter, add_date, run)
 
   walk(save_list$par_dat_con, ~ dbDisconnect(.x))
   walk(save_list$sim_con, ~ dbDisconnect(.x))
@@ -221,53 +240,29 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
   return(sim_results)
 }
 
-#' Helper function to collect a table from a sqlite date base according to the
-#' information given in one line of the table_overview
+#' Collect selected columns from table in SQLite database
 #'
-#' @param sim_i One line of the overview_table providing with the columns
-#'   tbl_name (the name of a table in one of the sqlite db's), var (name of the
-#'   variable), run_label, run_num (the numeric representation of a run), and
-#'   the con_number (providing the number of the data base connection that
-#'   stores the results for this variable and run)
+#' @param col_name Character vector that defines the column nanems
+#' @param tbl_name String that defines the name of the table from which
+#'   to collect the columns
+#' @param db SQLite database connection
 #'
-#' @importFrom dplyr collect tbl %>%
-#' @importFrom purrr set_names
+#' @importFrom DBI dbClearResult dbConnect dbDisconnect dbFetch dbSendQuery
+#' @importFrom dplyr %>%
+#' @importFrom RSQLite SQLite
+#' @importFrom tibble as_tibble
 #' @keywords internal
 #'
-collect_sim_i <- function(sim_i, save_list){
-  con <- save_list$sim_db[[sim_i$con_number]]
-  tbl <- sim_i$tbl_name
-  var_name <- sim_i$var
-  tbl(con, tbl) %>%
-    collect(.) %>%
-    set_names(.,var_name)
-}
-
-#' Wrapper for sim_i that collects all variables for a simulation run
-#'
-#' @param sim_i same as sim_i above but multiple lines where each line is a
-#'   variable for the run_i
-#'
-#' @importFrom dplyr bind_cols %>%
-#' @importFrom purrr map
-#' @keywords internal
-#'
-collect_sim_run <- function(sim_run, save_list) {
-  map(sim_run, ~ collect_sim_i(.x, save_list), save_list) %>%
-    filter_not_empty(.) %>%
-    bind_cols(.)
-}
-
-#' Filter the elements of a list with tibbles where the tibbles are not empty
-#'
-#' @param dat_list List of tibbles (data.frames)
-#'
-#' @importFrom purrr map_lgl
-#' @keywords internal
-#'
-filter_not_empty <- function(dat_list) {
-  is_not_empty <- map_lgl(dat_list, ~ nrow(.x) > 0)
-  return(dat_list[is_not_empty])
+collect_cols <- function(col_name, tbl_name, db) {
+  db <- dbConnect(db)
+  var_str <- paste0("SELECT ", paste(col_name , collapse=","), " FROM ", tbl_name)
+  tbl_qry <- dbSendQuery(db, var_str)
+  tbl <- tbl_qry %>%
+    dbFetch(.) %>%
+    as_tibble(.)
+  dbClearResult(tbl_qry)
+  dbDisconnect(db)
+  return(tbl)
 }
 
 #' Retrieve information on saved SWAT runs
@@ -276,10 +271,8 @@ filter_not_empty <- function(dat_list) {
 #' get information on the simulation period, simulated variables and used
 #' parameter sets.
 #'
-#' @param save_dir Character string or vector of character strings that provide
-#'   the path/s to the save folder/s.
-#'
-#' @importFrom dplyr bind_cols %>%
+#' @param save_dir Character string or vector
+#' @importFrom lubridate years ymd
 #' @importFrom purrr map walk walk2
 #' @importFrom RSQLite dbDisconnect
 #' @importFrom tibble tibble as_tibble
@@ -288,44 +281,55 @@ filter_not_empty <- function(dat_list) {
 scan_swat_run <- function(save_dir) {
   save_list <- scan_save_files(save_dir)
 
-  duplicates <- find_duplicate(save_list$table_overview)
-  has_duplicates <- length(unlist(duplicates)) > 0
-  run_display <- display_runs(save_list$table_overview)
-  date_display <- display_date(save_list$date_data)
-
-  name_length <- run_display %>%
-    names(.) %>%
-    map(., ~nchar(.x)) %>%
-    unlist(.) %>%
-    max(.) %>%
-    paste0("%-", ., "s")
-
-  cat("Simulation period:\n", date_display, "\n")
-  cat("\n")
-  cat("Simulated variables:\n")
-  walk2(names(run_display), run_display,
-        ~ cat(sprintf(name_length, .x)%&%":", "runs", .y,"\n"))
-  if(has_duplicates) {
-    cat("\n")
-    cat("Warning! Duplicates found!\n")
-    walk2(names(duplicates), duplicates, function(x,y){
-      if(length(y) > 0){
-        cat("For", sprintf(name_length, x), "runs", paste(y, collapse = ", "),
-            "occured more than once.\n")
-      }
-    })
+  if (is.na(save_list$date_config$start_date_print)) {
+    start_date_print <- ymd(save_list$date_config$start_date) +
+                        years(as.numeric(save_list$date_config$years_skip))
+  } else {
+    start_date_print <- save_list$date_config$start_date_print
   }
+
+  if(nchar(save_list$date_config$output_interval) == 1) {
+    save_list$date_config$output_interval <-
+      case_when(save_list$date_config$output_interval == 'd' ~ 'daily',
+                save_list$date_config$output_interval == 'm' ~ 'monthly',
+                save_list$date_config$output_interval == 'y' ~ 'yearly')
+  }
+
+  cat("Simulation period:\n", save_list$date_config$start_date, "to",
+      save_list$date_config$end_date,"\n")
+
+  cat("\n")
+  cat("Printed outputs:\n", as.character(start_date_print), "to",
+      save_list$date_config$end_date, "with", save_list$date_config$output_interval,
+      "time steps.","\n")
+
+  cat("\n")
+  cat("Saved variables:\n")
+  cat(truncate(save_list$variables, 20), '\n')
+
+  cat("\n")
+  cat("Saved runs:\n")
+  cat(display_runs(save_list$sim_tbl$run_idx), '\n')
+
+  if (!is.null(save_list$err_run)) {
+    cat("\n")
+    cat("Unsaved runs due to errors in model execution :\n")
+    err_run_idx <- save_list$err_run %>%
+      str_remove(., 'run_') %>%
+      as.numeric(.)
+    cat(display_runs(err_run_idx))
+  }
+
   cat("\n")
   cat("Parameter set:\n")
   if(!is.null(save_list$par_val[[1]])) {
-    print(save_list$par_val[[1]])
-    print(save_list$par_def[[1]])
+    cat("Parameter values:\n")
+    print(save_list$par_val)
+    cat("\nParameter definition:\n")
+    print(save_list$par_def)
   } else {
     cat("No data set provided in the save files.")
   }
-
-  walk(save_list$par_dat_con, ~ dbDisconnect(.x))
-  walk(save_list$sim_con, ~ dbDisconnect(.x))
 }
 
 #' Scan the save folders of a SWAT run and return all meta data of this
@@ -361,11 +365,13 @@ scan_save_files <- function(save_dir) {
   if(par_available) {
     par_val <- map(par_dat_db, ~dbReadTable(.x, 'parameter_values'))
     if(!is_identical(par_val)) {
+      walk(par_dat_db, dbDisconnect)
       stop('The parameter sets in the provided save folders differ!')
     }
 
     par_def <- map(par_dat_db, ~dbReadTable(.x, 'parameter_definition'))
     if(!is_identical(par_def)) {
+      walk(par_dat_db, dbDisconnect)
       stop('The parameter definitions in the provided save folders differ!')
     }
 
@@ -378,6 +384,7 @@ scan_save_files <- function(save_dir) {
       any(.)
 
     if(!date_available) {
+      walk(par_dat_db, dbDisconnect)
       stop("'date_config' is missing in 'save_file'. A reason can be that ",
            "simulations were saved with a 'SWATplusR' version < 0.6. ",
            "To read these simulations downgrade to an older version of ",
@@ -387,36 +394,52 @@ scan_save_files <- function(save_dir) {
     date_config <- map(par_dat_db, ~dbReadTable(.x, 'date_config'))
 
     if(!is_identical(date_config)) {
+      walk(par_dat_db, dbDisconnect)
       stop('The dates in the provided save folders differ!')
     }
-
+    walk(par_dat_db, dbDisconnect)
     date_config <- as_tibble(date_config[[1]])
 
     par_dat_db <- par_dat_db[[1]]
 
   }else {
+    walk(par_dat_db, dbDisconnect)
     par_val <- NULL
     par_def  <- NULL
     date_config <- NULL
   }
+
+
   if (length(sim_file) > 0) {
     sim_db <- map(sim_file, ~ dbConnect(SQLite(), .x))
     sim_tbl <- map(sim_db, ~tibble(tbl = dbListTables(.x))) %>%
       map2_df(., 1:length(.), ~ mutate(.x, db_id = .y)) %>%
-      mutate(run = str_remove(tbl, '\\_[:digit:]+$'), .before = 1)
+      mutate(run_name = str_remove(tbl, '\\_[:digit:]+$'),
+             run_idx  = str_remove(run_name, 'run\\_') %>% as.numeric(.),
+             .before  = 1)
 
-    if(nrow(sim_tbl) > 0 ) {
-      first_run <- filter(sim_tbl, run == sim_tbl$run[1])
+    if(nrow(sim_tbl) > 0) {
+      first_run <- filter(sim_tbl, run_name == sim_tbl$run_name[1])
       variables <-   map(first_run$tbl, ~ dbListFields(sim_db[[first_run$db_id[1]]], .x)) %>%
         unlist(.) %>%
         .[. != 'date']
     } else {
       variables <- NULL
     }
-
+    walk(sim_db, dbDisconnect)
   } else {
     sim_db <- NULL
     sim_tbl <- NULL
+  }
+
+  if (length(err_file) > 0) {
+    err_db <- map(err_file, ~ dbConnect(SQLite(), .x))
+    err_run <- map(err_db, ~tibble(tbl = dbListTables(.x)))
+    walk(err_db, dbDisconnect)
+
+  } else {
+    err_db <- NULL
+    err_run <- NULL
   }
 
   return(list(par_val     = par_val,
@@ -424,8 +447,10 @@ scan_save_files <- function(save_dir) {
               date_config = date_config,
               variables   = variables,
               sim_tbl     = sim_tbl,
+              err_run     = err_run,
               par_dat_db  = par_dat_db,
-              sim_db      = sim_db))
+              sim_db      = sim_db,
+              err_db      = err_db))
 }
 
 #' Check if tables in a list are identical
@@ -443,22 +468,6 @@ is_identical <- function(tbl_list) {
     all(.)
 }
 
-#' Find simulation runs that are duplicated in the provided sqlite data bases
-#'
-#' @param tbl overview table that provides meta data for all simulation runs for
-#'   all variables saved in the data bases
-#'
-#' @importFrom dplyr %>%
-#' @importFrom purrr map
-#' @keywords internal
-#'
-find_duplicate <- function(tbl) {
-  tbl %>%
-    split(., as.factor(.$var)) %>%
-    map(., ~table(.x$run_num)) %>%
-    map(., ~.x[.x > 1])
-}
-
 #' Convert the information on available runs for the simulated variables into
 #' strings that are printed
 #'
@@ -466,72 +475,32 @@ find_duplicate <- function(tbl) {
 #'   all variables saved in the data bases
 #'
 #' @importFrom dplyr %>%
-#' @importFrom purrr map map2
+#' @importFrom purrr map map2 map2_chr
 #' @keywords internal
 #'
-display_runs <- function(tbl) {
-  runs <- tbl %>%
-    split(., as.factor(.$var)) %>%
-    map(., ~table(.x$run_num)) %>%
-    map(., ~ names(.x) %>% as.numeric(.))
+display_runs <- function(runs) {
+  diff_runs <- diff(sort(runs))
 
-  runs_consistent <- map(runs, ~ diff(.x) %>% .[.!= 1])
+  end_seq   <- c(runs[diff_runs != 1], runs[length(runs)])
+  start_seq <- c(runs[1], runs[which(diff_runs != 1) + 1])
 
-  map2(runs, runs_consistent, function(x,y){
-    if(length(y) == 0) {
-      paste(min(x), max(x), sep = " to ")
-    } else {
-      paste(c(x[1:10], "..."), collapse = ", ")
-    }
-  })
+  map2_chr(start_seq, end_seq, ~paste_runs(.x, .y)) %>%
+    truncate(., 10, side = 'both')
 }
 
-#' Convert the information on the dates for the simulated variables into strings
-#' that are printed
+#' Paste run indexes if start and end of sequence differ. Otherwise only use
+#' start value
 #'
-#' @param date_data Tables holding the dates loaded from the sqlite data bases
+#' @param strt Numeric start value of sequence
+#' @param end  Numeric end value of sequence
 #'
-#' @importFrom dplyr filter %>%
 #' @keywords internal
 #'
-display_date <- function(date_data) {
-  date_data[[1]] %>%
-    convert_date(.) %>%
-    filter(date == min(date) | date == max(date)) %>%
-    .$date %>%
-    as.character(.) %>%
-    paste(., collapse = " to ")
-}
-
-#' Convert dates from date format to year/month/day/hour/min/sec columns or vice
-#' versa
-#'
-#' @param date_tbl Table holding either one date column or the splitted date
-#'   columns
-#'
-#' @importFrom dplyr transmute %>%
-#' @importFrom lubridate year month day hour minute second ymd_hms
-#' @keywords internal
-#'
-convert_date <- function(date_tbl) {
-  if(ncol(date_tbl) == 1){
-    date_tbl %>%
-      transmute(year  = year(date),
-                month = month(date),
-                day   = day(date),
-                hour  = hour(date),
-                min   = minute(date),
-                sec   = second(date))
+paste_runs <- function(strt, end) {
+  if(strt == end) {
+    as.character(strt)
   } else {
-    time_diff <- (date_tbl[1,] - date_tbl[2,])[4:6]
-
-    if(any(time_diff != 0)) {
-      date_tbl %>%
-        transmute(date = ymd_hm(year%//%month%//%day%&&%hour%&&%min%&&%sec))
-    } else {
-      date_tbl %>%
-      transmute(date = ymd(year%//%month%//%day))
-    }
+    paste(strt, end, sep = ':')
   }
 }
 
@@ -553,29 +522,20 @@ check_saved_data <- function(save_path, parameter, output, run_index, model_setu
     compare_parameter(parameter$values, parameter$definition,
                       saved_data$par_val, saved_data$par_def)
 
-    if(nrow(saved_data$table_overview) > 0) {
-      out_name  <- names(output)
-      is_single <- map(output, ~length(unlist(.x$unit))) == 1
-      out_unit  <- map(output, ~ paste0("_", unlist(.x$unit)))
-      out_unit[is_single] <- ""
-      out_var   <- map2(names(output), out_unit, ~paste0(.x, .y)) %>%
-        unlist()
+    if(nrow(saved_data$sim_tbl) > 0) {
 
-      tbl_ovr <- saved_data$table_overview
+      sim_compl <- saved_data$sim_tbl$run_idx[saved_data$sim_tbl$run_idx %in% run_index]
 
-      sim_compl <- map(out_var, ~ tbl_ovr %>% filter(var == .x) %>% .$run_num) %>%
-        set_names(out_var) %>%
-        map(., ~ .x[.x %in% run_index])
+      sim_msg <-  truncate(sim_compl, 10)
+        # map(., as.character) %>%
 
-      sim_msg <- sim_compl %>%
-        map(., as.character) %>%
-        map(., ~ truncate(.x , 10)) %>%
-        map2(., names(.), ~ paste0("  ",.y, ": ", .x,  " \n")) %>%
-      unlist()
+      #   map(., ~ truncate(.x , 10)) %>%
+      #   map2(., names(.), ~ paste0("  ",.y, ": ", .x,  " \n")) %>%
+      # unlist()
 
       if(length(unlist(sim_compl)) > 0) {
         stop("The following simulation runs are already saved in 'save_file': \n",
-             sim_msg, "\n Either change the 'run_index', or define a new 'save_file'.")
+             '  ', sim_msg, "\n  Either change the 'run_index', or define a new 'save_file'.")
       }
     }
   }
@@ -607,9 +567,24 @@ compare_parameter <- function(par_val, par_def, par_val_db, par_def_db) {
   }
 }
 
-truncate <- function(x, n) {
-  if(!is.na(x[n])) {
-    x <- c(x[1:n],"...")
+#' Truncate long character vectors
+#'
+#' @param x Character vector
+#' @param n Threshold value when truncation should be done
+#' @param side side of truncation with ... Either left or both
+#'
+#' @keywords internal
+#'
+truncate <- function(x, n, side = 'left') {
+  if (side == 'left') {
+    if(!is.na(x[n])) {
+      x <- c(x[1:n],"...")
+    }
+  } else if (side == 'both') {
+    if(length(x) > (n + 1)) {
+      x <- c(x[1:(n/2)],"...", x[(length(x) - (n/2)) : length(x)])
+    }
   }
+
   paste(x, collapse = ", ")
 }

@@ -7,8 +7,7 @@
 scan_swat_run(save_dir)
 }
 \arguments{
-\item{save_dir}{Character string or vector of character strings that provide
-the path/s to the save folder/s.}
+\item{save_dir}{Character string or vector}
 }
 \description{
 Scan one or multiple save folders that belong to the same SWAT simulation and
