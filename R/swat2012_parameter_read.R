@@ -50,9 +50,9 @@ read_swat2012_files <- function(project_path, file_meta) {
 
   return(backup)
 }
-
-c("pnd", "rte", "sub", "swq", "hru", "gw", "mgt", "sol", "chm",
-  "sdr", "sep", "bsn", "wwq", "res", "ops")
+#
+# c("pnd", "rte", "sub", "swq", "hru", "gw", "mgt", "sol", "chm",
+#   "sdr", "sep", "bsn", "wwq", "res", "ops")
 
 #' Read the meta information for the parameter files
 #'

@@ -481,8 +481,8 @@ is_identical <- function(tbl_list) {
 display_runs <- function(runs) {
   diff_runs <- diff(sort(runs))
 
-  end_seq   <- c(runs[diff_runs != 1], runs[length(runs)])
-  start_seq <- c(runs[1], runs[which(diff_runs != 1) + 1])
+  end_seq   <- unique(c(runs[diff_runs != 1], runs[length(runs)]))
+  start_seq <- unique(c(runs[1], runs[which(diff_runs != 1) + 1]))
 
   map2_chr(start_seq, end_seq, ~paste_runs(.x, .y)) %>%
     truncate(., 10, side = 'both')
@@ -523,10 +523,18 @@ check_saved_data <- function(save_path, parameter, output, run_index, model_setu
                       saved_data$par_val, saved_data$par_def)
 
     if(nrow(saved_data$sim_tbl) > 0) {
+      sim_all   <- 1:nrow(saved_data$par_val)
 
       sim_compl <- saved_data$sim_tbl$run_idx[saved_data$sim_tbl$run_idx %in% run_index]
+      sim_msg <-  sim_compl %>%
+        sort() %>%
+        display_runs(.)
 
-      sim_msg <-  truncate(sim_compl, 10)
+      sim_miss  <- sim_all[! sim_all %in% sim_compl]
+      miss_msg <-  sim_miss %>%
+        sort() %>%
+        display_runs(.)
+      # sim_msg <-  truncate(sim_compl, 10)
         # map(., as.character) %>%
 
       #   map(., ~ truncate(.x , 10)) %>%
@@ -534,8 +542,17 @@ check_saved_data <- function(save_path, parameter, output, run_index, model_setu
       # unlist()
 
       if(length(unlist(sim_compl)) > 0) {
-        stop("The following simulation runs are already saved in 'save_file': \n",
-             '  ', sim_msg, "\n  Either change the 'run_index', or define a new 'save_file'.")
+        if (length(sim_miss) == 0) {
+          stop("All simulation runs for the defined parameter set are",
+               " already saved in 'save_file'!"
+               )
+        } else {
+          stop("The following simulation runs are already saved in 'save_file': \n",
+               '  ', sim_msg,
+               "\n  The following simulation runs are missing in 'save_file': \n",
+               '  ', miss_msg,
+               "\n  Change the 'run_index' to run only missing simulations.")
+        }
       }
     }
   }
