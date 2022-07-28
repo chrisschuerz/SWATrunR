@@ -29,6 +29,7 @@ format_swatplus_parameter <- function(parameter) {
 #' @importFrom dplyr %>%
 #' @importFrom purrr map2_df map_dbl
 #' @importFrom readr write_lines
+#' @importFrom stringr str_sub
 #'
 #' @keywords internal
 #'
@@ -41,7 +42,8 @@ write_calibration <- function(thread_path, parameter, calibration, run_index,
     unlist(.) %>%
     # map_dbl(., ~.x) %>%
     set_names(., parameter$definition$parameter) %>%
-    sprintf("%.15s", .)
+    sprintf("%.15f", .) %>%
+    str_sub(., 1, 15)
 
   col_format <- c("%-12s", "%8s", "%16s", "%16s", rep("%8s", ncol(calibration) - 4))
 

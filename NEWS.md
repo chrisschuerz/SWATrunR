@@ -1,6 +1,16 @@
 # SWATplusR 0.6
 
-##Major update 
+## Critical fix
+- Writing parameter values to calibration.cal had issues with small values. Exponent was cut off then. This commit fixes the parameter writing to calibration.cal
+
+# SWATplusR 0.6.1
+
+## Minor fix
+- Fix and improve message prompting for saving and screening simulations saved in databases.
+
+# SWATplusR 0.6
+
+## Major update 
 - Saving and loading of SWAT simulations into SQLite data bases is fixed and works with new structure of simulation outputs
 - Loading simulations with `load_swat_run()` is not downwards compatible, due to different structure of saved content.
 - To load old SWAT runs that were saved to SQLite databases you have to downgrade `SWATplusR` to e.g. version 0.4
