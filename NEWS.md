@@ -1,4 +1,9 @@
-# SWATplusR 0.6
+# SWATplusR 0.6.3
+
+## Minor update
+- Introduction of input argument `time_out` in `run_swatplus()`. Some SWAT+ parameter combinations lead to simulations to hang up. A workaround is to introduce a timeout for runs that get stuck. Now runs that time out return a time out error.
+
+# SWATplusR 0.6.2
 
 ## Critical fix
 - Writing parameter values to calibration.cal had issues with small values. Exponent was cut off then. This commit fixes the parameter writing to calibration.cal

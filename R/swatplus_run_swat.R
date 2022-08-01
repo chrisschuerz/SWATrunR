@@ -64,8 +64,13 @@
 #' @param quiet (optional) Logical. If \code{quiet = TRUE} no messages are
 #'   written.  \code{Default = FALSE}
 #' @param revision (optional) Numeric. If \code{revision} is defined
-#' \code{run_swatplus()} uses the input revision number (e.g. \code{revision = 59.3}.
-#' Otherwise the revision number is acquired from the SWAT executable.
+#'   \code{run_swatplus()} uses the input revision number (e.g. \code{revision = 59.3}.
+#'   Otherwise the revision number is acquired from the SWAT executable.
+#' @param time_out (optional) Numeric. Timeout for simulation in seconds.
+#'   Simulations may get stuck due to specific parameter combinations. A timeout
+#'   kills any simulation if the runtime exceeds the set time in seconds.
+#'   Be careful with this setting as a timeout set too short will also kill
+#'   all potentially sucessful runs before finishing.
 #'
 #' @section Examples:
 #'   To learn the basics on how to use \code{SWATplusR} see the
@@ -95,7 +100,8 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                          save_file = NULL, return_output = TRUE,
                          add_parameter = TRUE, add_date = TRUE,
                          refresh = TRUE, keep_folder = FALSE,
-                         quiet = FALSE, revision = NULL) {
+                         quiet = FALSE, revision = NULL,
+                         time_out = Inf) {
 
 #-------------------------------------------------------------------------------
 
@@ -236,9 +242,19 @@ sim_result <- foreach(i_run = 1:n_run,
     }
 
     ## Execute the SWAT exe file located in the thread folder
-    msg <- run(run_os(swat_exe, os), wd = thread_path, error_on_status = FALSE)
+    msg <- run(run_os(swat_exe, os), wd = thread_path,
+               error_on_status = FALSE, timeout = time_out)
 
-    if(nchar(msg$stderr) == 0) {
+    if(msg$timeout) {
+      out_msg <- str_split(msg$stdout, '\r\n|\r|\n', simplify = TRUE) %>%
+        .[max(1, length(.) - 10):length(.)]
+      err_msg <- c(paste0('Simulation timed out after ', time_out, ' sec'),
+                   'Simulation run:', out_msg)
+      model_output <- err_msg
+      if(!is.null(save_path)) {
+        save_error_log(save_path, model_output, parameter, run_index, i_run)
+      }
+    } else if(nchar(msg$stderr) == 0) {
       model_output <- read_swatplus_output(output, thread_path, add_date, revision)
 
       if(!is.null(save_path)) {
@@ -246,8 +262,6 @@ sim_result <- foreach(i_run = 1:n_run,
       }
     } else {
       err_msg <- str_split(msg$stderr, '\r\n|\r|\n', simplify = TRUE)
-      out_msg <- str_split(msg$stdout, '\r\n|\r|\n', simplify = TRUE) %>%
-        .[max(1, length(.) - 10):length(.)]
       err_msg <- c('Last output:', out_msg, 'Error:', err_msg)
       model_output <- err_msg
       if(!is.null(save_path)) {

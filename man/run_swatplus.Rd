@@ -24,7 +24,8 @@ run_swatplus(
   refresh = TRUE,
   keep_folder = FALSE,
   quiet = FALSE,
-  revision = NULL
+  revision = NULL,
+  time_out = Inf
 )
 }
 \arguments{
@@ -106,6 +107,12 @@ written.  \code{Default = FALSE}}
 \item{revision}{(optional) Numeric. If \code{revision} is defined
 \code{run_swatplus()} uses the input revision number (e.g. \code{revision = 59.3}.
 Otherwise the revision number is acquired from the SWAT executable.}
+
+\item{time_out}{(optional) Numeric. Timeout for simulation in seconds.
+Simulations may get stuck due to specific parameter combinations. A timeout
+kills any simulation if the runtime exceeds the set time in seconds.
+Be careful with this setting as a timeout set too short will also kill
+all potentially sucessful runs before finishing.}
 }
 \value{
 Returns the simulation results for the defined output variables as a
