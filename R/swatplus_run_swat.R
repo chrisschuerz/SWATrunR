@@ -261,6 +261,8 @@ sim_result <- foreach(i_run = 1:n_run,
         save_run(save_path, model_output, parameter, run_index, i_run, thread_id)
       }
     } else {
+      out_msg <- str_split(msg$stdout, '\r\n|\r|\n', simplify = TRUE) %>%
+        .[max(1, length(.) - 10):length(.)]
       err_msg <- str_split(msg$stderr, '\r\n|\r|\n', simplify = TRUE)
       err_msg <- c('Last output:', out_msg, 'Error:', err_msg)
       model_output <- err_msg
