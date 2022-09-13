@@ -1,3 +1,8 @@
+# SWATplusR 0.6.4
+
+## Minor fix
+- Fix issue with returning error message in `run_swatplus()`.
+
 # SWATplusR 0.6.3
 
 ## Minor update
