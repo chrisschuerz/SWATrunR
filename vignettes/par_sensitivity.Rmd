@@ -217,13 +217,13 @@ path_plus <- load_demo(dataset = 'project',
 ```
 
 ```{r, echo=F}
-demo_path <- "C:/Users/schuerz/Documents/swatplus/swatplus_rev60_demo"
+path plus <- "C:/Users/schuerz/Documents/swatplus/swatplus_rev60_demo"
 ```
 
 We perform daily simulations for the basin average evapotranspiration (`et`) and the discharge (`q`) in the channel of the model setup.
 
 ```{r, eval=F}
-sim_morris <- run_swatplus(project_path = demo_path,
+sim_morris <- run_swatplus(project_path = path_plus,
                            output = list(et = define_output(file = 'basin_wb',
                                                             variable = 'et',
                                                             unit = 1),
@@ -344,7 +344,7 @@ par_star <- star_sample %>%
 We will again simulate ET and discharge which we already analyzed in the Morris' example. We keep the same time periods and the same start date to print simulation outputs. Hence the only input argument that we have to change in the simulation run is the parameter set that we want to use. We define `parameter = par_star` to implement the parameter set that we sampled with the STAR sampling design.
 
 ```{r, eval=F}
-sim_vars <- run_swatplus(project_path = demo_path,
+sim_vars <- run_swatplus(project_path = path_plus,
                          output = list(et = define_output(file = 'basin_wb',
                                                           variable = 'et',
                                                           unit = 1),
@@ -455,7 +455,7 @@ par_sobol <- sobol_mat %>%
 As in the previous examples we will simulate ET and the discharge. Because the number of required simulations is large than in the previous examples we will use a shorter simulation period between `start_date = 20050101` and `end_date = 20101231` where we print the years starting from `start_date_print = 20080101`. We will also use the new parameter set `parameter = par_sobol` now for the simulations. 
 
 ```{r, eval=F}
-sim_sobol <- run_swatplus(project_path = demo_path,
+sim_sobol <- run_swatplus(project_path = path_plus,
                           output = list(et = define_output(file = 'basin_wb',
                                                            variable = 'et',
                                                            unit = 1),

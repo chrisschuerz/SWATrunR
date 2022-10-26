@@ -141,7 +141,7 @@ path_plus <- load_demo(dataset = 'project',
 ```
 
 ```{r, echo=F}
-demo_path <- "C:/Users/schuerz/Documents/swatplus/swatplus_rev60_demo"
+path_plus <- "C:/Users/schuerz/Documents/swatplus/swatplus_rev60_demo"
 ```
 
 A few catchment properties that we will use later on in the example I will define already at this point.
@@ -209,7 +209,7 @@ In this simulation experiment we will extract two outputs that we will analyze t
 We define the basin average ET (`et`) and the yields for the crops in the HRUs 2, 3, and 4 (`yld_ag1`) to which the crop rotation management *lrew_ag1* was assigned in the model setup step as our model output variables. In this small setup these three HRUs together are all HRUs with *lrew_ag1* in the model setup. We will return the simulation outputs as annual values for the time period 2006 to 2012. 
 
 ```{r, eval=FALSE}
-et_yld <- run_swatplus(project_path = demo_path,
+et_yld <- run_swatplus(project_path = path_plus,
                        output = list(et      = define_output(file = 'basin_wb', 
                                                              variable = 'et', 
                                                              unit = 1),
@@ -333,7 +333,7 @@ par_et_yld <- sample_lhs(par_bound, 20)
 We will validate the updated parameter boundaries to see if we meet our aims for ET and yields. Again a small set of simulations might be enough to get a picture of ET and yield.
 
 ```{r, eval=F}
-et_yld2 <- run_swatplus(project_path = demo_path,
+et_yld2 <- run_swatplus(project_path = path_plus,
                         output = list(et      = define_output(file = 'basin_wb', 
                                                               variable = 'et', 
                                                               unit = 1),
@@ -416,7 +416,7 @@ par_cal <- sample_lhs(par_bound, 500)
 In this small example we will now only focus on the discharge of the main catchment outlet. Therefore, the only variable we will simulate for the 500 parameter combinations `par_cal` is the daily channel discharge. The simulation period we defined already at the beginning of this article and saved the dates for the simulation period in the variables `cal_start`, `cal_end`, and `cal_start_print`.
 
 ```{r, eval=FALSE}
-qsim_cal <- run_swatplus(project_path = demo_path,
+qsim_cal <- run_swatplus(project_path = path_plus,
                          output = list(q = define_output(file = 'channel_sd', 
                                                          variable = 'flo_out', 
                                                          unit = 1)),
@@ -555,7 +555,7 @@ We will run the simulations with the selected parameter combinations for the val
 ```{r, eval=FALSE}
 
 
-qsim_val <- run_swatplus(project_path = demo_path,
+qsim_val <- run_swatplus(project_path = path_plus,
                          output = list(q = define_output(file = 'channel_sd', 
                                                          variable = 'flo_out', 
                                                          unit = 1)),
