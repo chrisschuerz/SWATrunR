@@ -217,7 +217,7 @@ path_plus <- load_demo(dataset = 'project',
 ```
 
 ```{r, echo=F}
-path plus <- "C:/Users/schuerz/Documents/swatplus/swatplus_rev60_demo"
+path_plus <- "C:/Users/schuerz/Documents/swatplus/swatplus_rev60_demo"
 ```
 
 We perform daily simulations for the basin average evapotranspiration (`et`) and the discharge (`q`) in the channel of the model setup.
