@@ -225,12 +225,16 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
 
   sim_tbl_col <- filter(save_list$sim_tbl, run_idx %in% run)
 
-  sim_results <- sim_tbl_col %>%
+  sim_tbl_list <- sim_tbl_col %>%
     group_by(run_name) %>%
     group_split() %>%
     map(., ~ group_by(.x, tbl)) %>%
-    map(., ~ group_split(.x)) %>%
-    map(., ~ map(.x, ~ collect_cols(variable,.x$tbl, save_list$sim_db[[.x$db_id]]))) %>%
+    map(., ~ group_split(.x))
+
+  variable <- map(save_list$variables_split, ~ variable[variable %in% .x])
+
+  sim_results <- sim_tbl_list %>%
+    map(., ~ map2(.x, variable, ~ collect_cols(.y, .x$tbl, save_list$sim_db[[.x$db_id]]))) %>%
     map(., bind_cols) %>%
     tidy_results(., parameter, date, add_parameter, add_date, run)
 
@@ -358,6 +362,27 @@ scan_save_files <- function(save_dir) {
   err_file <- sq_file[str_detect(sq_file, 'error_log.sqlite$')]
 
   par_dat_db <- map(par_dat_file, ~ dbConnect(SQLite(), .x))
+  date_available <- map(par_dat_db, ~ 'date_config' %in% dbListTables(.x)) %>%
+    unlist(.) %>%
+    any(.)
+
+  if(!date_available) {
+    walk(par_dat_db, dbDisconnect)
+    stop("'date_config' is missing in 'save_file'. A reason can be that ",
+         "simulations were saved with a 'SWATplusR' version < 0.6. ",
+         "To read these simulations downgrade to an older version of ",
+         "'SWATplusR' (e.g. version 0.5)!")
+  }
+
+  date_config <- map(par_dat_db, ~dbReadTable(.x, 'date_config'))
+
+  if(!is_identical(date_config)) {
+    walk(par_dat_db, dbDisconnect)
+    stop('The dates in the provided save folders differ!')
+  }
+
+  date_config <- as_tibble(date_config[[1]])
+
   par_available <- map(par_dat_db, ~ 'parameter_values' %in% dbListTables(.x)) %>%
     unlist(.) %>%
     any(.)
@@ -370,6 +395,7 @@ scan_save_files <- function(save_dir) {
     }
 
     par_def <- map(par_dat_db, ~dbReadTable(.x, 'parameter_definition'))
+
     if(!is_identical(par_def)) {
       walk(par_dat_db, dbDisconnect)
       stop('The parameter definitions in the provided save folders differ!')
@@ -378,37 +404,14 @@ scan_save_files <- function(save_dir) {
     par_val <- as_tibble(par_val[[1]])
     par_def <- as_tibble(par_def[[1]])
 
-    # If parameter is available, date_config should be as well
-    date_available <- map(par_dat_db, ~ 'date_config' %in% dbListTables(.x)) %>%
-      unlist(.) %>%
-      any(.)
-
-    if(!date_available) {
-      walk(par_dat_db, dbDisconnect)
-      stop("'date_config' is missing in 'save_file'. A reason can be that ",
-           "simulations were saved with a 'SWATplusR' version < 0.6. ",
-           "To read these simulations downgrade to an older version of ",
-           "'SWATplusR' (e.g. version 0.5)!")
-    }
-
-    date_config <- map(par_dat_db, ~dbReadTable(.x, 'date_config'))
-
-    if(!is_identical(date_config)) {
-      walk(par_dat_db, dbDisconnect)
-      stop('The dates in the provided save folders differ!')
-    }
-    walk(par_dat_db, dbDisconnect)
-    date_config <- as_tibble(date_config[[1]])
-
-    par_dat_db <- par_dat_db[[1]]
-
-  }else {
-    walk(par_dat_db, dbDisconnect)
+  } else {
     par_val <- NULL
     par_def  <- NULL
-    date_config <- NULL
   }
 
+  walk(par_dat_db, dbDisconnect)
+
+  par_dat_db <- par_dat_db[[1]]
 
   if (length(sim_file) > 0) {
     sim_db <- map(sim_file, ~ dbConnect(SQLite(), .x))
@@ -420,7 +423,8 @@ scan_save_files <- function(save_dir) {
 
     if(nrow(sim_tbl) > 0) {
       first_run <- filter(sim_tbl, run_name == sim_tbl$run_name[1])
-      variables <-   map(first_run$tbl, ~ dbListFields(sim_db[[first_run$db_id[1]]], .x)) %>%
+      variables_split <-   map(first_run$tbl, ~ dbListFields(sim_db[[first_run$db_id[1]]], .x))
+      variables <- variables_split %>%
         unlist(.) %>%
         .[. != 'date']
     } else {
@@ -442,15 +446,16 @@ scan_save_files <- function(save_dir) {
     err_run <- NULL
   }
 
-  return(list(par_val     = par_val,
-              par_def     = par_def,
-              date_config = date_config,
-              variables   = variables,
-              sim_tbl     = sim_tbl,
-              err_run     = err_run,
-              par_dat_db  = par_dat_db,
-              sim_db      = sim_db,
-              err_db      = err_db))
+  return(list(par_val         = par_val,
+              par_def         = par_def,
+              date_config     = date_config,
+              variables       = variables,
+              variables_split = variables_split,
+              sim_tbl         = sim_tbl,
+              err_run         = err_run,
+              par_dat_db      = par_dat_db,
+              sim_db          = sim_db,
+              err_db          = err_db))
 }
 
 #' Check if tables in a list are identical
