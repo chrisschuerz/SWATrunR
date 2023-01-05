@@ -258,14 +258,18 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
 #' @keywords internal
 #'
 collect_cols <- function(col_name, tbl_name, db) {
-  db <- dbConnect(db)
-  var_str <- paste0("SELECT ", paste(col_name , collapse=","), " FROM ", tbl_name)
-  tbl_qry <- dbSendQuery(db, var_str)
-  tbl <- tbl_qry %>%
-    dbFetch(.) %>%
-    as_tibble(.)
-  dbClearResult(tbl_qry)
-  dbDisconnect(db)
+  if (length(col_name) > 0) {
+    db <- dbConnect(db)
+    var_str <- paste0("SELECT ", paste(col_name , collapse=","), " FROM ", tbl_name)
+    tbl_qry <- dbSendQuery(db, var_str)
+    tbl <- tbl_qry %>%
+      dbFetch(.) %>%
+      as_tibble(.)
+    dbClearResult(tbl_qry)
+    dbDisconnect(db)
+  } else {
+    tbl <- NULL
+  }
   return(tbl)
 }
 
