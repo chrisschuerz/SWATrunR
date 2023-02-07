@@ -248,7 +248,7 @@ sim_result <- foreach(i_run = 1:n_run,
     if(msg$timeout) {
       out_msg <- str_split(msg$stdout, '\r\n|\r|\n', simplify = TRUE) %>%
         .[max(1, length(.) - 10):length(.)]
-      err_msg <- c(paste0('Simulation timed out after ', time_out, ' sec'),
+      err_msg <- c('Error:', paste0('Simulation timed out after ', time_out, ' sec'),
                    'Simulation run:', out_msg)
       model_output <- err_msg
       if(!is.null(save_path)) {
