@@ -4,10 +4,13 @@
 \alias{scan_swat_run}
 \title{Retrieve information on saved SWAT runs}
 \usage{
-scan_swat_run(save_dir)
+scan_swat_run(save_dir, return_full = FALSE)
 }
 \arguments{
 \item{save_dir}{Character string or vector}
+
+\item{return_full}{If TRUE a list with all variables, successful run IDs and
+missing run IDs is returned. Otherwise only the overview is printed.}
 }
 \description{
 Scan one or multiple save folders that belong to the same SWAT simulation and

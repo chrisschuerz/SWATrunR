@@ -280,13 +280,16 @@ collect_cols <- function(col_name, tbl_name, db) {
 #' parameter sets.
 #'
 #' @param save_dir Character string or vector
+#' @param return_full If TRUE a list with all variables, successful run IDs and
+#'   missing run IDs is returned. Otherwise only the overview is printed.
+#'
 #' @importFrom lubridate years ymd
 #' @importFrom purrr map walk walk2
 #' @importFrom RSQLite dbDisconnect
 #' @importFrom tibble tibble as_tibble
 #' @export
 #'
-scan_swat_run <- function(save_dir) {
+scan_swat_run <- function(save_dir, return_full = FALSE) {
   save_list <- scan_save_files(save_dir)
 
   if (is.na(save_list$date_config$start_date_print)) {
@@ -313,11 +316,11 @@ scan_swat_run <- function(save_dir) {
 
   cat("\n")
   cat("Saved variables:\n")
-  cat(truncate(save_list$variables, 20), '\n')
+  cat(truncate(group_variable_units(save_list$variables), 20), '\n')
 
   cat("\n")
   cat("Saved runs:\n")
-  cat(display_runs(save_list$sim_tbl$run_idx), '\n')
+  cat(display_runs(sort(unique(save_list$sim_tbl$run_idx))), '\n')
 
   if (!is.null(save_list$err_run)) {
     cat("\n")
@@ -338,6 +341,15 @@ scan_swat_run <- function(save_dir) {
   } else {
     cat("No data set provided in the save files.")
   }
+
+  if(return_full) {
+    run_index <- sort(unique(save_list$sim_tbl$run_idx))
+    run_index_miss <- which(! 1:nrow(save_list$par_val) %in% run_index)
+
+    return(list(variables = save_list$variables,
+                run_index_finished = run_index,
+                run_index_missing  = run_index_miss))
+  }
 }
 
 #' Scan the save folders of a SWAT run and return all meta data of this
@@ -348,7 +360,7 @@ scan_swat_run <- function(save_dir) {
 #'
 #' @importFrom DBI dbConnect dbListFields dbListTables dbReadTable
 #' @importFrom dplyr bind_rows collect filter mutate %>%
-#' @importFrom purrr map map2 map2_df
+#' @importFrom purrr list_rbind map map2 map2_df
 #' @importFrom RSQLite SQLite
 #' @importFrom stringr str_detect str_remove
 #' @importFrom tibble as_tibble tibble
@@ -418,8 +430,15 @@ scan_save_files <- function(save_dir) {
   par_dat_db <- par_dat_db[[1]]
 
   if (length(sim_file) > 0) {
-    sim_db <- map(sim_file, ~ dbConnect(SQLite(), .x))
-    sim_tbl <- map(sim_db, ~tibble(tbl = dbListTables(.x))) %>%
+    sim_tbl <- list()
+    sim_db <- list()
+    for (i in 1:length(sim_file)) {
+      sim_db[[i]] <- dbConnect(SQLite(), sim_file[i])
+      sim_tbl[[i]] <- tibble(tbl = dbListTables(sim_db[[i]]))
+      dbDisconnect(sim_db[[i]])
+    }
+
+    sim_tbl <- sim_tbl %>%
       map2_df(., 1:length(.), ~ mutate(.x, db_id = .y)) %>%
       mutate(run_name = str_remove(tbl, '\\_[:digit:]+$'),
              run_idx  = str_remove(run_name, 'run\\_') %>% as.numeric(.),
@@ -427,14 +446,15 @@ scan_save_files <- function(save_dir) {
 
     if(nrow(sim_tbl) > 0) {
       first_run <- filter(sim_tbl, run_name == sim_tbl$run_name[1])
+      sim_db[[first_run$db_id[1]]] <- dbConnect(sim_db[[first_run$db_id[1]]])
       variables_split <-   map(first_run$tbl, ~ dbListFields(sim_db[[first_run$db_id[1]]], .x))
+      dbDisconnect(sim_db[[first_run$db_id[1]]])
       variables <- variables_split %>%
         unlist(.) %>%
         .[. != 'date']
     } else {
       variables <- NULL
     }
-    walk(sim_db, dbDisconnect)
   } else {
     sim_db <- NULL
     sim_tbl <- NULL
@@ -442,7 +462,8 @@ scan_save_files <- function(save_dir) {
 
   if (length(err_file) > 0) {
     err_db <- map(err_file, ~ dbConnect(SQLite(), .x))
-    err_run <- map(err_db, ~tibble(tbl = dbListTables(.x)))
+    err_run <- map(err_db, ~tibble(tbl = dbListTables(.x))) %>%
+      list_rbind(.)
     walk(err_db, dbDisconnect)
 
   } else {
@@ -487,13 +508,13 @@ is_identical <- function(tbl_list) {
 #' @importFrom purrr map map2 map2_chr
 #' @keywords internal
 #'
-display_runs <- function(runs) {
+display_runs <- function(runs, sep = ':') {
   diff_runs <- diff(sort(runs))
 
   end_seq   <- unique(c(runs[diff_runs != 1], runs[length(runs)]))
   start_seq <- unique(c(runs[1], runs[which(diff_runs != 1) + 1]))
 
-  map2_chr(start_seq, end_seq, ~paste_runs(.x, .y)) %>%
+  map2_chr(start_seq, end_seq, ~paste_runs(.x, .y, sep = sep)) %>%
     truncate(., 10, side = 'both')
 }
 
@@ -505,12 +526,39 @@ display_runs <- function(runs) {
 #'
 #' @keywords internal
 #'
-paste_runs <- function(strt, end) {
+paste_runs <- function(strt, end, sep) {
   if(strt == end) {
     as.character(strt)
   } else {
-    paste(strt, end, sep = ':')
+    paste(strt, end, sep = sep)
   }
+}
+
+#' Group variable names which where saved for several spatial units
+#'
+#' @param variable_names Vector with variable names
+#'
+#' @importFrom dplyr group_by group_split %>%
+#' @importFrom purrr list_c map map_chr map2 set_names
+#' @importFrom stringr str_extract str_remove
+#' @importFrom tibble tibble
+#'
+#' @keywords internal
+#'
+group_variable_units <- function(variable_names) {
+  var_list <- tibble(variables = variable_names,
+                     parent = str_remove(variables, '_[:digit:]+$'),
+                     unit = as.numeric(str_extract(variables, '[:digit:]+$'))) %>%
+    group_by(parent) %>%
+    group_split()
+
+  var_names <- map_chr(var_list, ~ .x$parent[1])
+  var_list %>%
+    set_names(., var_names) %>%
+    map(., ~display_runs(sort(.x$unit), sep = ' to ')) %>%
+    map2(., names(.), ~ paste(.y, .x, sep = '_')) %>%
+    list_c(.) %>%
+    str_remove(., '_$')
 }
 
 #' Do general checkups for a SQLite database that already holds saved data and

@@ -5,7 +5,7 @@
 \title{Paste run indexes if start and end of sequence differ. Otherwise only use
 start value}
 \usage{
-paste_runs(strt, end)
+paste_runs(strt, end, sep)
 }
 \arguments{
 \item{strt}{Numeric start value of sequence}
