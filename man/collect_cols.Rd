@@ -4,10 +4,10 @@
 \alias{collect_cols}
 \title{Collect selected columns from table in SQLite database}
 \usage{
-collect_cols(col_name, tbl_name, db)
+collect_cols(col_name, tbl_name, db, handle_conn = TRUE)
 }
 \arguments{
-\item{col_name}{Character vector that defines the column nanems}
+\item{col_name}{Character vector that defines the column names}
 
 \item{tbl_name}{String that defines the name of the table from which
 to collect the columns}

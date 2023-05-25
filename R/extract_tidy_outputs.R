@@ -49,7 +49,7 @@ extract_out_i <- function(out_i, mod_out) {
 #'
 #' @importFrom dplyr bind_cols %>%
 #' @importFrom purrr map map_chr map_lgl set_names transpose
-#' @importFrom stringr str_remove
+#' @importFrom stringr str_extract
 #' @importFrom tibble add_column as_tibble enframe
 #' @keywords internal
 #'
@@ -72,7 +72,10 @@ tidy_results <- function(sim_result, parameter, date, add_parameter,
       n_digit <- length(sim_result) %>% as.character(.) %>% nchar(.)
     }
 
-    sim_result <- set_names(sim_result, "run"%_%sprintf("%0"%&%n_digit%&%"d", run))
+    is_run_name <- max(nchar(str_extract(names(sim_result[1]), 'run_')), 0) > 0
+    if(!is_run_name) {
+      sim_result <- set_names(sim_result, "run"%_%sprintf("%0"%&%n_digit%&%"d", run))
+    }
 
     is_result <- map_lgl(sim_result, is.list)
 

@@ -175,15 +175,19 @@ initialize_save_file <- function(save_path, parameter, model_setup) {
 #' @importFrom DBI dbConnect dbDisconnect dbListFields
 #' @importFrom dplyr filter group_by group_split mutate %>%
 #' @importFrom lubridate ymd
-#' @importFrom purrr map walk
+#' @importFrom purrr map map_lgl walk
 #' @importFrom RSQLite SQLite
+#' @importFrom stringr str_remove
 #' @export
 #'
 load_swat_run <- function(save_dir, variable = NULL, run = NULL,
                           add_parameter = TRUE, add_date = TRUE) {
+  cat('Scan saved runs...')
   save_list <- scan_save_files(save_dir)
+  cat('Done!\n')
 
   if(add_date) {
+    cat('Read date vector...')
     db <- dbConnect(save_list$sim_db[[save_list$sim_tbl$db_id[1]]])
     col_names <- dbListFields(db, save_list$sim_tbl$tbl[1])
     dbDisconnect(db)
@@ -198,6 +202,7 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
                end_date   = ymd(end_date))
       date <- get_date_vector_2012(date_config)
     }
+   cat('Done!\n')
   }
 
   if(is.null(variable)) {
@@ -220,33 +225,65 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
          paste(no_run, collapse = ', '))
   }
 
+  if(add_parameter) {
+    cat('Read parameters...')
+    cat('Done!\n')
+  }
   parameter <- list(values = save_list$par_val,
                     definition = save_list$par_def)
 
-  sim_tbl_col <- filter(save_list$sim_tbl, run_idx %in% run)
-
-  sim_tbl_list <- sim_tbl_col %>%
-    group_by(run_name) %>%
-    group_split() %>%
-    map(., ~ group_by(.x, tbl)) %>%
-    map(., ~ group_split(.x))
-
+  cat('Read variables...\n')
   variable <- map(save_list$variables_split, ~ variable[variable %in% .x])
+  tbl_ids <- which(map_lgl(variable, ~ length(.x) > 0))
 
-  sim_results <- sim_tbl_list %>%
-    map(., ~ map2(.x, variable, ~ collect_cols(.y, .x$tbl, save_list$sim_db[[.x$db_id]]))) %>%
-    map(., bind_cols) %>%
+  sim_tbl_col <- filter(save_list$sim_tbl, run_idx %in% run) %>%
+    mutate(., tbl_id = as.numeric(str_remove(tbl, 'run_[:digit:]+_')))
+
+  if(!is.na(sim_tbl_col$tbl_id[1])) {
+    sim_tbl_col <- filter(sim_tbl_col, tbl_id %in% tbl_ids)
+  }
+
+  # sim_tbl_list <- sim_tbl_col %>%
+  #   group_by(run_name) %>%
+  #   group_split() %>%
+  #   map(., ~ group_by(.x, tbl)) %>%
+  #   map(., ~ group_split(.x))
+  #
+  db_ids <- unique(sim_tbl_col$db_id)
+
+  sim_results <- list()
+  i <- 1
+  n <- nrow(sim_tbl_col)
+  t0 <- now()
+  for(i_db in db_ids) {
+    save_list$sim_db[[i_db]] <- dbConnect(save_list$sim_db[[i_db]])
+    sim_tbl_col_i <- filter(sim_tbl_col, db_id == i_db)
+    for (i_row in 1:nrow(sim_tbl_col_i)) {
+      if (is.null(sim_results[[sim_tbl_col_i$run_name[i_row]]])) {
+        sim_results[[sim_tbl_col_i$run_name[i_row]]] <- list()
+      }
+      sim_results[[sim_tbl_col_i$run_name[i_row]]][[sim_tbl_col_i$tbl[i_row]]] <-
+        collect_cols(variable[[sim_tbl_col_i$tbl_id[i_row]]],
+                     sim_tbl_col_i$tbl[i_row],
+                     save_list$sim_db[[i_db]],
+                     handle_conn = F)
+    display_progress_pct(n = i, nmax = n, t0 = t0)
+    i <- i + 1
+    }
+    dbDisconnect(save_list$sim_db[[i_db]])
+  }
+  finish_progress(nmax = n, t0 = t0, word = 'Table')
+  cat('Return simulation results...')
+  sim_results <-  map(sim_results, bind_cols)
+  sim_results <- sim_results[order(names(sim_results))] %>%
     tidy_results(., parameter, date, add_parameter, add_date, run)
-
-  walk(save_list$par_dat_con, ~ dbDisconnect(.x))
-  walk(save_list$sim_con, ~ dbDisconnect(.x))
-
+  cat('Done!\n')
   return(sim_results)
 }
 
 #' Collect selected columns from table in SQLite database
 #'
-#' @param col_name Character vector that defines the column nanems
+#' @param col_name Character vector that defines the column names
 #' @param tbl_name String that defines the name of the table from which
 #'   to collect the columns
 #' @param db SQLite database connection
@@ -257,16 +294,20 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
 #' @importFrom tibble as_tibble
 #' @keywords internal
 #'
-collect_cols <- function(col_name, tbl_name, db) {
+collect_cols <- function(col_name, tbl_name, db, handle_conn = TRUE) {
   if (length(col_name) > 0) {
-    db <- dbConnect(db)
+    if (handle_conn) {
+      db <- dbConnect(db)
+    }
     var_str <- paste0("SELECT ", paste(col_name , collapse=","), " FROM ", tbl_name)
     tbl_qry <- dbSendQuery(db, var_str)
     tbl <- tbl_qry %>%
       dbFetch(.) %>%
       as_tibble(.)
     dbClearResult(tbl_qry)
-    dbDisconnect(db)
+    if (handle_conn) {
+      dbDisconnect(db)
+    }
   } else {
     tbl <- NULL
   }
@@ -318,17 +359,33 @@ scan_swat_run <- function(save_dir, return_full = FALSE) {
   cat("Saved variables:\n")
   cat(truncate(group_variable_units(save_list$variables), 20), '\n')
 
-  cat("\n")
-  cat("Saved runs:\n")
-  cat(display_runs(sort(unique(save_list$sim_tbl$run_idx))), '\n')
+  run_index <- sort(unique(save_list$sim_tbl$run_idx))
+  run_index_miss <- which(! 1:nrow(save_list$par_val) %in% run_index)
 
-  if (!is.null(save_list$err_run)) {
+  if (length(run_index) > 0) {
     cat("\n")
-    cat("Unsaved runs due to errors in model execution :\n")
-    err_run_idx <- save_list$err_run %>%
-      str_remove(., 'run_') %>%
-      as.numeric(.)
-    cat(display_runs(err_run_idx))
+    cat("Saved runs:\n")
+    cat(display_runs(run_index), '\n')
+  } else {
+    cat("\nNo successful simulations saved so far.\n")
+  }
+
+  if (length(run_index_miss) > 0) {
+    cat("\n")
+    cat("Missing runs:\n")
+    cat(display_runs(run_index_miss), '\n')
+  } else {
+    cat("\nNo missing runs. All simulations successful.\n")
+  }
+
+  if (!is.null(save_list$err_log)) {
+    err_log <- save_list$err_log %>%
+      filter(! idx %in% run_index)
+    if (nrow(err_log) > 0) {
+      cat("\n")
+      cat("Unsaved runs due to errors in model execution :\n")
+      cat(display_runs(err_run_idx), '\n\n')
+    }
   }
 
   cat("\n")
@@ -343,12 +400,16 @@ scan_swat_run <- function(save_dir, return_full = FALSE) {
   }
 
   if(return_full) {
-    run_index <- sort(unique(save_list$sim_tbl$run_idx))
-    run_index_miss <- which(! 1:nrow(save_list$par_val) %in% run_index)
-
-    return(list(variables = save_list$variables,
-                run_index_finished = run_index,
-                run_index_missing  = run_index_miss))
+    parameter <- list(values = save_list$par_val,
+                      definition = save_list$par_def)
+    return_list <- list(variables = save_list$variables,
+                        run_index_finished = run_index,
+                        run_index_missing  = run_index_miss,
+                        parameter = parameter)
+    if(nrow(err_log) > 0) {
+      return_list$error_log <- err_log
+    }
+    return(return_list)
   }
 }
 
@@ -462,13 +523,19 @@ scan_save_files <- function(save_dir) {
 
   if (length(err_file) > 0) {
     err_db <- map(err_file, ~ dbConnect(SQLite(), .x))
-    err_run <- map(err_db, ~tibble(tbl = dbListTables(.x))) %>%
-      list_rbind(.)
+    err_log <- list()
+    for(db_i in err_db) {
+      err_tbls <- dbListTables(db_i)
+      for (tbl_i in err_tbls) {
+        err_log[[tbl_i]] <- dbReadTable(db_i, tbl_i) %>% as_tibble(.)
+      }
+    }
+    err_log <- list_rbind(err_log)
     walk(err_db, dbDisconnect)
 
   } else {
     err_db <- NULL
-    err_run <- NULL
+    err_log <- NULL
   }
 
   return(list(par_val         = par_val,
@@ -477,7 +544,7 @@ scan_save_files <- function(save_dir) {
               variables       = variables,
               variables_split = variables_split,
               sim_tbl         = sim_tbl,
-              err_run         = err_run,
+              err_log         = err_log,
               par_dat_db      = par_dat_db,
               sim_db          = sim_db,
               err_db          = err_db))
