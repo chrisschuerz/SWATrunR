@@ -1,13 +1,13 @@
-Package: SWATplusR
+Package: SWATrunR
 Type: Package
 Title: Running SWAT2012 and SWAT+ Projects in R
-Version: 0.6.9
+Version: 0.7.0
 Authors@R: person("Christoph", "Schuerz",
                 email = "c.schuerz@posteo.org",
                 role = c("aut", "cre"),
                 comment = c(ORCID = '0000-0002-7204-5828'))
 Maintainer: Christoph Schuerz <c.schuerz@posteo.org>
-Description: SWATplusR links your SWAT2012 and SWAT+ projects on the local hard
+Description: SWATrunR links your SWAT2012 and SWAT+ projects on the local hard
         drive with your modeling work flows in R. You can specify simulation
         outputs, alter model paramaters, and control many SWAT simulation
         parameters from R. SWATplusR returns simulations in a tidy format,
@@ -32,8 +32,8 @@ Imports:
     tibble (>= 2.1.1),
     tidyselect (>= 1.1)
 RoxygenNote: 7.2.3
-URL: https://github.com/chrisschuerz/SWATplusR
-BugReports: https://github.com/chrisschuerz/SWATplusR/issues
+URL: https://github.com/chrisschuerz/SWATrunR
+BugReports: https://github.com/chrisschuerz/SWATrunR/issues
 Suggests:
     devtools,
     knitr,
