@@ -1,8 +1,8 @@
 ---
-title: "Getting started with SWATplusR"
+title: "Getting started with SWATrunR"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Getting started with SWATplusR}
+  %\VignetteIndexEntry{Getting started with SWATrunR}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: literature.bib
@@ -18,22 +18,22 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Loading `SWATplusR`
+## Loading `SWATrunR`
 
-If you did not install `SWATplusR` yet you can do that now running the following lines in `R`.
+If you did not install `SWATrunR` yet you can do that now running the following lines in `R`.
 
 ```{r, eval=FALSE}
 # If the package remotes is not installed run first:
 install.packages('remotes')
 
-remotes::install_github('chrisschuerz/SWATplusR')
+remotes::install_github('chrisschuerz/SWATrunR')
 ```
 
 
-Before we start exploring the package load `SWATplusR`.
+Before we start exploring the package load `SWATrunR`.
 
 ```{r}
-library(SWATplusR)
+library(SWATrunR)
 ```
 
 ## SWAT demo projects
@@ -88,7 +88,7 @@ With the functions `run_swatplus()` and `run_swat2012()` you can perform simulat
 
 ### `project_path`
 
-As the project path we define the path to the previously loaded demo project `project_path = path_plus`. If you do not want to work with the demo project, but you already want to use your own SWAT project you can define the path to your SWAT 'TxtInOut' folder and simply run simulations there. Be aware in this case that the runtime can be much longer for large projects, which might hinder you in testing many things when first playing around with `SWATplusR`. The demo projects are designed in a way that simulations should not take longer than a few seconds, depending on the machine where it is executed. If you want to use your own SWAT project please consider a few things:
+As the project path we define the path to the previously loaded demo project `project_path = path_plus`. If you do not want to work with the demo project, but you already want to use your own SWAT project you can define the path to your SWAT 'TxtInOut' folder and simply run simulations there. Be aware in this case that the runtime can be much longer for large projects, which might hinder you in testing many things when first playing around with `SWATrunR`. The demo projects are designed in a way that simulations should not take longer than a few seconds, depending on the machine where it is executed. If you want to use your own SWAT project please consider a few things:
 
 - The SWAT project folder must contain exactly one executable file. `run_swat*()` automatically searches for the one SWAT executable in the project folder. If there are no or more than one executables available in the project folder an error is returned as `run_swat*()` does not know which executable file to use.
 - Weather data must be provided with the project as `run_swat*()` does some checks for which time periods weather data are available.
@@ -167,7 +167,7 @@ q_sim_2012_2 <- readRDS(here::here('vignettes/datasets/q_sim_2012_2.rds'))
 
 ### Exploring the simulation outputs
 
-`SWATplusR` aims to return SWAT simulations in a *tidy* format. The date structure of the simulation results is different for single simulation and many simulations with different parameter sets. Yet, the general structure is the same for all simulation outputs returned in `R`. Simulation results are always arranged in `tibbles` [@Mueller2019]. In the `run_swat*()` default setting (`add_date = TRUE`) the first column of the simulation results is always the date column followed by the columns for the output variables. If a single simulation run was performed without parameter changes (`parameter = NULL` so the default setting) a single tibble with the simulation outputs for that run is returned. When performing simulations with one or many different parameter sets a list of tibbles is returned that I explain [below](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#exploring-simulations-with-parameter-changes).
+`SWATrunR` aims to return SWAT simulations in a *tidy* format. The date structure of the simulation results is different for single simulation and many simulations with different parameter sets. Yet, the general structure is the same for all simulation outputs returned in `R`. Simulation results are always arranged in `tibbles` [@Mueller2019]. In the `run_swat*()` default setting (`add_date = TRUE`) the first column of the simulation results is always the date column followed by the columns for the output variables. If a single simulation run was performed without parameter changes (`parameter = NULL` so the default setting) a single tibble with the simulation outputs for that run is returned. When performing simulations with one or many different parameter sets a list of tibbles is returned that I explain [below](https://chrisschuerz.github.io/SWATrunR/articles/SWATrunR.html#exploring-simulations-with-parameter-changes).
 
 If we have a look at the outputs of all three simulations we see that they all have the same general structure. The first column is a date column which is followed by the defined output variables. In the case of the SWAT+ simulation outputs `q_sim_plus` the single output variable that we defined is called `flo_out`, so the name of the variable as it is defined in the *.txt* output file. 
 
@@ -187,7 +187,7 @@ As mentioned above, the only difference between `q_sim_2012` and `q_sim_2012_2` 
 q_sim_2012_2
 ```
 
-You can see from all three simulation outputs that daily simulation outputs were returned and the output printing in all cases started with the date 2003-01-01. The simple reason for that is that the default settings in the *'file.cio'* of the SWAT2012 model setup and the *'print.prt'* and *'time.sim'* files of the SWAT+ model setup are defined to perform simulations between 2000-01-01 and 2012-12-31 and to skip 3 years and return daily outputs. In practice we often want to change all of these model parameters. `run_swatplus()` and `run_swat2012()` do have many input arguments to specify these and other model configurations. I will explain further input arguments in the section [Further input arguments](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#further-swatplusr-input-arguments).
+You can see from all three simulation outputs that daily simulation outputs were returned and the output printing in all cases started with the date 2003-01-01. The simple reason for that is that the default settings in the *'file.cio'* of the SWAT2012 model setup and the *'print.prt'* and *'time.sim'* files of the SWAT+ model setup are defined to perform simulations between 2000-01-01 and 2012-12-31 and to skip 3 years and return daily outputs. In practice we often want to change all of these model parameters. `run_swatplus()` and `run_swat2012()` do have many input arguments to specify these and other model configurations. I will explain further input arguments in the section [Further input arguments](https://chrisschuerz.github.io/SWATrunR/articles/SWATrunR.html#further-SWATrunR-input-arguments).
 
 ### Plotting the simulation outputs
 
@@ -226,7 +226,7 @@ ggplot(data = q_plot) +
 
 ## Changing parameter values
 
-Changing parameter values is an essential option for SWAT model simulations. In a SWAT model calibration we (or at least I do) define large sets of combinations for model parameter changes and apply each of them in model simulations. Parameter optimization usually starts with an initial parameter combination and iteratively tests new parameter combinations to progessively improve the model performance. `SWATplusR`'s `run_swat*()` functions can easily be included in such modelling workflows in `R`. Parameter value changes in a SWAT run are controlled through the input argument `parameter`.
+Changing parameter values is an essential option for SWAT model simulations. In a SWAT model calibration we (or at least I do) define large sets of combinations for model parameter changes and apply each of them in model simulations. Parameter optimization usually starts with an initial parameter combination and iteratively tests new parameter combinations to progessively improve the model performance. `SWATrunR`'s `run_swat*()` functions can easily be included in such modelling workflows in `R`. Parameter value changes in a SWAT run are controlled through the input argument `parameter`.
 
 ### `parameter` inputs
 
@@ -343,7 +343,7 @@ The second part of the simulation outputs provides the `simulation` results for 
 q_sim1$simulation
 ```
 
-To see if the parameter change was effective we compare the simulated outputs of `q_sim1` where we implemented the parameter set `par_comb` to the initial simulation `q_sim_plus` from our [first SWAT model runs](https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#first-swat-model-runs) in a simple plot. 
+To see if the parameter change was effective we compare the simulated outputs of `q_sim1` where we implemented the parameter set `par_comb` to the initial simulation `q_sim_plus` from our [first SWAT model runs](https://chrisschuerz.github.io/SWATrunR/articles/SWATrunR.html#first-swat-model-runs) in a simple plot. 
 
 
 ```{r}
@@ -388,7 +388,7 @@ par_set <- tibble('cn2.hru | change = abschg' = runif(n,-15,10),
 
 par_set
 ```
-The implementation in `run_swat*()` works the same way as with a single parameter set. The parameter table `par_set` is simply passed to the input argument `parameter`. To show the main differences in the simulation outputs we define the three SWAT output variables *'flo_out'*, *'surq_gen'*, and *'latq'* to be returned in `R`. The progress message this time shows that 5 simulations are performed and updates the elapsed and remaining time for the simulations, which can be valuable information in case of longer simulation experiments. It further says that the simulations are performed on one core. Parallel processing is implemented in `SWATplusR` and can be easily activated with the input argument `n_thread`. Parallel processing will be briefly addressed in the section ??? below.   
+The implementation in `run_swat*()` works the same way as with a single parameter set. The parameter table `par_set` is simply passed to the input argument `parameter`. To show the main differences in the simulation outputs we define the three SWAT output variables *'flo_out'*, *'surq_gen'*, and *'latq'* to be returned in `R`. The progress message this time shows that 5 simulations are performed and updates the elapsed and remaining time for the simulations, which can be valuable information in case of longer simulation experiments. It further says that the simulations are performed on one core. Parallel processing is implemented in `SWATrunR` and can be easily activated with the input argument `n_thread`. Parallel processing will be briefly addressed in the section ??? below.   
 
 ```{r, eval=F}
 q_simn <- run_swatplus(project_path = path_plus,
@@ -653,7 +653,7 @@ The simulations that used `run_index` for subsetting preserved the initial run n
 
 - Performance of time consuming simulation experiments with a large number of parameter combinations. Performing many simulations bears the risk of errors in single simulations. When you run these simulations and a single run results in an unsolvable error `run_swat*()` may return an error and would not return any simulation results. Thus, computation time would be simply lost time and the simulations must be repeated.
 - Performing simulations where the entire list of simulation outputs for all parameter combinations would not fit into the computers RAM. In this case the simulations can be saved incrementally to data bases and would not fill up the RAM (if the input argument `return_output = FALSE`. See the example below).
-- Splitting simulations to run on several computers and merging them later on one machine. The `SWATplusR` function `load_swat_run()` can access the results that were saved in multiple data bases to merge them and return them in R as a single simulation output. Thus, `SWATplusR` facilitates a user friendly workflow to split simulations and merge the outputs for the analysis.
+- Splitting simulations to run on several computers and merging them later on one machine. The `SWATrunR` function `load_swat_run()` can access the results that were saved in multiple data bases to merge them and return them in R as a single simulation output. Thus, `SWATrunR` facilitates a user friendly workflow to split simulations and merge the outputs for the analysis.
 
 To incrementally save simulation outputs you just define the name of your simulation output with the input argument `save_file`. Running the simulations with `run_swat*()` then generates a folder with this name in the `project_path` that contains multiple SQLite data bases which store the simulations runs. You can see yourself when you run the following simulations on your computer and have a look into your SWAT project folder. For this example we will again use the parameter set that we generated above and simply extend the execution of `run_swatplus()` from above with `run_file = q_sim_1_16` (The name indicates that this save folder contains the simulations 1 to 16 for this simulation project). Below you can also see that we do not assign the function call of `run_swatplus()` to any variable and that we also added the input argument `return_output = FALSE`. With `return_output = FALSE` no simulation results will be returned back to `R` and all simulation results are only saved in the data bases. You can of course still keep both when setting `return_output = TRUE` and assigning the outputs to a variable in `R`. In this case you would have the simulation outputs directly saved in the RAM and the `R` working environment and as a backup in the SQLite data bases.
 
