@@ -129,6 +129,11 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     check_swatplus_parameter(project_path, parameter)
     unit_cons <- read_unit_conditions(project_path, parameter)
 
+    if('pdb' %in% parameter$definition$file_name) {
+      parameter$plants_plt <-
+        as_tibble(fread(paste0(project_path, '/plants.plt'),skip = 1))
+    }
+
     # here would also be clever to implement parameter boundary checkup keep
     # parameter boundary file in R package and write to project folder when it
     # does not exist. Otherwise read boundary file from there and do check! Jeff

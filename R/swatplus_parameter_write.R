@@ -75,6 +75,24 @@ write_calibration <- function(thread_path, parameter, calibration, run_index,
 #' @keywords internal
 #'
 check_swatplus_parameter <- function(project_path, parameter) {
+  if ('pdb' %in% parameter$definition$file_name) {
+    plant_par <- parameter$definition$parameter[parameter$definition$file_name == 'pdb']
+    parameter$definition <- filter(parameter$definition, file_name != 'pdb')
+    plants_plt <- read_lines(paste0(project_path, '/plants.plt'), skip = 1,
+                             n_max = 1, lazy = FALSE) %>%
+      str_trim(.) %>%
+      str_split(., '[:space:]+') %>%
+      unlist(.)
+
+    in_plant_parms <- plant_par %in% plants_plt
+
+    if(any(!in_plant_parms)){
+      stop("Plant parameters ",
+           paste(plant_par[!in_plant_parms], collapse = ", "),
+           " not defined in 'plants.plt'")
+    }
+  }
+
   if("cal_parms.cal" %in% list.files(project_path)) {
     cal_parms <- read_lines(project_path%//%"cal_parms.cal", skip = 3, lazy = FALSE) %>%
       strsplit(., "\\s+") %>%
