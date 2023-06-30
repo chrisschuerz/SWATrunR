@@ -166,6 +166,7 @@ setup_swatplus <- function(project_path, parameter, output,
   model_setup$print.prt[9] <- "n             n             n             n             "
 
   if(!is.null(parameter)) {
+    parameter$definition <- filter(parameter$definition, file_name != 'pdb')
     model_setup$calibration.cal <- map(1:nrow(parameter$definition), ~ parameter$definition[.x,]) %>%
       map(., ~ setup_calibration_cal(.x, unit_cons)) %>%
       bind_rows(.)

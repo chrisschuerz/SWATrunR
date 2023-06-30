@@ -81,6 +81,7 @@
 #'   returned where each column is a model run and each list entry is an output
 #'   variable.
 #'
+#' @importFrom data.table fread
 #' @importFrom doSNOW registerDoSNOW
 #' @importFrom dplyr %>%
 #' @importFrom foreach foreach %dopar%
@@ -89,7 +90,7 @@
 #' @importFrom processx run
 #' @importFrom purrr map map_if map_lgl
 #' @importFrom stringr str_split
-#' @importFrom tibble tibble
+#' @importFrom tibble tibble as_tibble
 #' @export
 run_swatplus <- function(project_path, output, parameter = NULL,
                          start_date = NULL, end_date = NULL,
@@ -123,12 +124,12 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   stopifnot(is.logical(keep_folder))
   stopifnot(is.logical(quiet))
 
-  ## Check if all parameter names exist in cal_parms.cal
+  ## Check if all parameter names exist in cal_parms.cal and plants.plt
   if(!is.null(parameter)) {
     parameter <- format_swatplus_parameter(parameter)
     check_swatplus_parameter(project_path, parameter)
     unit_cons <- read_unit_conditions(project_path, parameter)
-
+  ## Read the plants.plt data base if plant parameters should be adjusted.
     if('pdb' %in% parameter$definition$file_name) {
       parameter$plants_plt <-
         as_tibble(fread(paste0(project_path, '/plants.plt'),skip = 1))
@@ -244,6 +245,7 @@ sim_result <- foreach(i_run = 1:n_run,
     } else {
       write_calibration(thread_path, parameter, model_setup$calibration.cal,
                         run_index, i_run)
+      parameter <- parameter[c('values', 'definition')]
     }
 
     ## Execute the SWAT exe file located in the thread folder

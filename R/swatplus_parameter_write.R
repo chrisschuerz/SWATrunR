@@ -35,8 +35,18 @@ format_swatplus_parameter <- function(parameter) {
 #'
 write_calibration <- function(thread_path, parameter, calibration, run_index,
                               i_run) {
+  is_plant_par <- parameter$definition$file_name == 'pdb'
+
+  if(any(is_plant_par)) {
+    update_plant_par(thread_path, parameter, is_plant_par, run_index, i_run)
+  }
+  # Remove all pdb (plant) parameters from the parameter list and keep all
+  # parameters which are updated with the calibration.cal file
+  parameter$definition <- parameter$definition[!is_plant_par,]
+  parameter$values     <- parameter$values[ ,!is_plant_par]
+
   cal_pos <- which(is.na(calibration$VAL))
-  cal_names <- calibration$NAME[cal_pos]
+  # cal_names <- calibration$NAME[cal_pos]
 
   calibration$VAL[cal_pos] <- parameter$values[run_index[i_run],] %>%
     unlist(.) %>%
@@ -62,6 +72,46 @@ write_calibration <- function(thread_path, parameter, calibration, run_index,
   write_lines(calibration, thread_path%//%"calibration.cal")
 }
 
+#' Modify plants.plt parameters
+#'
+#' @param thread_path Path to the parallel thread folder
+#' @param parameter List providing the parameter table and the parameter
+#'   constraints
+#' @param is_plant_par Logical vector that defines the plant parameters
+#' @param run_index Vector of the indices of runs that are performed
+#' @param i_run Index that gives the number of the current run simulated in the
+#'   respective thread
+#'
+#' @importFrom data.table fwrite
+#' @importFrom dplyr %>% filter mutate select
+#' @importFrom readr write_lines
+#'
+#' @keywords internal
+#'
+update_plant_par <- function(thread_path, parameter, is_plant_par, run_index, i_run) {
+  def <- parameter$definition[is_plant_par, ]
+  plant_par <- parameter$plants_plt %>%
+    mutate(., file_name = 'pdb', file_code = 1:nrow(.))
+  for (i_par in 1:nrow(def)) {
+    def_i <- def[i_par, ]
+    idx <- def_i %>%
+      build_expression() %>%
+      evaluate_expression(plant_par, .) %>%
+      .[["file_code"]]
+
+    par_up_i <- parameter$values[[def_i$par_name]][run_index[i_run]]
+    par_val  <- plant_par[[def_i$parameter]][idx]
+
+    par_val <- update_par(par_val, par_up_i, def_i$change)
+
+    plant_par[[def_i$par_name]][idx] <- par_val
+
+  }
+  plant_par <- select(plant_par, - file_name, - file_code)
+  plt_path <- paste0(thread_path, '/plants.plt')
+  write_lines('plants.plt updated with SWATrunR', file = plt_path)
+  fwrite(plant_par, plt_path, append = TRUE, sep = '\t', col.names = TRUE)
+}
 
 #' Check if the names of the defined parameters are available in 'cal_parms.cal'.
 #'
