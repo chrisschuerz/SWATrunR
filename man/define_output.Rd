@@ -4,7 +4,7 @@
 \alias{define_output}
 \title{Define SWAT output variables}
 \usage{
-define_output(file, variable = NULL, unit = NULL, expression = NULL)
+define_output(file, variable = NULL, unit = NULL)
 }
 \arguments{
 \item{file}{Character string. The SWAT output file to read.
@@ -28,10 +28,6 @@ column number of a variable in the respective output file can be provided.
 HRU) defined by the columns 'RCH', 'SUB', 'HRU' in the respective SWAT2012
 output file or the 'unit' column in the SWAT+ output file for which the
 outputs should be extracted.}
-
-\item{expression}{As an alternative to \code{variable} and \code{unit} an
-expression can be defined as a string to perform an individual extraction of outputs.
-This is still experimental and is not necessary in most cases!}
 }
 \description{
 Define the SWAT output variables that should be extracted after the SWAT
@@ -73,18 +69,5 @@ out_def <- list(flow = define_output(file = "rch",
                 et_a = define_output(file = "sub",
                                      variable = "ET",
                                      unit = 5))
-
-
-# Define output with an expression:
-# E.g. directly extract P_TOT concentrations for reach 5 from
-# daily simulations:
-
-expr <- paste0("dplyr::filter(., RCH == 5) \%>\% ",
-               "dplyr::filter(., MON \%in\% 1:12) \%>\% ",
-               "dplyr::select(., FLOW_OUT, P_TOT) \%>\% ",
-               "dplyr::mutate(., P_CONC = P_TOT/FLOW_OUT/86.4) \%>\% ",
-               "dplyr::select(., P_CONC)")
-
-out_def <- list(p_conc = define_output(file ="rch", expression = expr))
 
 }

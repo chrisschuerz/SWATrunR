@@ -28,9 +28,7 @@
 #'   HRU) defined by the columns 'RCH', 'SUB', 'HRU' in the respective SWAT2012
 #'   output file or the 'unit' column in the SWAT+ output file for which the
 #'   outputs should be extracted.
-#' @param expression As an alternative to \code{variable} and \code{unit} an
-#'   expression can be defined as a string to perform an individual extraction of outputs.
-#'   This is still experimental and is not necessary in most cases!
+#'
 #' @importFrom tibble tibble
 #' @importFrom stringr str_sub
 #' @export
@@ -65,105 +63,91 @@
 #'                                      variable = "ET",
 #'                                      unit = 5))
 #'
-#'
-#' # Define output with an expression:
-#' # E.g. directly extract P_TOT concentrations for reach 5 from
-#' # daily simulations:
-#'
-#' expr <- paste0("dplyr::filter(., RCH == 5) %>% ",
-#'                "dplyr::filter(., MON %in% 1:12) %>% ",
-#'                "dplyr::select(., FLOW_OUT, P_TOT) %>% ",
-#'                "dplyr::mutate(., P_CONC = P_TOT/FLOW_OUT/86.4) %>% ",
-#'                "dplyr::select(., P_CONC)")
-#'
-#' out_def <- list(p_conc = define_output(file ="rch", expression = expr))
-#'
-define_output <- function(file, variable = NULL, unit = NULL,
-                          expression = NULL){
-  if(!is.null(expression)) {
-    if(!is.null(variable)) {
-      stop("If 'expression' is given 'variable' must not be defined.")
-    }
-    if(is.null(unit)) {
-      stop("If 'expression' is given, 'unit' must be provided as well.")
-    }
-  }
-
-  if(is.null(expression) &
-     (is.null(unit) | is.null(variable))){
-    stop("A selection by 'variable' requires a 'unit' value.")
-  }
-
-  if(!is.null(unit) &
-     !(typeof(unit) %in% c("double", "integer"))){
-    stop("'unit' must be a number or a vector of numbers.")
-  }
-
-  if(!is.null(variable) & (length(variable) > 1)){
-    stop("Only one variable is allowed in 'define_output()'.")
-  }
-
-
-  file_check <- file %>%
-    str_sub(., (nchar(.) - 2), nchar(.))
-
-  vers <- ifelse(file_check %in% c("rch", "sub", "hru", "sed", "rsv"), "2012", "plus")
-
-  if(vers == "2012") {
-    file <- "output"%.%file_check
-  }
-
+define_output <- function(file, variable = NULL, unit = NULL){
   variable <- variable %>%
     remove_units_2012(.) %>%
     remove_units_plus(.)
 
+  output <- tibble(file = file,
+                   variable = variable,
+                   unit = list(unit))
 
-  if((vers == "2012") & is.null(expression)){
-    expression <- paste0("dplyr::filter(filter_mon(MON)) %>% ",
-                         "dplyr::select( 2, ", variable, " )")
-  } else {
-    expression <- variable
-  }
-
-  # if(length(unit) > 1){
-  #   label_ind <- paste0("_",unit)
-  # } else {
-  #   label_ind <- ""
-  # }
-
-  return(tibble(file = file,
-                expr = expression,
-                unit = list(unit)))
+  return(output)
 }
 
 #' Check output if is a data.frame and convert in case to named list
 #'
-#' @param output Defined output
-#' @importFrom dplyr mutate
+#' @param output Output (or list of outputs) defined with \code{define_output()}
+#' @param swat_vers SWAT version one of '2012' or 'plus'
+#'
+#' @importFrom dplyr mutate rename %>%
 #' @importFrom purrr map2_df
+#' @importFrom stringr str_sub
 #'
 #' @keywords internal
 #'
-check_output <- function(output, swat_vers) {
-  if(is.data.frame(output)) {
-    if(swat_vers == "2012") {
-      unit <- "2"
-    } else {
-      unit <- "unit"
-    }
-
-    var_name <- output$expr[1] %>%
-      strsplit(., " %>%") %>%
-      unlist(.) %>%
-      .[[length(.)]] %>%
-      gsub(paste0("dplyr\\:\\:select\\( ", unit, ","), "", .) %>%
-      gsub("\\)", "", .) %>%
-      trimws(., "both")
-
-    output <- list(output)
-    names(output) <- var_name
+prepare_output_definition <- function(output, swat_vers, project_path) {
+  if (is.data.frame(output)) {
+    output <- mutate(output, name = variable, .before = 1)
+  } else {
+    output <- map2_df(output, names(output), ~ mutate(.x, name = .y, .before = 1))
   }
-  output <- map2_df(output, names(output), ~ mutate(.x, name = .y, .before = 1))
+
+  has_no_unit <- is.null(output$unit) & !output$file %in% paste0('basin_crop_yld_', c('aa', 'yr'))
+  if(any(has_no_unit)) {
+    stop("\nThe following output variables were defined without defining a 'unit':\n",
+         paste(output$name[has_no_unit], collapse = ', '))
+  }
+
+  if(swat_vers == "2012") {
+    output <- output %>%
+      mutate(file = str_sub(file, (nchar(file) - 2), nchar(file)),
+             file = paste0('output.', file),
+             variable = paste0('dplyr::filter(filter_mon(MON)) %>% dplyr::select(2, ',
+                               variable, ')')) %>%
+      rename(expr = variable)
+
+    is_2012_outfile <- output$file %in% paste0('output.',
+                                               c("rch", "sub", "hru", "sed", "rsv"))
+    if(any(!is_2012_outfile)) {
+      wrong_outputs <- output[!is_2012_outfile,]
+      name_length <- max(nchar(c('name',wrong_outputs$name)))
+      file_length <- max(nchar(c('output_file', wrong_outputs$file)))
+      names <- sprintf(paste0('%', name_length, 's'), c('name', wrong_outputs$name))
+      files <- sprintf(paste0('%', file_length, 's'), c('output_file', wrong_outputs$file))
+      lines_print <- map2_chr(names, files, ~ paste(.x , .y, '\n', collapse = '   '))
+
+      stop('\nThe output file definitions for the following variables are not supported:\n\n',
+           lines_print)
+    }
+  } else {
+    print_prt <- read_lines(paste0(project_path, '/print.prt'), lazy = FALSE)
+    out_names <- print_prt[11:length(print_prt)] %>%
+      str_trim(.) %>%
+      str_split(., '[:space:]+', simplify = TRUE) %>%
+      .[,1] %>%
+      c('channel_sdmorph') %>%
+      rep(., each = 4) %>%
+      paste0(., c('_aa', '_yr', '_mon', '_day')) %>%
+      c('fdcout', paste0('basin_crop_yld_', c('aa', 'yr')))
+
+    is_plus_outfile <- output$file %in% out_names
+
+    if(any(!is_2012_outfile)) {
+      wrong_outputs <- output[!is_plus_outfile,]
+      name_length <- max(nchar(c('name',wrong_outputs$name)))
+      file_length <- max(nchar(c('output_file', wrong_outputs$file)))
+      names <- sprintf(paste0('%', name_length, 's'), c('name', wrong_outputs$name))
+      files <- sprintf(paste0('%', file_length, 's'), c('output_file', wrong_outputs$file))
+      lines_print <- map2_chr(names, files, ~ paste(.x , .y, '\n', collapse = '   '))
+
+      stop('\nThe output file definitions for the following variables are not supported:\n\n',
+           lines_print, '\n',
+           "Please define 'file' as given in 'print.prt' together with the time interval \n",
+           "(adding one of '_aa', '_yr', '_mon', '_day' to the file name).")
+    }
+  }
+
 
   return(output)
 }
