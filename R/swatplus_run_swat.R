@@ -16,6 +16,9 @@
 #'   vector or a tibble. The parameter changes provided with \code{parameter}
 #'   are performed during the model execution accordingly. To learn how to
 #'   modify parameters see the \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html}{Get started} page of \code{SWATplusR}.
+#' @param parameter_files (optional) tibble with one column 'parameter' for parameter names
+#' and second column named 'file' with file names where to look specific parameter.
+#' This should be used for parameters outside calibration.cal file.
 #' @param start_date (optional) Start date of the SWAT simulation. Provided as
 #'   character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
 #'   in the form yyyymmdd, or in Date format.
@@ -92,6 +95,7 @@
 #' @importFrom tibble tibble
 #' @export
 run_swatplus <- function(project_path, output, parameter = NULL,
+                         parameter_files = NULL,
                          start_date = NULL, end_date = NULL,
                          output_interval = NULL, years_skip = NULL,
                          start_date_print = NULL,
@@ -125,9 +129,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
   ## Check if all parameter names exist in cal_parms.cal
   if(!is.null(parameter)) {
-    parameter <- format_swatplus_parameter(parameter)
-    check_swatplus_parameter(project_path, parameter)
-    unit_cons <- read_unit_conditions(project_path, parameter)
+    parameter <- parameter_bck <- format_swatplus_parameter(parameter)
 
     # here would also be clever to implement parameter boundary checkup keep
     # parameter boundary file in R package and write to project folder when it
@@ -140,6 +142,23 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     run_index <- check_run_index(run_index, parameter$values)
   } else {
     run_index <- 1:max(nrow(parameter$values), 1)
+  }
+
+  if(!is.null(parameter_files)) {
+    ##Separate parameters into two lists designated for calibration.cal and to separate files
+    parameter_to_files <- list(values = parameter$values[,names(parameter$values) %in% parameter_files$parameter],
+                               definition = parameter$definition[parameter$definition$parameter %in% parameter_files$parameter,])
+    parameter <- list(values = parameter$values[,!names(parameter$values) %in% parameter_files$parameter],
+                      definition = parameter$definition[!parameter$definition$parameter %in% parameter_files$parameter,])
+    check_swatplus_parameter_infiles(project_path, parameter_files)
+    if(length(parameter$values) == 0){
+      parameter <- NULL
+    }
+  }
+
+  if(!is.null(parameter)) {
+    check_swatplus_parameter(project_path, parameter)
+    unit_cons <- read_unit_conditions(project_path, parameter)
   }
 
   ## Convert output to named list in case single unnamed output was defined
@@ -163,10 +182,17 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
   ## Identify the required number of parallel threads to build.
-  n_thread <- min(max(nrow(parameter$values),1),
-                  max(n_thread,1),
-                  max(length(run_index),1),
-                  detectCores())
+  if(is.null(parameter) && exists('parameter_to_files')){
+    n_thread <- min(max(nrow(parameter_to_files$values),1),
+                    max(n_thread,1),
+                    max(length(run_index),1),
+                    detectCores())
+  } else {
+    n_thread <- min(max(nrow(parameter$values),1),
+                    max(n_thread,1),
+                    max(length(run_index),1),
+                    detectCores())
+  }
 
   ## Set the .model_run folder as the run_path
   run_path <- ifelse(is.null(run_path), project_path, run_path)%//%".model_run"
@@ -223,7 +249,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
 sim_result <- foreach(i_run = 1:n_run,
 .packages = c("dplyr", "lubridate", "processx", "stringr"), .options.snow = opts) %dopar% {
-    # for(i_run in 1:max(nrow(parameter), 1)) {
+  # for(i_run in 1:max(nrow(parameter), 1)) {
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
     thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
@@ -239,6 +265,40 @@ sim_result <- foreach(i_run = 1:n_run,
     } else {
       write_calibration(thread_path, parameter, model_setup$calibration.cal,
                         run_index, i_run)
+    }
+    ##If parameter should be changed in files
+    if(exists('parameter_to_files')){
+      for(f in unique(parameter_files$file)){
+        file.copy(file.path(project_path, f), thread_path, overwrite = TRUE)
+        tbl <- tbl0 <- read_tbl(f, thread_path, n_skip = 1) ###################
+        par_vec <- parameter_files[parameter_files$file == f, "parameter"][[1]]
+        for(p in par_vec){
+          tbl[p] <- update_par(tbl[p][[1]], parameter_to_files$values[i_run,p][[1]],
+                                          parameter_to_files$definition[parameter_to_files$definition$parameter == p,"change"][[1]])
+        }
+        if(f == "plants.plt"){ #####################
+          tbl <- bind_rows(filter(tbl, name %in% c("wwht", "corn", "barl", "trit", ###########
+                                                   "canp", "alfa", "fesc", "sgbt",
+                                                   "mint", "onio", "crrt", "lett")),
+                           filter(tbl0, !name %in% c("wwht", "corn", "barl", "trit",
+                                                     "canp", "alfa", "fesc", "sgbt",
+                                                     "mint", "onio", "crrt", "lett")))
+        } ########################
+        ##Writing
+        tbl[par_vec] <- mutate_all(tbl[par_vec], ~sprintf(., fmt = '%#.6s'))
+        text_l <-  paste0(f,": ", "written by SWATrunR on ", Sys.time())
+        write.table(text_l, paste0(thread_path, "/", f), append = FALSE, sep = "\t",
+                    dec = ".", row.names = FALSE, col.names = FALSE, quote = FALSE)
+        st_hd <- c('%-15s', rep('%20s', length(names(tbl))-2), '%-20s')
+        write.table(paste(sprintf(st_hd,names(tbl)), collapse = ' '), paste0(thread_path, "/", f),
+                    append = TRUE, sep = "\t", dec = ".", row.names = FALSE, col.names = FALSE, quote = FALSE)
+
+        txt <- tbl %>%
+          map2_df(., st_hd, ~sprintf(.y, .x)) %>%
+          apply(., 1, paste, collapse = ' ')
+        write.table(txt, paste0(thread_path, "/", f), append = TRUE, sep = "\t",
+                    dec = ".", row.names = FALSE, col.names = FALSE, quote = FALSE)
+      }
     }
 
     ## Execute the SWAT exe file located in the thread folder
@@ -256,7 +316,6 @@ sim_result <- foreach(i_run = 1:n_run,
       }
     } else if(nchar(msg$stderr) == 0) {
       model_output <- read_swatplus_output(output, thread_path, add_date, revision)
-
       if(!is.null(save_path)) {
         save_run(save_path, model_output, parameter, run_index, i_run, thread_id)
       }
@@ -299,7 +358,8 @@ sim_result <- foreach(i_run = 1:n_run,
     }
     ## Tidy up the simulation results and arrange them in clean tibbles before
     ## returning them
-    sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
+
+    sim_result <- tidy_results(sim_result, parameter_bck, date, add_parameter,
                                add_date, run_index)
 
   }
