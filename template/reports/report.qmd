@@ -1,0 +1,184 @@
+---
+title: "Model crop calibration results for CS4"
+subtitle: "Report for model performance"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    embed-resources: true
+    smooth-scroll: true
+    toc: true
+    toc-location: left
+    toc-title: Summary
+    toc_float:
+      toc_collapsed: true
+    toc_depth: 3
+    theme: cosmo
+    fontcolor: black
+---
+
+## ET figure
+
+```{r}
+#| echo: FALSE
+d <- summary(et_df$et)
+t_d <- data.frame(unclass(d), check.names = FALSE, stringsAsFactors = FALSE) %>% t %>% `rownames<-`("summary") %>% round(.,1)
+datatable(t(t_d))
+```
+
+```{r}
+#| out-width: '100%'
+#| echo: FALSE
+
+print(et_fig)
+```
+
+## Plant processes
+
+### Stress level
+
+```{r}
+#| out-width: '100%'
+#| echo: FALSE
+
+plot_variable_at_harvkill(sim0, variable = 'stress')
+```
+
+
+### Yields
+
+```{r}
+#| out-width: '100%'
+#| echo: FALSE
+
+sim_list <- list(no_stress = sim1, except_nutrient = sim2, all_stress = sim0)
+plot_variable_at_harvkill(sim_list, variable = 'yield')
+rm(sim_list)
+```
+
+### PHUs
+
+```{r}
+#| out-width: '100%'
+#| echo: FALSE
+debug(plot_variable_at_harvkill)
+debug(SWATdoctR:::prepare_var_at_harvkill)
+debug(SWATdoctR:::prepare_phu)
+??plot_variable_at_harvkill
+plot_variable_at_harvkill(sim0, variable = 'phu')
+
+tbl_harv <- SWATdoctR:::prepare_var_at_harvkill(sim0$mgt_out, 
+      years = 20203:2100, "phu")
+
+tbl_var <- SWATdoctR:::prepare_phu(sim0$mgt_out, years = 2003:2100)
+phu_tbl[phu_tbl$hru == 1, ] 
+
+years = 2003:2100
+phu_tbl0 <- phu_tbl[phu_tbl$hru == 74, ] %>% filter(n_op == 2) %>% 
+  group_by(hru, year, op_typ) %>% 
+  mutate(date_diff = diff(date)) %>% 
+  ungroup() %>% filter(year %in% years)
+
+phu_tbl <- sim0$mgt_out %>% mutate(date = 10000 * year + 100 * 
+  mon + day) %>% filter(operation %in% c("PLANT", "HARVEST", 
+  "KILL")) %>% select(hru, date, year, operation, op_typ, 
+  phuplant) %>% group_by(hru, op_typ) %>% mutate(grw_group = ifelse(operation == 
+  "PLANT", 1, 0), grw_group = cumsum(grw_group)) %>% ungroup() %>% 
+  filter(operation != "PLANT") %>% group_by(hru, op_typ, 
+  grw_group) %>% mutate(n_op = n()) %>% ungroup()
+
+
+x <- phu_tbl[phu_tbl$hru == 74, ]
+```
+
+### Biomass and LAI change random 3 first HRUs **no stress**
+
+```{r}
+#| out-width: '100%'
+#| echo: FALSE
+
+plot_hru_pw_day(sim1, hru_id = c(1:3), var = c('lai', 'bioms'), add_crop = TRUE)
+```
+### Biomass and LAI change random 3 first HRUs **nutrient stress**
+
+```{r}
+#| out-width: '100%'
+#| echo: FALSE
+
+plot_hru_pw_day(sim2, hru_id = c(1:3), var = c('lai', 'bioms'), add_crop = TRUE)
+```
+
+### Biomass and LAI change random 3 first HRUs **all stress**
+
+```{r}
+#| out-width: '100%'
+#| echo: FALSE
+
+plot_hru_pw_day(sim0, hru_id = c(1:3), var = c('lai', 'bioms'), add_crop = TRUE)
+```
+
+## Crop yield figures
+
+```{r}
+#| echo: FALSE
+datatable(df[,c("crop","yield")] %>% 
+  group_by(crop) %>% 
+  summarize(`Min.` = min(yield), 
+            `1rd Qu.` = quantile(yield, 0.25), 
+            Median = median(yield), 
+            Mean = mean(yield),
+            `3rd Qu.` = quantile(yield, 0.75), 
+            `Max.` = max(yield)) %>% 
+  left_join(crops_obs, by = 'crop') %>% 
+  rename(`Obs. yield kg/y`= value) %>% 
+  mutate(`PBIAS` = (Median/`Obs. yield kg/y`-1)*100) %>% 
+  mutate_if(is.numeric, ~round(.,2)))
+```
+
+```{r}
+#| echo: FALSE
+#| results: asis
+#| out-width: '100%'
+#| fig-height: 5
+
+for(f in names(crop_figs)){
+  cat("  \n###", f, " plots \n")
+  print(crop_figs[[f]])
+  cat("  \n")
+}
+```
+
+<!-- ## Dotty figures -->
+
+<!-- ```{r} -->
+<!-- #| echo: FALSE -->
+
+<!-- datatable(map(names(stat_list), ~summary(stat_list[[.x]])) %>%  -->
+<!--   bind_rows %>%  -->
+<!--   as.data.frame %>%  -->
+<!--   `rownames<-`(names(stat_list)) %>%  -->
+<!--   mutate_if(is.numeric,~round(.,2))) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| echo: FALSE -->
+<!-- #| results: asis -->
+<!-- #| out-width: '100%' -->
+<!-- #| fig-height: 5 -->
+
+<!-- for(f in names(dotty_figs)){ -->
+<!--   cat("  \n###", f, "dotty plots \n") -->
+<!--   print(dotty_figs[[f]]) -->
+<!--   cat("  \n") -->
+<!-- } -->
+<!-- ``` -->
+
+## Settings.R values
+
+These settings were used in running scripts and preparing report.
+
+```{r}
+#| echo: FALSE
+print(paste0("SWAT model used in calculation: ", swat_file))
+source("../settings.R", echo = TRUE, local = knitr::knit_global(), max.deparse.length=9999)
+
+```

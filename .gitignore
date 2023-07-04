@@ -2,6 +2,7 @@ inst/doc
 # History files
 .Rhistory
 .Rapp.history
+.html
 
 # Session Data files
 .RData
