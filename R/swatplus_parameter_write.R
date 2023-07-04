@@ -92,6 +92,35 @@ check_swatplus_parameter <- function(project_path, parameter) {
   }
 }
 
+#' Check if the names of the defined parameters are available in defined files (in parameter_files).
+#'
+#' @param project_path Path to the SWAT+ project
+#' @param parameter_files tibble with one column 'parameter' for parameter names
+#' and second column named 'file' with file names where to look specific parameter.
+#'
+#' @importFrom dplyr %>%
+#' @importFrom purrr map
+#' @importFrom readr read_lines
+#'
+#' @keywords internal
+#'
+check_swatplus_parameter_infiles <- function(project_path, parameter_files) {
+  missing_pars <- c()
+  for (f in unique(parameter_files$file)){
+    f_head <- strsplit(read_lines(paste0(project_path,'/', f),
+                                  skip = 1, n_max = 1, lazy = FALSE), "\\s+")[[1]]
+    par_vec <- parameter_files[parameter_files$file == f, "parameter"][[1]]
+    in_file <- par_vec %in% f_head
+    missing_par <- par_vec[!in_file]
+    missing_pars <- c(missing_pars, missing_par)
+  }
+  if(length(missing_pars)>0){
+    f <- unique(parameter_files[parameter_files$parameter %in% missing_pars, "file"][[1]])
+    stop("Parameter"%&&%missing_pars%&&%"could not be found in"%&&%f%&&%"file. ")
+  }
+}
+
+
 #' Read the unit numbers (for hru, aqu, cha, res) and the textures etc for later
 #' parameter conditioning.
 #'
@@ -178,3 +207,32 @@ get_sol_texture <- function(file) {
     map_chr(., ~.x[7])
 }
 
+#' Read parameter table
+#'
+#' @param file file name
+#' @param path path to the object file
+#' @param n_skip numeric how many lines to skip
+#'
+#' @keywords internal
+#'
+read_tbl <- function(file, path, n_skip) {
+  file_path <- paste0(path, '/', file)
+
+  col_names <- read_lines(file = file_path, skip = n_skip, n_max = 1, lazy = FALSE) %>%
+    str_trim(.) %>%
+    str_split(., '[:space:]+') %>%
+    unlist()
+
+  name_duplicate <- table(col_names) %>%
+    .[. > 1]
+  if(length(name_duplicate) > 0) {
+    for (i in 1:length(name_duplicate)) {
+      col_names[col_names == names(name_duplicate[i])] <-
+        paste0(names(name_duplicate[i]), 1:name_duplicate[i])
+    }
+  }
+
+  fread(file_path, skip = n_skip + 1, header = FALSE) %>%
+    set_names(., col_names) %>%
+    tibble(.)
+}

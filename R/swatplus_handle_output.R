@@ -35,12 +35,39 @@ read_swatplus_output <- function(output, thread_path, add_date, revision) {
   out_tables <- map2(output, col_names, ~ read_output_i(.x, .y, thread_path, date_cols))
 
   if(add_date) {
-    date <- out_tables[[1]] %>%
-      filter(unit == out_tables[[1]]$unit[1]) %>%
-      mutate(date = ymd(paste(yr,mon,day, sep = '-'))) %>%
-      select(date)
+    # date <- out_tables[[1]] %>%
+    #   filter(unit == out_tables[[1]]$unit[1]) %>%
+    #   mutate(date = ymd(paste(yr,mon,day, sep = '-'))) %>%
+    #   select(date)
+    date <- map(out_tables, ~.x %>%
+            filter(unit == .x$unit) %>%
+            mutate(date = ymd(paste(yr,mon,day, sep = '-'))) %>%
+            select(date))
+
+    date_same <- map(date, ~length(.x[[1]])) %>%
+      unlist(.)
+    if(length(unique(date_same)) == 1){
+      date <-  date[[1]]
+    } else {
+      i <- which.max(date_same)
+      out_tables[[i]] <- out_tables[[i]] %>%
+        pivot_wider(c(date_cols), names_from = unit, values_from = output[[i]]$expr) %>%
+        mutate(unit = 1) %>%
+        select(where(~ sum(.) != 0))
+      i <- which.min(date_same)
+      date <-  date[[i]]
+    }
 
     out_tables <- map(out_tables, ~ select(.x, -yr, -mon, -day))
+  }
+
+  ##Code to deal (equalize) with unequal data.frames (for instance crops, which doesn't work with years skip)
+  ddf <- map(out_tables, ~(dim(.x)[1]))
+  while(ddf %>% unlist %>% unique %>% length > 1){
+    max_i <- ddf %>% which.max
+    remove_rows <- dim(out_tables[[max_i]])[1]-dim(out_tables[[ddf %>% which.min]])[1]
+    out_tables[[max_i]] <- tail(out_tables[[max_i]], -remove_rows)
+    ddf <- map(out_tables, ~(dim(.x)[1]))
   }
 
   out_tables <- out_tables %>%
@@ -72,12 +99,22 @@ read_swatplus_output <- function(output, thread_path, add_date, revision) {
 #' @keywords internal
 #'
 read_output_i <- function(output_i, col_names_i, thread_path, date_cols) {
-  fread(thread_path%//%output_i$file[1], skip = 3) %>%
-    as_tibble(.) %>%
-    .[,1:length(col_names_i)] %>%
-    set_names(col_names_i) %>%
-    select(., all_of(c(date_cols, 'unit', output_i$expr))) %>%
-    filter(unit %in% (output_i$unit %>% unlist(.) %>% unique(.)))
+  if(!"plant_name" %in% col_names_i) {
+    fread(thread_path%//%output_i$file[1], skip = 3) %>%
+      as_tibble(.) %>%
+      .[,1:length(col_names_i)] %>%
+      set_names(col_names_i) %>%
+      select(., all_of(c(date_cols, 'unit', output_i$expr))) %>%
+      filter(unit %in% (output_i$unit %>% unlist(.) %>% unique(.)))
+  } else {
+    ##This is a case to read in basin crop file
+    fread(thread_path%//%output_i$file[1], skip = 2) %>%
+      as_tibble(.) %>%
+      .[,1:length(col_names_i)] %>%
+      set_names(col_names_i) %>%
+      add_column(yr = .$year, mon = 12, day = 31, unit = .$plant_name) %>%
+      select(., all_of(c(date_cols, 'unit', output_i$expr)))
+  }
 }
 
 #' Add suffix value to duplicated column names of SWAT+ output files..
@@ -129,16 +166,19 @@ add_id <- function(tbl){
 #'
 mutate_output_i <- function(out_tbl_i, output_i) {
   is_multi_unit <- map_lgl(output_i$unit, ~ length(.x) > 1)
-
-  map(output_i$expr, ~ select(out_tbl_i, id, unit, .x)) %>%
-    map2(., output_i$unit, ~ filter(.x, unit %in% .y)) %>%
-    map2(., output_i$name, ~ set_names(.x, c('id', 'unit', .y))) %>%
-    map(., ~ mutate(.x, unit = paste0('_', unit))) %>%
-    map2(., is_multi_unit, ~ mutate(.x, unit = ifelse(rep(.y, nrow(.x)), unit, ''))) %>%
-    map(.,  ~ pivot_wider(.x, id_cols = id, names_from = unit, names_glue = "{.value}{unit}", values_from = 3)) %>%
-    map(., ~ select(.x, -id)) %>%
-    bind_cols()
-
+  if(!grepl('yld', output_i$expr, fixed = TRUE)){
+    map(output_i$expr, ~ select(out_tbl_i, id, unit, .x)) %>%
+      map2(., output_i$unit, ~ filter(.x, unit %in% .y)) %>%
+      map2(., output_i$name, ~ set_names(.x, c('id', 'unit', .y))) %>%
+      map(., ~ mutate(.x, unit = paste0('_', unit))) %>%
+      map2(., is_multi_unit, ~ mutate(.x, unit = ifelse(rep(.y, nrow(.x)), unit, ''))) %>%
+      map(.,  ~ pivot_wider(.x, id_cols = id, names_from = unit, names_glue = "{.value}{unit}", values_from = 3)) %>%
+      map(., ~ select(.x, -id)) %>%
+      bind_cols()
+  } else {
+    select(out_tbl_i, - c(id, unit)) %>%
+      dplyr::rename_with(~paste0(output_i$name, '_', .x))
+  }
 }
 
 #' Translate the output file settings defined according to print.prt to the
