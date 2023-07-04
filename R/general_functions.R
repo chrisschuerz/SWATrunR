@@ -135,6 +135,18 @@ plural <- function(n) {
   ifelse(n == 1, "", "s")
 }
 
+## Translate a label to a respective value.
+##
+#' @param x Character vector with the labels to translate
+#' @param lbl Character vector with the labels corresponding to the
+#'   parameter values.
+#' @param val Numeric vector with the parameter values corresponding to
+#'   the labels.
+#'
+translate_par_value <- function(x, pot, val) {
+  val[match(x, pot)]
+}
+
 #' Concatenate with an underscore
 #'
 #' \%_\% pastes two strings by "_".

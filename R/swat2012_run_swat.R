@@ -131,7 +131,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   }
 
   ## Convert output to named list in case single unnamed output was defined
-  output <- check_output(output, "2012")
+  output <- prepare_output_definition(output, "2012", project_path)
 
   ## Read the meta information on the parameters and the required parameter files
   if(!is.null(parameter)) {

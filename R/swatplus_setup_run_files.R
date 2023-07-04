@@ -7,9 +7,6 @@
 #'   located
 #' @param end_date End date of the SWAT simulation. Provided as character string
 #'   in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are located
-#' @param output_interval Time interval in which the SWAT model outputs are
-#'   written. Provided either as character string ("d" for daily, "m" for
-#'   monthly, "y" for yearly, or "a", for average annual).
 #' @param years_skip Integer value that provides the numbe of years to be
 #'   skipped during writing the SWAT model outputs
 #' @importFrom lubridate as_date ceiling_date int_end int_start interval
@@ -22,7 +19,7 @@
 #'
 setup_swatplus <- function(project_path, parameter, output,
                            start_date, end_date, start_date_print,
-                           output_interval, years_skip, unit_cons) {
+                           years_skip, unit_cons) {
   ## Read unmodified file.cio, print.prt, and time.sim
   options(readr.num_columns = 0)
   model_setup <- list()
@@ -39,8 +36,8 @@ setup_swatplus <- function(project_path, parameter, output,
   print_table <- model_setup$print.prt[- c(1:10)] %>%
     str_trim(.) %>%
     str_split(., pattern = '[:space:]+') %>%
-    map_df(., ~tibble(objects = .x[1], daily = .x[2],
-                      monthly = .x[3], yearly = .x[3], avann = .x[4]))
+    map_df(., ~tibble(objects = .x[1], day = .x[2],
+                      mon = .x[3], yr = .x[3], aa = .x[4]))
 
   ## Define simulation period
   if(xor(is.null(start_date), is.null(end_date))) {
@@ -126,44 +123,52 @@ setup_swatplus <- function(project_path, parameter, output,
 
   ## Output interval settings
   ## Set output_interval to 'daily' as default if not provided by user.
-  if(is.null(output_interval)) output_interval <- "d"
+  # if(is.null(output_interval)) output_interval <- "d"
+  #
+  # if(output_interval == 'm') {
+  #   t_int <- seq(start_date_print, end_date, by = 'm')
+  #   if(length(t_int) == 1 & end_date != ceiling_date(end_date, unit = 'm')-1) {
+  #     stop('Monthly simulation outputs require a simulation period of ',
+  #          'at least one full month!')
+  #   }
+  # }
+  print_table[,2:5] <- "n"
 
-  if(output_interval == 'm') {
-    t_int <- seq(start_date_print, end_date, by = 'm')
-    if(length(t_int) == 1 & end_date != ceiling_date(end_date, unit = 'm')-1) {
-      stop('Monthly simulation outputs require a simulation period of ',
-           'at least one full month!')
-    }
+  # Remove crop and FDC outputs from objects as they are not defined there
+  objects_in_tbl <- filter(output, ! file %in% c('basin_crop_yld', 'fdcout'))
+  # Change from channel_sdmorph to channel_sd as the first is written when the
+  # second is defined
+  objects_in_tbl[objects_in_tbl == 'channel_sdmorph'] <- 'channel_sd'
+
+  for(i in 1:nrow(objects_in_tbl)) {
+    print_table[print_table$objects == objects_in_tbl$file[i],
+                objects_in_tbl$time_interval[i]] <- 'y'
   }
 
-  output_interval <- str_sub(output_interval, 1,1) %>% tolower(.)
-  output_interval <-
-    case_when(output_interval == "d" ~ "daily",
-              output_interval == "m" ~ "monthly",
-              output_interval == "y" ~ "yearly",
-              output_interval == "a" ~ "avann")
-
-  model_setup$output_interval <- output_interval
 
   # Set all outputs to no, except the output files defined in output and only
   # for the defined time interval
-  object_names <- unique(output$file)
-  print_table[,2:5] <- "n"
-  print_table[print_table$objects %in% object_names, output_interval] <- "y"
+  # print_table[print_table$objects %in% object_names, output_interval] <- "y"
 
   print_table <- print_table %>%
     mutate(objects = sprintf("%-16s", objects),
-           daily   = sprintf("%14s", daily),
-           monthly = sprintf("%14s", monthly),
-           yearly  = sprintf("%14s", yearly),
-           avann   = sprintf("%14s", avann)) %>%
+           day = sprintf("%14s", day),
+           mon = sprintf("%14s", mon),
+           yr  = sprintf("%14s", yr),
+           aa  = sprintf("%14s", aa)) %>%
     apply(., 1, paste, collapse = "")
 
   model_setup$print.prt <- c(model_setup$print.prt[1:10], print_table)
 
-  # So far avoid any other output files to be written
+  # So far avoid any other output files types to be written
   model_setup$print.prt[7] <- "n             n             n             "
-  model_setup$print.prt[9] <- "n             n             n             n             "
+
+  # Print also FDC output file if defined in outputs
+  if ('fdcout' %in% output$file) {
+    model_setup$print.prt[9] <- 'n             n             n             y             '
+  } else {
+    model_setup$print.prt[9] <- 'n             n             n             n             '
+  }
 
   if(!is.null(parameter)) {
     parameter$definition <- filter(parameter$definition, file_name != 'pdb')

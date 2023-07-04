@@ -1,7 +1,7 @@
 Package: SWATrunR
 Type: Package
 Title: Running SWAT2012 and SWAT+ Projects in R
-Version: 0.8.0
+Version: 0.9.0.9001
 Authors@R: person("Christoph", "Schuerz",
                 email = "c.schuerz@posteo.org",
                 role = c("aut", "cre"),

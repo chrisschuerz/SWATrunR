@@ -133,7 +133,7 @@ prepare_output_definition <- function(output, swat_vers, project_path) {
 
     is_plus_outfile <- output$file %in% out_names
 
-    if(any(!is_2012_outfile)) {
+    if(any(!is_plus_outfile)) {
       wrong_outputs <- output[!is_plus_outfile,]
       name_length <- max(nchar(c('name',wrong_outputs$name)))
       file_length <- max(nchar(c('output_file', wrong_outputs$file)))
@@ -146,6 +146,10 @@ prepare_output_definition <- function(output, swat_vers, project_path) {
            "Please define 'file' as given in 'print.prt' together with the time interval \n",
            "(adding one of '_aa', '_yr', '_mon', '_day' to the file name).")
     }
+
+    output <- output %>%
+      mutate(time_interval = str_extract(file, '[^_]+$'), .after = file) %>%
+      mutate(file = str_remove(file, '_[^_]+$'))
   }
 
 

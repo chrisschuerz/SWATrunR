@@ -22,9 +22,6 @@
 #' @param end_date (optional) End date of the SWAT simulation. Provided as
 #'   character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
 #'   in the form yyyymmdd, or in Date format.
-#' @param output_interval (optional) Time interval in which the SWAT model
-#'   outputs are written. Provided either as character string ("d" for daily,
-#'   "m" for monthly, or "y" for yearly, and "a" for average annual)
 #' @param years_skip (optional) Integer value to define the number of simulation
 #'   years that are skipped before writing SWAT model outputs.
 #' @param start_date_print (optional) Start date for printing of the simulation
@@ -94,8 +91,7 @@
 #' @export
 run_swatplus <- function(project_path, output, parameter = NULL,
                          start_date = NULL, end_date = NULL,
-                         output_interval = NULL, years_skip = NULL,
-                         start_date_print = NULL,
+                         years_skip = NULL, start_date_print = NULL,
                          run_index = NULL, run_path = NULL,
                          n_thread = NULL, save_path = NULL,
                          save_file = NULL, return_output = TRUE,
@@ -149,13 +145,13 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   }
 
   ## Convert output to named list in case single unnamed output was defined
-  output <- check_output(output, "plus")
+  output <- prepare_output_definition(output, "plus", project_path)
 
   ## Read and modify the projects' files defining simulation period years to
   ## skip, interval, etc.
   model_setup <- setup_swatplus(project_path, parameter, output,
                                 start_date, end_date, start_date_print,
-                                output_interval, years_skip, unit_cons)
+                                years_skip, unit_cons)
 
   ## Define save_path and check if planned simulations already exist in save file
   if(!is.null(save_file)) {
@@ -227,14 +223,14 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     opts <- list()
   }
 
-sim_result <- foreach(i_run = 1:n_run,
-.packages = c("dplyr", "lubridate", "processx", "stringr"), .options.snow = opts) %dopar% {
-    # for(i_run in 1:max(nrow(parameter), 1)) {
+# sim_result <- foreach(i_run = 1:n_run,
+# .packages = c("dplyr", "lubridate", "processx", "stringr"), .options.snow = opts) %dopar% {
+    for(i_run in 1:max(nrow(parameter), 1)) {
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
     thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
     thread_path <- run_path%//%thread_id
-    # thread_path <- run_path%//%"thread_1"
+    thread_path <- run_path%//%"thread_1"
 
         ## Modify model parameters if parameter set was provided and write
     ## calibration file. If no parameters provided write empty calibration file
