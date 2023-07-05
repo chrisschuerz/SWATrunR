@@ -2,7 +2,6 @@ inst/doc
 # History files
 .Rhistory
 .Rapp.history
-.html
 
 # Session Data files
 .RData
@@ -29,3 +28,4 @@ vignettes/*.pdf
 rsconnect/
 .Rproj.user
 test
+template/reports/*.html

@@ -6,7 +6,6 @@ par_lhs <- sample_lhs(par_bound, n_sample)
 
 # Average annual ET estimated from pcp and q
 et_avann_est <- pcp_avann_obs - q_avann_obs
-options(error=recover)
 res <- run_swatplus(project_path = mod_path,
                     output = list(q = define_output('channel_sd', 'flo_out', 52),
                                   crop = define_output('basin_crop_yld', 'yld(t/ha)', 1),
