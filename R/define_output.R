@@ -64,13 +64,23 @@
 #'                                      unit = 5))
 #'
 define_output <- function(file, variable = NULL, unit = NULL){
-  variable <- variable %>%
-    remove_units_2012(.) %>%
-    remove_units_plus(.)
+  if(is.null(variable)) {
+    variable <- NA_character_
+  } else {
+    variable <- variable %>%
+      remove_units_2012(.) %>%
+      remove_units_plus(.)
+  }
 
-  output <- tibble(file = file,
+  if (is.null(unit)) {
+    unit <- list(NA_integer_)
+  } else {
+    unit <- list(as.integer(unit))
+  }
+
+  output <- tibble(file     = file,
                    variable = variable,
-                   unit = list(unit))
+                   unit     = unit)
 
   return(output)
 }
@@ -149,7 +159,9 @@ prepare_output_definition <- function(output, swat_vers, project_path) {
 
     output <- output %>%
       mutate(time_interval = str_extract(file, '[^_]+$'), .after = file) %>%
-      mutate(file = str_remove(file, '_[^_]+$'))
+      mutate(file = str_remove(file, '_[^_]+$')) %>%
+      mutate(file_full = paste0(file, '_', time_interval, '.txt'), .before = file) %>%
+      mutate(file_full = ifelse(file == 'fdcout', 'flow_duration_curve.out', file_full))
   }
 
 
