@@ -21,6 +21,8 @@
 #' This should be used for parameters outside calibration.cal file.
 #' @param crop_filter (optional) vector of characters to filter crops on which
 #' changes should be applied in plants.plt. For example c("wwht", "corn").
+#' @param climate_set (optional) vector of characters, which direct to climate data
+#' to be used in climate simulations.
 #' @param start_date (optional) Start date of the SWAT simulation. Provided as
 #'   character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
 #'   in the form yyyymmdd, or in Date format.
@@ -98,7 +100,7 @@
 #' @export
 run_swatplus <- function(project_path, output, parameter = NULL,
                          parameter_files = NULL,
-                         crop_filter = NULL,
+                         crop_filter = NULL, climate_set = NULL,
                          start_date = NULL, end_date = NULL,
                          output_interval = NULL, years_skip = NULL,
                          start_date_print = NULL,
@@ -143,6 +145,8 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## Check values provided with run_index and prepare run_index for simulation
   if(!is.null(run_index)){
     run_index <- check_run_index(run_index, parameter$values)
+  } else if (!is.null(climate_set)){
+    run_index <- 1:length(climate_set)
   } else {
     run_index <- 1:max(nrow(parameter$values), 1)
   }
@@ -179,7 +183,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     check_saved_data(save_path, parameter, output, run_index)
   }
 
-    # Check if weather inputs accord with start and end date
+  # Check if weather inputs accord with start and end date
   check_dates(project_path, model_setup)
 
 #-------------------------------------------------------------------------------
@@ -190,7 +194,11 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                     max(n_thread,1),
                     max(length(run_index),1),
                     detectCores())
-  } else {
+  } else if (!is.null(climate_set)){
+    n_thread <- min(max(n_thread,1),
+                    max(length(run_index),1),
+                    detectCores())
+    } else {
     n_thread <- min(max(nrow(parameter$values),1),
                     max(n_thread,1),
                     max(length(run_index),1),
@@ -300,6 +308,10 @@ sim_result <- foreach(i_run = 1:n_run,
         write.table(txt, paste0(thread_path, "/", f), append = TRUE, sep = "\t",
                     dec = ".", row.names = FALSE, col.names = FALSE, quote = FALSE)
       }
+    }
+    if(!is.null(climate_set)){
+      file.copy(paste0(climate_set[i_run], "/",
+                       list.files(climate_set[i_run])), thread_path, overwrite = TRUE)
     }
 
     ## Execute the SWAT exe file located in the thread folder
