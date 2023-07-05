@@ -103,10 +103,18 @@ prepare_output_definition <- function(output, swat_vers, project_path) {
     output <- map2_df(output, names(output), ~ mutate(.x, name = .y, .before = 1))
   }
 
-  has_no_unit <- is.null(output$unit) & !output$file %in% paste0('basin_crop_yld_', c('aa', 'yr'))
+  has_no_unit <- is.na(output$unit) & !output$file %in% paste0('basin_crop_yld_', c('aa', 'yr'))
   if(any(has_no_unit)) {
     stop("\nThe following output variables were defined without defining a 'unit':\n",
          paste(output$name[has_no_unit], collapse = ', '))
+  }
+
+  is_no_yld_output <- output$file %in% paste0('basin_crop_yld_', c('aa', 'yr')) &
+                      !output$variable %in% c('harv_area', 'yld_total', 'yld')
+
+  if(any(is_no_yld_output)) {
+    stop("\n Wrong 'variable' defined for 'basin_crop_yld' output.\n",
+         "'variable' must be either 'harv_area', 'yld_total', or 'yld'.")
   }
 
   if(swat_vers == "2012") {
