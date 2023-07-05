@@ -121,31 +121,6 @@ for(f in names(crop_figs)){
 }
 ```
 
-<!-- ## Dotty figures -->
-
-<!-- ```{r} -->
-<!-- #| echo: FALSE -->
-
-<!-- datatable(map(names(stat_list), ~summary(stat_list[[.x]])) %>%  -->
-<!--   bind_rows %>%  -->
-<!--   as.data.frame %>%  -->
-<!--   `rownames<-`(names(stat_list)) %>%  -->
-<!--   mutate_if(is.numeric,~round(.,2))) -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- #| echo: FALSE -->
-<!-- #| results: asis -->
-<!-- #| out-width: '100%' -->
-<!-- #| fig-height: 5 -->
-
-<!-- for(f in names(dotty_figs)){ -->
-<!--   cat("  \n###", f, "dotty plots \n") -->
-<!--   print(dotty_figs[[f]]) -->
-<!--   cat("  \n") -->
-<!-- } -->
-<!-- ``` -->
-
 ## Settings.R values
 
 These settings were used in running scripts and preparing report.
