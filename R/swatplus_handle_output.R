@@ -18,43 +18,65 @@ read_swatplus_output <- function(output, thread_path, add_date, revision) {
   } else {
     date_cols <- c()
   }
-  output <- output %>% group_by(file) %>% group_split()
 
-  unit_names <- output %>%
-    map(., ~ fread(thread_path%//%.x$file[1], skip = 2, nrows = 1, header = F)) %>%
-    map(., ~ unlist(.x) %>% unname(.))
+  # Split into time series outputs and other outputs (yields, FDC)
+  output_ts <- filter(output, !file %in% c('basin_crop_yld', 'fdcout'))
+  output_yld <- filter(output,  file %in% c('basin_crop_yld'))
+  output_fdc <- filter(output,  file %in% c('fdcout'))
 
-  col_names <- output %>%
-    map(., ~ fread(thread_path%//%.x$file[1], skip = 1, nrows = 1, header = F)) %>%
-    map(., ~ unlist(.x) %>% unname(.)) %>%
-    map2(., unit_names, ~ replace_colname_na(.x, .y)) %>%
-    map(., ~ .x[!is.na(.x)]) %>%
-    map(., ~add_suffix_to_duplicate(.x))
+  if(nrow(output_ts) > 0) {
+    output_ts <- output_ts %>%
+      group_by(file_full) %>%
+      group_split()
 
-  ## Read all output files, assign column names and assign output file names
-  out_tables <- map2(output, col_names, ~ read_output_i(.x, .y, thread_path, date_cols))
+    unit_names <- output_ts %>%
+      map(., ~ fread(thread_path%//%.x$file_full[1], skip = 2, nrows = 1, header = F)) %>%
+      map(., ~ unlist(.x) %>% unname(.))
 
-  if(add_date) {
-    date <- out_tables[[1]] %>%
-      filter(unit == out_tables[[1]]$unit[1]) %>%
-      mutate(date = ymd(paste(yr,mon,day, sep = '-'))) %>%
-      select(date)
+    col_names <- output_ts %>%
+      map(., ~ fread(thread_path%//%.x$file_full[1], skip = 1, nrows = 1, header = F)) %>%
+      map(., ~ unlist(.x) %>% unname(.)) %>%
+      map2(., unit_names, ~ replace_colname_na(.x, .y)) %>%
+      map(., ~ .x[!is.na(.x)]) %>%
+      map(., ~add_suffix_to_duplicate(.x))
 
-    out_tables <- map(out_tables, ~ select(.x, -yr, -mon, -day))
+    ## Read all output files, assign column names and assign output file names
+    out_tables_ts <- map2(output_ts, col_names, ~ read_output_i(.x, .y, thread_path, date_cols))
+
+    if(add_date) {
+      out_tables_ts <- out_tables_ts %>%
+        map(., ~ mutate(.x, date = ymd(paste(yr,mon,day, sep = '-')), .before = 1)) %>%
+        map(., ~ select(.x, -yr, -mon, -day))
+    }
+
+    out_tables_ts <- out_tables_ts %>%
+      map(., ~ add_id(.x)) %>%
+      map2(., output_ts, ~mutate_output_i(.x, .y))
+  } else {
+    out_tables_ts <- NULL
   }
 
-  out_tables <- out_tables %>%
-    map(., ~ add_id(.x)) %>%
-    map2(., output, ~mutate_output_i(.x, .y)) %>%
-    bind_cols(.)
+  if (nrow(output_yld) > 0) {
+    output_yld <- output_yld %>%
+      group_by(file_full) %>%
+      group_split()
 
-  if(add_date) {
-    out_tables <- bind_cols(date, out_tables)
+    out_tables_yld <- map(output_yld, ~ read_basin_yld(.x, thread_path))
+  } else {
+    out_tables_yld <- NULL
   }
+
+  if (nrow(output_fdc) > 0) {
+    output_fdc <- list(output_fdc)
+    out_tables_fdc <- map(output_fdc, ~ read_fdcout(.x, thread_path))
+  } else {
+    out_tables_fdc <- NULL
+  }
+
+  out_tables <- c(out_tables_ts, out_tables_yld, out_tables_fdc)
 
   return(out_tables)
 }
-
 
 #' Reading the i_th SWAT+ output file, filter required units and select variables.
 #'
@@ -72,12 +94,62 @@ read_swatplus_output <- function(output, thread_path, add_date, revision) {
 #' @keywords internal
 #'
 read_output_i <- function(output_i, col_names_i, thread_path, date_cols) {
-  fread(thread_path%//%output_i$file[1], skip = 3) %>%
+  fread(thread_path%//%output_i$file_full[1], skip = 3) %>%
     as_tibble(.) %>%
     .[,1:length(col_names_i)] %>%
     set_names(col_names_i) %>%
-    select(., all_of(c(date_cols, 'unit', output_i$expr))) %>%
+    select(., all_of(c(date_cols, 'unit', output_i$variable))) %>%
     filter(unit %in% (output_i$unit %>% unlist(.) %>% unique(.)))
+}
+
+#' Read basin yield output tables.
+#'
+#' @param thread_path String path to the thread where to read the output file
+#' @param output_i i_th part from the output table which defines what to
+#'   read from the SWAT model results
+#'
+#' @importFrom data.table fread
+#' @importFrom dplyr select %>%
+#' @importFrom purrr set_names
+#' @importFrom tibble as_tibble
+#' @importFrom tidyselect all_of
+#' @keywords internal
+#'
+read_basin_yld <- function(output_i, thread_path) {
+  yld_header <- c('year', 'no', 'plant_name', 'harv_area', 'yld_total', 'yld')
+  fread(thread_path%//%output_i$file_full[1], skip = 2, header = FALSE) %>%
+    set_names(., yld_header) %>%
+    as_tibble(.) %>%
+    select(., year, plant_name, all_of(output_i$variable))
+}
+
+#' Reading the FDC output table.
+#'
+#' @param output_i i_th part from the output table which defines what to
+#'   read from the SWAT model results
+#' @param thread_path String path to the thread where to read the output file
+#'
+#' @importFrom data.table fread
+#' @importFrom dplyr filter mutate rename select %>%
+#' @importFrom purrr set_names
+#' @importFrom stringr str_remove
+#' @importFrom tibble as_tibble
+#' @importFrom tidyr pivot_longer pivot_wider
+#' @importFrom tidyselect all_of
+#' @keywords internal
+#'
+read_fdcout <- function(output_i, thread_path) {
+  fread(thread_path%//%output_i$file_full[1], skip = 1) %>%
+    as_tibble(.) %>%
+    rename(unit = props) %>%
+    filter(unit %in% output_i$unit[[1]]) %>%
+    select(-ob_typ, -area_ha, -mean) %>% # mean removed as all zero in outputs
+    pivot_longer(., cols = - unit, names_to = 'p', values_to = output_i$name) %>%
+    mutate(., unit = ifelse(length(output_i$unit[[1]]) > 1, paste0('_', unit), '')) %>%
+    mutate(p = ifelse(p == 'max', 'p0', p),
+           p = ifelse(p == 'min', 'p100', p),
+           p = str_remove(p, 'p') %>% as.numeric(.)) %>%
+    pivot_wider(., id_cols = p, names_from = unit, names_glue = "{.value}{unit}", values_from = 3)
 }
 
 #' Add suffix value to duplicated column names of SWAT+ output files..
@@ -130,7 +202,7 @@ add_id <- function(tbl){
 mutate_output_i <- function(out_tbl_i, output_i) {
   is_multi_unit <- map_lgl(output_i$unit, ~ length(.x) > 1)
 
-  map(output_i$expr, ~ select(out_tbl_i, id, unit, .x)) %>%
+  out_tbl_wide <- map(output_i$variable, ~ select(out_tbl_i, id, unit, .x)) %>%
     map2(., output_i$unit, ~ filter(.x, unit %in% .y)) %>%
     map2(., output_i$name, ~ set_names(.x, c('id', 'unit', .y))) %>%
     map(., ~ mutate(.x, unit = paste0('_', unit))) %>%
@@ -139,6 +211,15 @@ mutate_output_i <- function(out_tbl_i, output_i) {
     map(., ~ select(.x, -id)) %>%
     bind_cols()
 
+  if('date' %in% names(out_tbl_i)) {
+    date_col <- out_tbl_i %>%
+      filter(., unit == unique(out_tbl_i$unit)[1]) %>%
+      select(date)
+
+    out_tbl_wide <- bind_cols(date_col, out_tbl_wide)
+  }
+
+  return(out_tbl_wide)
 }
 
 #' Translate the output file settings defined according to print.prt to the
