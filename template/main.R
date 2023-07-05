@@ -42,11 +42,13 @@ df <- res$simulation %>%
   left_join(res$parameter$values %>%
               mutate(run = as.numeric(rownames(.))), by = c('run')) %>%
   select(-run) %>%
-  mutate(yield = case_when(crop == "fesc" ~ yield*4,
-                            crop == "alfa" ~ yield*3,
-                            crop == "lett" ~ yield*4,
-                            crop == "mint" ~ yield*2,
-                            .default = yield)) %>%
+  left_join(crops_obs[c("crop", "yield_nb")], by = "crop") %>%
+  mutate(yield_nb = ifelse(is.na(yield_nb), 1, yield_nb)) %>%
+  mutate(yield = yield_nb*yield) %>%
+  select(-yield_nb)%>%
+  group_by(crop) %>%
+  filter(sum(yield) > 0) %>%
+  ungroup() %>%
   pivot_longer(!c("crop", "yield"), names_to = "Parameter", values_to = "Values")
 
 crop_figs <- plot_pars(df, "yield", "Parameter", "crop", crops_obs)

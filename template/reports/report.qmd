@@ -60,34 +60,8 @@ rm(sim_list)
 ```{r}
 #| out-width: '100%'
 #| echo: FALSE
-debug(plot_variable_at_harvkill)
-debug(SWATdoctR:::prepare_var_at_harvkill)
-debug(SWATdoctR:::prepare_phu)
-??plot_variable_at_harvkill
+
 plot_variable_at_harvkill(sim0, variable = 'phu')
-
-tbl_harv <- SWATdoctR:::prepare_var_at_harvkill(sim0$mgt_out, 
-      years = 20203:2100, "phu")
-
-tbl_var <- SWATdoctR:::prepare_phu(sim0$mgt_out, years = 2003:2100)
-phu_tbl[phu_tbl$hru == 1, ] 
-
-years = 2003:2100
-phu_tbl0 <- phu_tbl[phu_tbl$hru == 74, ] %>% filter(n_op == 2) %>% 
-  group_by(hru, year, op_typ) %>% 
-  mutate(date_diff = diff(date)) %>% 
-  ungroup() %>% filter(year %in% years)
-
-phu_tbl <- sim0$mgt_out %>% mutate(date = 10000 * year + 100 * 
-  mon + day) %>% filter(operation %in% c("PLANT", "HARVEST", 
-  "KILL")) %>% select(hru, date, year, operation, op_typ, 
-  phuplant) %>% group_by(hru, op_typ) %>% mutate(grw_group = ifelse(operation == 
-  "PLANT", 1, 0), grw_group = cumsum(grw_group)) %>% ungroup() %>% 
-  filter(operation != "PLANT") %>% group_by(hru, op_typ, 
-  grw_group) %>% mutate(n_op = n()) %>% ungroup()
-
-
-x <- phu_tbl[phu_tbl$hru == 74, ]
 ```
 
 ### Biomass and LAI change random 3 first HRUs **no stress**
