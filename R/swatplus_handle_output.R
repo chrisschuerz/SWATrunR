@@ -52,8 +52,9 @@ read_swatplus_output <- function(output, thread_path, add_date, revision) {
       i <- which.max(date_same)
       out_tables[[i]] <- out_tables[[i]] %>%
         pivot_wider(c(date_cols), names_from = unit, values_from = output[[i]]$expr) %>%
-        mutate(unit = 1) %>%
-        select(where(~ sum(.) != 0))
+        mutate(unit = 1)
+      # %>%
+      #   select(where(~ sum(.) != 0))
       i <- which.min(date_same)
       date <-  date[[i]]
     }
