@@ -6,7 +6,7 @@ n_thread <- 2
 
 test_path <-"../test/TxtInOut"
 climate_set <- list.dirs(path = "../test/cli3", full.names = TRUE, recursive = TRUE) %>%
-  .[grepl('N|E|H',.)]
+  .[grepl('/N|/E|/H',.)]
 #
 # debug(run_swatplus)
 # options(error=recover)
