@@ -19,6 +19,8 @@
 #' @param parameter_files (optional) tibble with one column 'parameter' for parameter names
 #' and second column named 'file' with file names where to look specific parameter.
 #' This should be used for parameters outside calibration.cal file.
+#' @param crop_filter (optional) vector of characters to filter crops on which
+#' changes should be applied in plants.plt. For example c("wwht", "corn").
 #' @param start_date (optional) Start date of the SWAT simulation. Provided as
 #'   character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
 #'   in the form yyyymmdd, or in Date format.
@@ -96,6 +98,7 @@
 #' @export
 run_swatplus <- function(project_path, output, parameter = NULL,
                          parameter_files = NULL,
+                         crop_filter = NULL,
                          start_date = NULL, end_date = NULL,
                          output_interval = NULL, years_skip = NULL,
                          start_date_print = NULL,
@@ -276,14 +279,12 @@ sim_result <- foreach(i_run = 1:n_run,
           tbl[p] <- update_par(tbl[p][[1]], parameter_to_files$values[i_run,p][[1]],
                                           parameter_to_files$definition[parameter_to_files$definition$parameter == p,"change"][[1]])
         }
-        if(f == "plants.plt"){ #####################
-          tbl <- bind_rows(filter(tbl, name %in% c("wwht", "corn", "barl", "trit", ###########
-                                                   "canp", "alfa", "fesc", "sgbt",
-                                                   "mint", "onio", "crrt", "lett")),
-                           filter(tbl0, !name %in% c("wwht", "corn", "barl", "trit",
-                                                     "canp", "alfa", "fesc", "sgbt",
-                                                     "mint", "onio", "crrt", "lett")))
-        } ########################
+        if(!is.null(crop_filter)){
+          if(f == "plants.plt"){
+            tbl <- bind_rows(filter(tbl, name %in% crop_filter),
+                             filter(tbl0, !name %in% crop_filter))
+          }
+        }
         ##Writing
         tbl[par_vec] <- mutate_all(tbl[par_vec], ~sprintf(., fmt = '%#.6s'))
         text_l <-  paste0(f,": ", "written by SWATrunR on ", Sys.time())
