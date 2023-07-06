@@ -1,44 +1,6 @@
 #-------------------------------------------------------------------------------
 # Functions for output variable extraction
 
-#' Extract the variables from the model outputs as defined in 'output'
-#'
-#' @param output Output defined to read from the SWAT model results
-#' @param model_output Output files read from the respective thread
-#'
-#' @importFrom dplyr bind_cols %>%
-#' @importFrom purrr map2
-#' @keywords internal
-#'
-extract_output <- function(output, model_output) {
-  output %>%
-    transpose(.) %>%
-    map(., ~extract_out_i(.x, model_output)) %>%
-    bind_cols()
-}
-
-#' Extract the variable i from the simulation outputs
-#'
-#' @param out_i The ith output defined to read from the SWAT model results
-#' @param out_i_name The name of the ith output variable
-#' @param mod_out Output files read from the respective thread
-#'
-#' @importFrom dplyr bind_cols %>%
-#' @importFrom purrr map map2 set_names
-#' @keywords internal
-#'
-extract_out_i <- function(out_i, mod_out) {
-  if(length(out_i$unit) > 1) {
-    out_i$name <- paste(out_i$name, out_i$unit, sep = "_")
-  }
-  var <- out_i$expr %>%
-    paste0('table %>% ', .) %>%
-    evaluate_expression(mod_out[[out_i$file]], .)
-  map(out_i$unit, ~var[var[,1] == .x, 2]) %>%
-    map2(., out_i$name, ~set_names(.x, .y)) %>%
-    bind_cols()
-}
-
 #' Prepare run info for the simulation experiment
 #'
 #' @param sim_results List of simulation results from the SWAT model runs
@@ -63,10 +25,10 @@ prepare_run_info <- function(sim_result, model_setup, output, run_index,
                               run_finished = t1)
   run_info$run_time <- t1 - t0
 
-  run_info$simulation_period <- c(start_date = model_setup$start_date,
-                                  end_date   = model_setup$end_date,
-                                  years_skip = model_setup$years_skip,
-                                  start_date_print = model_setup$start_date_print)
+  run_info$simulation_period <- c(start_date = as.character(model_setup$start_date),
+                                  end_date   = as.character(model_setup$end_date),
+                                  years_skip = as.character(model_setup$years_skip),
+                                  start_date_print = as.character(model_setup$start_date_print))
 
   run_info$output_definition <- output
 

@@ -211,7 +211,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## If not quiet a function for displaying the simulation progress is generated
   ## and provided to foreach via the SNOW options
   n_run <- length(run_index)
-  n_tot <- nrow(parameter$values)
+  n_tot <- min(nrow(parameter$values), 1)
   t0 <- now()
   if(!quiet) {
     cat("Performing", n_run, "simulation"%&%plural(n_run),"on", n_thread,
@@ -224,15 +224,15 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     opts <- list()
   }
 
-  sim_result <- foreach(i_run = 1:n_run,
-   .packages = c("dplyr", "lubridate", "processx", "stringr"),
-   .options.snow = opts) %dopar% {
-    # for(i_run in 1:max(nrow(parameter), 1)) {
+  # sim_result <- foreach(i_run = 1:n_run,
+  #  .packages = c("dplyr", "lubridate", "processx", "stringr"),
+  #  .options.snow = opts) %dopar% {
+    for(i_run in 1:max(nrow(parameter), 1)) {
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
     thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
     thread_path <- run_path%//%thread_id
-    # thread_path <- run_path%//%"thread_1"
+    thread_path <- run_path%//%"thread_1"
 
         ## Modify model parameters if parameter set was provided and write
     ## calibration file. If no parameters provided write empty calibration file

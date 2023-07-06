@@ -120,10 +120,7 @@ prepare_output_definition <- function(output, swat_vers, project_path) {
   if(swat_vers == "2012") {
     output <- output %>%
       mutate(file = str_sub(file, (nchar(file) - 2), nchar(file)),
-             file = paste0('output.', file),
-             variable = paste0('dplyr::filter(filter_mon(MON)) %>% dplyr::select(2, ',
-                               variable, ')')) %>%
-      rename(expr = variable)
+             file = paste0('output.', file))
 
     is_2012_outfile <- output$file %in% paste0('output.',
                                                c("rch", "sub", "hru", "sed", "rsv"))

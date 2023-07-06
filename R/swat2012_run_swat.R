@@ -85,11 +85,12 @@
 #'   variable.
 #'
 #' @importFrom doSNOW registerDoSNOW
-#' @importFrom dplyr %>%
+#' @importFrom dplyr mutate %>%
 #' @importFrom foreach foreach %dopar%
 #' @importFrom lubridate now
 #' @importFrom parallel detectCores makeCluster parSapply stopCluster
 #' @importFrom processx run
+#' @importFrom purrr map
 #' @importFrom stringr str_split
 #' @importFrom tibble tibble
 #' @export
@@ -202,6 +203,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## If not quiet a function for displaying the simulation progress is generated
   ## and provided to foreach via the SNOW options
   n_run <- length(run_index)
+  n_tot <- min(nrow(parameter$values), 1)
   if(!quiet) {
     cat("Performing", n_run, ifelse(n_run == 1, "simulation", "simulations"),
         "on", n_thread, "cores:", "\n")
@@ -237,8 +239,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
     if(nchar(msg$stderr) == 0) {
       ## Read defined model outputs
-      model_output <- read_swat2012_output(output, thread_path) %>%
-        extract_output(output, .)
+      model_output <- read_swat2012_output(output, thread_path)
 
       if(!is.null(save_path)) {
         save_run(save_path, model_output, parameter, run_index, i_run, thread_id)
@@ -265,25 +266,42 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## Show total runs and elapsed time in console if not quiet
   if(!quiet) {
     finish_progress(n_run, t0, "simulation")
-  ## Delete the time stamp t0 created for the progress estimation
-    rm(t0)
   }
+
+  n_digit <- nchar(as.character(n_tot))
+  sim_result <- set_names(sim_result,
+                          "run"%_%sprintf("%0"%&%n_digit%&%"d", run_index))
+
+  t1 <- now()
 
   ## Delete the parallel threads if keep_folder is not TRUE
   if(!keep_folder) unlink(run_path, recursive = TRUE)
 
   ##Tidy up and return simulation results if return_output is TRUE
   if(return_output) {
-    ## Create date vector from the information in model_setup
-    date <- get_date_vector_2012(model_setup)
-    ## Tidy up the simulation results and arrange them in clean tibbles before
-    ## returning them
-    sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
-                               add_date, run_index)
+    output_list <- list()
+
+    if(add_parameter) {
+      output_list$parameter <- parameter[c('values', 'definition')]
+    }
+
+    output_list$simulation <- tidy_simulations(sim_result)
+
+    if(add_date) {
+      ## Create date vector from the information in model_setup
+      date <- get_date_vector_2012(model_setup)
+      output_list$simulation <- map(output_list$simulation, ~ bind_cols(date, .x))
+    }
+
+    output_list$error_report <- prepare_error_report(sim_result)
+
+    output_list$run_info <- prepare_run_info(sim_result, model_setup, output,
+                                             run_index, project_path, t0, t1)
+
     if("error_report" %in% names(sim_result)) {
       warning("Some simulations runs failed! Check '.$error_report' in your",
               " simulation results for further information.")
     }
-    return(sim_result)
+    return(output_list)
   }
 }

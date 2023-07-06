@@ -13,6 +13,8 @@
 read_swat2012_output <- function(output, thread_path) {
   ## Get unique output files defined in output
   output_files <- unique(output$file)
+  split_key <- factor(output$file, levels = output_files)
+  output_list <- split(output, split_key)
 
   ## Find the first position of table in each file
   frst_pos <- find_first_line(output_files, thread_path)
@@ -28,8 +30,7 @@ read_swat2012_output <- function(output, thread_path) {
                        read_fwf(file = thread_path%//%out,
                                 col_positions = fwf_positions(fwf[[1]], fwf[[2]]),
                                 skip = frst, guess_max = 3, lazy = FALSE)}, thread_path) %>%
-    map2(., file_header, ~set_names(.x, .y)) %>%
-    set_names(., output_files)
+    map2(., file_header, ~set_names(.x, .y))
 
   tables_nrow <- map(out_tables, ~nrow(.x)) %>% unlist(.)
   if(any(tables_nrow == 0)){
@@ -39,7 +40,27 @@ read_swat2012_output <- function(output, thread_path) {
          "caused a parameter to be out of bounds!")
   }
 
+  out_tables <- map2(out_tables, output_list,
+                     ~ extract_swat2012_output_i(.x, .y))
+
   return(out_tables)
+}
+
+#' Extract and rearrange output variables of SWAT2012 outputs
+#'
+#' @param out_tbl_i ith output table read from SWAT2012 simulations
+#' @param out_def_i ith output definition table
+#'
+#' @importFrom dplyr rename select %>%
+#' @importFrom tidyselect all_of
+#' @keywords internal
+#'
+extract_swat2012_output_i <- function(out_tbl_i, out_def_i) {
+  out_tbl_i %>%
+    select(., 2, all_of(out_def_i$variable)) %>%
+    rename(., unit = 1) %>%
+    add_id(.) %>% # Revised, uses now ID adding from SWAT+ version
+    mutate_output_i(., out_def_i) # Revised, uses now mutate from SWAT+ version
 }
 
 #' Read the column names for the SWAT output files
