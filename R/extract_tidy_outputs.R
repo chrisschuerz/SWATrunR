@@ -99,6 +99,7 @@ tidy_results <- function(sim_result, parameter, add_parameter,
   output_list <- list()
 
   if(add_parameter & !is.null(parameter$value)) {
+    parameter <- parameter[c('values', 'definition')]
     output_list$parameter <- parameter
   }
 
