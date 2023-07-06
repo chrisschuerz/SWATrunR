@@ -211,10 +211,11 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## If not quiet a function for displaying the simulation progress is generated
   ## and provided to foreach via the SNOW options
   n_run <- length(run_index)
+  n_tot <- nrow(parameter$values)
+  t0 <- now()
   if(!quiet) {
     cat("Performing", n_run, "simulation"%&%plural(n_run),"on", n_thread,
         "core"%&%plural(n_thread)%&%":", "\n")
-    t0 <- now()
     progress <- function(n){
       display_progress(n, n_run, t0, "Simulation")
     }
@@ -223,8 +224,9 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     opts <- list()
   }
 
-sim_result <- foreach(i_run = 1:n_run,
-.packages = c("dplyr", "lubridate", "processx", "stringr"), .options.snow = opts) %dopar% {
+  sim_result <- foreach(i_run = 1:n_run,
+   .packages = c("dplyr", "lubridate", "processx", "stringr"),
+   .options.snow = opts) %dopar% {
     # for(i_run in 1:max(nrow(parameter), 1)) {
     ## Identify worker of the parallel process and link it with respective thread
     worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
@@ -285,25 +287,26 @@ sim_result <- foreach(i_run = 1:n_run,
   ## Show total runs and elapsed time in console if not quiet
   if(!quiet) {
     finish_progress(n_run, t0, "simulation")
-    ## Delete the time stamp t0 created for the progress estimation
-    rm(t0)
   }
+
+  n_digit <- nchar(as.character(n_tot))
+  sim_result <- set_names(sim_result,
+                          "run"%_%sprintf("%0"%&%n_digit%&%"d", run_index))
+
+  t1 <- now()
 
   ##Tidy up results if return_output is TRUE
   if(return_output) {
-    ## Create date vector from the information in model_setup
-    # if(add_date) {
-    #   is_successful_run <- map_lgl(sim_result, ~ is.data.frame(.x))
-    #   first_successful_run <- which(is_successful_run)[1]
-    #   if(length(first_successful_run) > 0) {
-    #     date <- sim_result[[first_successful_run]]['date']
-    #     sim_result <- map_if(sim_result, is_successful_run, ~select(.x, -date))
-    #   }
-    # }
-    ## Tidy up the simulation results and arrange them in clean tibbles before
-    ## returning them
-    sim_result <- tidy_results(sim_result, parameter, add_parameter,
-                               add_date, run_index)
+    output_list <- list()
+
+
+    if(add_parameter) {
+      output_list$parameter <- parameter[c('values', 'definition')]
+    }
+    output_list$simulation <- tidy_simulations(sim_result)
+    output_list$error_report <- prepare_error_report(sim_result)
+    output_list$run_info <- prepare_run_info(sim_result, model_setup, output,
+                                             run_index, project_path, t0, t1)
 
   }
   ## Delete the parallel threads if keep_folder is not TRUE
@@ -314,5 +317,5 @@ sim_result <- foreach(i_run = 1:n_run,
             " simulation results for further information.")
   }
   ## ...and return simulation results if return_output is TRUE
-  return(sim_result)
+  return(output_list)
 }

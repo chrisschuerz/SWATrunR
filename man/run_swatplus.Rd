@@ -10,7 +10,6 @@ run_swatplus(
   parameter = NULL,
   start_date = NULL,
   end_date = NULL,
-  output_interval = NULL,
   years_skip = NULL,
   start_date_print = NULL,
   run_index = NULL,
@@ -48,10 +47,6 @@ in the form yyyymmdd, or in Date format.}
 \item{end_date}{(optional) End date of the SWAT simulation. Provided as
 character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
 in the form yyyymmdd, or in Date format.}
-
-\item{output_interval}{(optional) Time interval in which the SWAT model
-outputs are written. Provided either as character string ("d" for daily,
-"m" for monthly, or "y" for yearly, and "a" for average annual)}
 
 \item{years_skip}{(optional) Integer value to define the number of simulation
 years that are skipped before writing SWAT model outputs.}

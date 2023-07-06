@@ -12,7 +12,6 @@ setup_swatplus(
   start_date,
   end_date,
   start_date_print,
-  output_interval,
   years_skip,
   unit_cons
 )
@@ -26,10 +25,6 @@ located}
 
 \item{end_date}{End date of the SWAT simulation. Provided as character string
 in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are located}
-
-\item{output_interval}{Time interval in which the SWAT model outputs are
-written. Provided either as character string ("d" for daily, "m" for
-monthly, "y" for yearly, or "a", for average annual).}
 
 \item{years_skip}{Integer value that provides the numbe of years to be
 skipped during writing the SWAT model outputs}

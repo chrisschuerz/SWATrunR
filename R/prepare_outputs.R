@@ -39,37 +39,85 @@ extract_out_i <- function(out_i, mod_out) {
     bind_cols()
 }
 
-#' Tidy up simulation results before returning them
+#' Prepare run info for the simulation experiment
 #'
-#' @param sim_results Extracted simulation results from the SWAT model runs
-#' @param parameter Provided parameter set
-#' @param file_cio Modified file.cio
-#' @param add_parameter Logical. If TRUE parameters are saved in outputs
-#' @param add_date Logical. If TRUE Dates are added to the simulation results
+#' @param sim_results List of simulation results from the SWAT model runs
+#' @param model_setup List of model configurations
+#' @param output Table of defined output variables
+#' @param run_index Vector of run IDs
+#' @param project_path Path to the SWAT project folder
+#' @param t0 Start date time stamp
+#' @param t1 End date time stamp
 #'
-#' @importFrom dplyr bind_cols %>%
-#' @importFrom purrr map map_chr map_lgl set_names transpose
-#' @importFrom stringr str_extract
-#' @importFrom tibble add_column as_tibble enframe
+#' @importFrom dplyr %>%
+#' @importFrom purrr map_lgl
+#'
 #' @keywords internal
 #'
-tidy_results <- function(sim_result, parameter, add_parameter,
-                         add_date, run) {
-  n_digit <- length(sim_result) %>% as.character(.) %>% nchar(.)
-  sim_result <- set_names(sim_result, "run"%_%sprintf("%0"%&%n_digit%&%"d", run))
+prepare_run_info <- function(sim_result, model_setup, output, run_index,
+                             project_path, t0, t1) {
+  run_info <- list()
+
+  run_info$project_path <- project_path
+  run_info$run_timestamp <- c(run_started  = t0,
+                              run_finished = t1)
+  run_info$run_time <- t1 - t0
+
+  run_info$simulation_period <- c(start_date = model_setup$start_date,
+                                  end_date   = model_setup$end_date,
+                                  years_skip = model_setup$years_skip,
+                                  start_date_print = model_setup$start_date_print)
+
+  run_info$output_definition <- output
 
   is_result <- map_lgl(sim_result, is.list)
+  run_info$run_index_finished <- run_index[is_result]
+  run_info$run_index_error    <- run_index[!is_result]
+
+  return(run_info)
+}
+
+#' Prepare error report in case of failed simulations
+#'
+#' @param sim_results List of simulation results from the SWAT model runs
+#'
+#' @importFrom dplyr %>%
+#' @importFrom purrr map_chr map_lgl set_names
+#' @importFrom stringr str_remove
+#' @importFrom tibble add_column enframe
+#' @keywords internal
+#'
+prepare_error_report <- function(sim_result) {
+  is_result <- map_lgl(sim_result, is.list)
+
   if(!all(is_result)) {
     error_report <- sim_result[!is_result] %>%
       enframe() %>%
       set_names(c("run", "message")) %>%
-      add_column(. ,error = map_chr(.$message, ~.x[which(.x == 'Error:') + 1]), .after = "run") %>%
+      add_column(. ,error = map_chr(.$message,
+                                    ~.x[which(.x == 'Error:') + 1]),
+                 .after = "run") %>%
       add_column(. ,idx = as.numeric(str_remove(.$run, "run_")), .before = 1)
 
-    sim_result <- sim_result[is_result]
+
   } else {
     error_report <- NULL
   }
+
+  return(error_report)
+}
+
+#' Tidy up and rearrange simulation results before returning them
+#'
+#' @param sim_results List of simulation results from the SWAT model runs
+#'
+#' @importFrom dplyr bind_cols %>%
+#' @importFrom purrr list_flatten map map2 map_lgl set_names list_transpose
+#' @keywords internal
+#'
+tidy_simulations <- function(sim_result) {
+  is_result <- map_lgl(sim_result, is.list)
+  sim_result <- sim_result[is_result]
 
   if(length(sim_result) > 0) {
     add_cols <- map(sim_result[[1]], ~ extract_non_var_cols(.x))
@@ -96,23 +144,15 @@ tidy_results <- function(sim_result, parameter, add_parameter,
     sim_result <- NULL
   }
 
-  output_list <- list()
-
-  if(add_parameter & !is.null(parameter$value)) {
-    parameter <- parameter[c('values', 'definition')]
-    output_list$parameter <- parameter
-  }
-
-  output_list$simulation <- sim_result
-
-  if(!is.null(error_report)) {
-    output_list$error_report <- error_report
-  }
-
-  return(output_list)
+  return(sim_result)
 }
 
-
+#' Extract date, plant_name, p columns from the respective simulation outputs
+#'
+#' @param tbl Table of simulation results for one SWAT output file
+#'
+#' @keywords internal
+#'
 extract_non_var_cols <- function(tbl) {
   if (names(tbl)[1] == 'date') {
     col_extr <- tbl[1]
@@ -126,6 +166,12 @@ extract_non_var_cols <- function(tbl) {
   return(col_extr)
 }
 
+#' Extract variable columns from the respective simulation outputs
+#'
+#' @param tbl Table of simulation results for one SWAT output file
+#'
+#' @keywords internal
+#'
 remove_non_var_cols <- function(tbl) {
   if (names(tbl)[1] == 'date') {
     tbl <- tbl[2:ncol(tbl)]
@@ -136,43 +182,6 @@ remove_non_var_cols <- function(tbl) {
   }
   return(tbl)
 }
-
-  # if(length(sim_result) == 1) {
-  #   sim_result <- sim_result[[1]]
-  #   is_result <- is.data.frame(sim_result)
-  #   if(!is_result) {
-  #     error_report <- sim_result
-  #     sim_result <- NULL
-  #   } else {
-  #     error_report <- NULL
-  #   }
-  # } else {
-  #   if(!is.null(parameter)) {
-  #     n_digit <- get_digit(parameter$values)
-  #   } else {
-  #     n_digit <- length(sim_result) %>% as.character(.) %>% nchar(.)
-  #   }
-
-
-    # is_run_name <- max(nchar(str_extract(names(sim_result[1]), 'run_')), 0) > 0
-
-
-
-
-
-
-
-  # if(add_date & !is.null(sim_result)) {
-  #   sim_date <- date
-  #   if(is.data.frame(sim_result)){
-  #     sim_result <- bind_cols(sim_date, sim_result)
-  #   } else {
-  #     sim_result <- map(sim_result, ~ bind_cols(sim_date, .x))
-  #   }
-  # }
-
-
-
 
 #' Create date vector from the date info in the model setup of a SWAT2012 project
 #'
