@@ -140,11 +140,12 @@ setup_swatplus <- function(project_path, parameter, output,
   # second is defined
   objects_in_tbl[objects_in_tbl == 'channel_sdmorph'] <- 'channel_sd'
 
-  for(i in 1:nrow(objects_in_tbl)) {
-    print_table[print_table$objects == objects_in_tbl$file[i],
-                objects_in_tbl$time_interval[i]] <- 'y'
+  if(nrow(objects_in_tbl) > 0) {
+    for(i in 1:nrow(objects_in_tbl)) {
+      print_table[print_table$objects == objects_in_tbl$file[i],
+                  objects_in_tbl$time_interval[i]] <- 'y'
+    }
   }
-
 
   # Set all outputs to no, except the output files defined in output and only
   # for the defined time interval
@@ -165,14 +166,15 @@ setup_swatplus <- function(project_path, parameter, output,
 
   # Print also FDC output file if defined in outputs
   if ('fdcout' %in% output$file) {
-    model_setup$print.prt[9] <- 'n             n             n             y             '
+    model_setup$print.prt[9] <- 'n             n             n             y'
   } else {
-    model_setup$print.prt[9] <- 'n             n             n             n             '
+    model_setup$print.prt[9] <- 'n             n             n             n'
   }
 
   if(!is.null(parameter)) {
     parameter$definition <- filter(parameter$definition, file_name != 'pdb')
-    model_setup$calibration.cal <- map(1:nrow(parameter$definition), ~ parameter$definition[.x,]) %>%
+    model_setup$calibration.cal <- map(1:nrow(parameter$definition),
+                                       ~ parameter$definition[.x,]) %>%
       map(., ~ setup_calibration_cal(.x, unit_cons)) %>%
       bind_rows(.)
   }

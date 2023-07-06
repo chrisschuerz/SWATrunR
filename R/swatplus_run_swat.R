@@ -241,7 +241,7 @@ sim_result <- foreach(i_run = 1:n_run,
     } else {
       write_calibration(thread_path, parameter, model_setup$calibration.cal,
                         run_index, i_run)
-      parameter <- parameter[c('values', 'definition')]
+      # parameter <- parameter[c('values', 'definition')]
     }
 
     ## Execute the SWAT exe file located in the thread folder
