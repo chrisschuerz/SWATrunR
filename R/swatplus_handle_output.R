@@ -120,7 +120,8 @@ read_basin_yld <- function(output_i, thread_path) {
   fread(thread_path%//%output_i$file_full[1], skip = 2, header = FALSE) %>%
     set_names(., yld_header) %>%
     as_tibble(.) %>%
-    select(., year, plant_name, all_of(output_i$variable))
+    select(., year, plant_name, all_of(output_i$variable)) %>%
+    set_names(c('year', 'plant_name', output_i$name))
 }
 
 #' Reading the FDC output table.
