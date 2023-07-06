@@ -292,23 +292,27 @@ sim_result <- foreach(i_run = 1:n_run,
   ##Tidy up results if return_output is TRUE
   if(return_output) {
     ## Create date vector from the information in model_setup
-    if(add_date) {
-      is_successful_run <- map_lgl(sim_result, ~ is.data.frame(.x))
-      first_successful_run <- which(is_successful_run)[1]
-      if(length(first_successful_run) > 0) {
-        date <- sim_result[[first_successful_run]]['date']
-        sim_result <- map_if(sim_result, is_successful_run, ~select(.x, -date))
-      }
-    }
+    # if(add_date) {
+    #   is_successful_run <- map_lgl(sim_result, ~ is.data.frame(.x))
+    #   first_successful_run <- which(is_successful_run)[1]
+    #   if(length(first_successful_run) > 0) {
+    #     date <- sim_result[[first_successful_run]]['date']
+    #     sim_result <- map_if(sim_result, is_successful_run, ~select(.x, -date))
+    #   }
+    # }
     ## Tidy up the simulation results and arrange them in clean tibbles before
     ## returning them
-    sim_result <- tidy_results(sim_result, parameter, date, add_parameter,
+    sim_result <- tidy_results(sim_result, parameter, add_parameter,
                                add_date, run_index)
 
   }
   ## Delete the parallel threads if keep_folder is not TRUE
   if(!keep_folder) unlink(run_path, recursive = TRUE)
 
+  if("error_report" %in% names(sim_result)) {
+    warning("Some simulations runs failed! Check '.$error_report' in your",
+            " simulation results for further information.")
+  }
   ## ...and return simulation results if return_output is TRUE
-  if(return_output) return(sim_result)
+  return(sim_result)
 }
