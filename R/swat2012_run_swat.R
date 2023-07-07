@@ -204,10 +204,13 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## and provided to foreach via the SNOW options
   n_run <- length(run_index)
   n_tot <- min(nrow(parameter$values), 1)
+  t0 <- now()
+
+  run_info <- initialize_run_info(model_setup, output, project_path, run_path, t0)
+
   if(!quiet) {
     cat("Performing", n_run, ifelse(n_run == 1, "simulation", "simulations"),
         "on", n_thread, "cores:", "\n")
-    t0 <- now()
     progress <- function(n){
       display_progress(n, n_run, t0, "Simulation")
     }
@@ -273,6 +276,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                           "run"%_%sprintf("%0"%&%n_digit%&%"d", run_index))
 
   t1 <- now()
+  run_info <- add_run_info(run_info, sim_result, run_index, t1)
 
   ## Delete the parallel threads if keep_folder is not TRUE
   if(!keep_folder) unlink(run_path, recursive = TRUE)
@@ -295,8 +299,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
     output_list$error_report <- prepare_error_report(sim_result)
 
-    output_list$run_info <- prepare_run_info(sim_result, model_setup, output,
-                                             run_index, project_path, t0, t1)
+    output_list$run_info <- run_info
 
     if("error_report" %in% names(sim_result)) {
       warning("Some simulations runs failed! Check '.$error_report' in your",

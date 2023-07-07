@@ -6,35 +6,60 @@
 #' @param sim_results List of simulation results from the SWAT model runs
 #' @param model_setup List of model configurations
 #' @param output Table of defined output variables
-#' @param run_index Vector of run IDs
 #' @param project_path Path to the SWAT project folder
+#' @param run_path Path to the SWAT project run folder
 #' @param t0 Start date time stamp
-#' @param t1 End date time stamp
 #'
-#' @importFrom dplyr %>%
-#' @importFrom purrr map_lgl
+#' @importFrom dplyr bind_cols %>%
+#' @importFrom tibble tibble
 #'
 #' @keywords internal
 #'
-prepare_run_info <- function(sim_result, model_setup, output, run_index,
-                             project_path, t0, t1) {
+initialize_run_info <- function(model_setup, output, project_path, run_path, t0) {
   run_info <- list()
 
-  run_info$project_path <- project_path
-  run_info$run_timestamp <- c(run_started  = t0,
-                              run_finished = t1)
-  run_info$run_time <- t1 - t0
+  run_info$simulation_log <- tibble(run_started  = t0,
+                                    run_finished = 'Not finished',
+                                    run_time = 'Not finished',
+                                    project_path = project_path,
+                                    run_path = run_path)
 
-  run_info$simulation_period <- c(start_date = as.character(model_setup$start_date),
-                                  end_date   = as.character(model_setup$end_date),
-                                  years_skip = as.character(model_setup$years_skip),
-                                  start_date_print = as.character(model_setup$start_date_print))
+  run_info$simulation_period <-   model_setup[c("start_date", "end_date", "years_skip",
+                                                "start_date_print", "output_interval")] %>%
+    .[!is.na(names(.))] %>%
+    bind_cols(.)
 
   run_info$output_definition <- output
 
+  return(run_info)
+}
+
+#' Prepare run info for the simulation experiment
+#'
+#' @param sim_results List of simulation results from the SWAT model runs
+#' @param output Table of defined output variables
+#' @param run_index Vector of run IDs
+#' @param project_path Path to the SWAT project folder
+#' @param t1 End date time stamp
+#'
+#' @importFrom dplyr %>%
+#' @importFrom lubridate as.period interval
+#' @importFrom purrr map_lgl
+#' @importFrom tibble tibble
+#'
+#' @keywords internal
+#'
+add_run_info <- function(run_info, sim_result, run_index, t1) {
   is_result <- map_lgl(sim_result, is.list)
-  run_info$run_index_finished <- run_index[is_result]
-  run_info$run_index_error    <- run_index[!is_result]
+  run_info$simulation_log$run_index_finished <- list(run_index[is_result])
+  run_info$simulation_log$run_index_error    <- list(run_index[!is_result])
+
+  t_diff <- interval(run_info$simulation_log$run_started, t1) %>%
+    round(.) %>%
+    as.period(.)
+
+  run_info$simulation_log$run_finished <- t1
+  run_info$simulation_log$run_time <- t_diff
 
   return(run_info)
 }
