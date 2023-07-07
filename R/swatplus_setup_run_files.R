@@ -89,36 +89,54 @@ setup_swatplus <- function(project_path, parameter, output,
       as.numeric(.)
 
     years_skip <- print_time[1]
-    print_jdn  <- max(print_time[2], 1)
-    print_year <- max(print_time[3], year(start_date))
-    start_date_print <- as_date(x = print_year%//%print_jdn, format = "%Y/%j")
+    if (years_skip > 0) {
+      print_jdn  <- 0
+      print_year <- 0
+      start_date_print <- NA_real_
+    } else {
+      print_jdn  <- max(print_time[2], 1)
+      print_year <- max(print_time[3], year(start_date))
+      start_date_print <- as_date(x = print_year%//%print_jdn, format = "%Y/%j")
+      years_skip <- NA_integer_
+    }
 
   } else if(!is.null(start_date_print)){
     start_date_print <- ymd(start_date_print)
-    if(start_date_print < start_date) {
-      stop("'start_date_print' is an earlier date than 'start_date'!")
-    }
-    years_skip <- year(start_date_print) - year(start_date)
+
     print_jdn  <- yday(start_date_print)
     print_year <- year(start_date_print)
+    years_skip <- NA_integer_
 
   } else {
     print_jdn  <- 0
     print_year <- 0
-    start_date_print <- start_date + years_skip
+    start_date_print <- NA_real_
+  }
+
+  if (!is.na(years_skip)) {
+    if (years_skip < 0) {
+      stop("'years_skip' must be a positive value.")
+    }
+    if (years_skip + year(start_date) > year(end_date)) {
+      stop("'start_date' + 'years_skip' is later than 'end_date'.")
+    }
+  }
+
+  if(!is.na(start_date_print)) {
+    if(start_date_print < start_date) {
+      stop("'start_date_print' is an earlier date than 'start_date'.")
+    }
+    if(start_date_print > end_date) {
+      stop("'start_date_print' is a later date than 'end_date'.")
+    }
   }
 
   model_setup$print.prt[3] <-
-    c(years_skip, print_jdn, print_year, 0, 0, 1) %>%
+    c(max(years_skip, 0, na.rm = TRUE), print_jdn, print_year, 0, 0, 1) %>%
     sprintf("%-11d", .) %>%
     paste(., collapse = '')
 
-  years_sim <- interval(start_date, end_date)/years(1)
-  if(years_skip >= years_sim) {
-    stop("Defined simulation period is not longer than the number of years to skip!")
-  }
-
-  model_setup$years_skip <- as.numeric(years_skip)
+  model_setup$years_skip <- years_skip
   model_setup$start_date_print <- start_date_print
 
   ## Output interval settings
