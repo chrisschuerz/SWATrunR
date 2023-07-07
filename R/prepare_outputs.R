@@ -19,8 +19,8 @@ initialize_run_info <- function(model_setup, output, project_path, run_path, t0)
   run_info <- list()
 
   run_info$simulation_log <- tibble(run_started  = t0,
-                                    run_finished = 'Not finished',
-                                    run_time = 'Not finished',
+                                    run_finished = NA,
+                                    run_time = NA,
                                     project_path = project_path,
                                     run_path = run_path)
 

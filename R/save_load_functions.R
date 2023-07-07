@@ -8,7 +8,7 @@
 #'
 #' @importFrom DBI dbConnect dbDisconnect dbWriteTable
 #' @importFrom dplyr mutate %>%
-#' @importFrom purrr map map2 set_names
+#' @importFrom purrr map map2 set_names walk2
 #' @importFrom RSQLite SQLite
 #' @keywords internal
 #'
@@ -16,26 +16,40 @@ save_run <- function(save_path, model_output, parameter, run_index, i_run, i_thr
   n_digit <- get_digit(parameter$values)
   run_name <- "run"%_%sprintf("%0"%&%n_digit%&%"d", run_index[i_run])
 
+  model_output <- set_names(model_output, run_name%_%1:length(model_output))
   # Convert date to numeric if date column is in table
+  has_date <- which(map_lgl(model_output, ~ 'date' %in% names(.x)))
+
   if('date' %in% colnames(model_output)) {
-    model_output <- mutate(model_output, date = as.integer(date))
+    model_output[has_date] <- map(model_output[has_date],
+                                  ~ mutate(.x, date = as.integer(date)))
   }
+
   # Splitting output table to 2000 column pieces due to column number limit
   # of SQLite
-  #
-  ncol_max  <- 2000
-  col_split <- c(0:floor(ncol(model_output)/ncol_max)*ncol_max,
-                 ncol(model_output))
-
-  out_split <- map2(col_split[-length(col_split)] + 1, col_split[-1],
-                    ~ model_output[,.x:.y]) %>%
-    set_names(run_name%_%1:(length(col_split) - 1))
+  out_split <- map(model_output, ~ split_out_tbl(.x, 2000)) %>%
+    list_flatten(., name_spec = "{outer}{inner}")
 
   output_db <- dbConnect(SQLite(), save_path%//%i_thread%.%"sqlite")
 
-  map2(out_split, names(out_split), ~dbWriteTable(output_db, .y, .x))
+  walk2(out_split, names(out_split), ~dbWriteTable(output_db, .y, .x))
 
   dbDisconnect(output_db)
+}
+
+#' Split tables with more than ncol_max columns into list of tables
+#'
+#' @param tbl Table which should be split
+#' @param ncol_max Maximum number of columns before split is done
+#'
+#' @importFrom purrr map2 set_names
+#' @keywords internal
+#'
+split_out_tbl <- function(tbl, ncol_max) {
+  col_split <- c(0:floor(ncol(tbl)/ncol_max)*ncol_max, ncol(tbl))
+  out_split <- map2(col_split[-length(col_split)] + 1, col_split[-1],
+                    ~ tbl[,.x:.y]) %>%
+    set_names(paste0('.',1:(length(col_split) - 1)))
 }
 
 #' Save error report of model run i in error_log sql data base
@@ -95,7 +109,7 @@ set_save_path <- function(project_path, save_path, save_dir) {
 #'
 #' @param save_path Character string. Path of the sql data base
 #' @param parameter Parameter set provided for simualtion
-#' @param model_setup List with files and variables that define the SWAT model
+#' @param run_info List with meta data on simulation
 #'   setup
 #'
 #' @importFrom DBI dbConnect dbDisconnect dbListTables dbReadTable dbWriteTable
@@ -106,8 +120,8 @@ set_save_path <- function(project_path, save_path, save_dir) {
 #' @importFrom tibble add_column
 #' @keywords internal
 #'
-initialize_save_file <- function(save_path, parameter, model_setup) {
-  output_db <- dbConnect(SQLite(), save_path%//%"par_dat.sqlite")
+initialize_save_file <- function(save_path, parameter, run_info) {
+  output_db <- dbConnect(SQLite(), save_path%//%"inputs.sqlite")
   table_names <- dbListTables(output_db)
 
   if("parameter_values"%in% table_names) {
@@ -133,25 +147,40 @@ initialize_save_file <- function(save_path, parameter, model_setup) {
     }
   }
 
-  date_config <- model_setup[c("start_date", "end_date", "years_skip",
-                               "start_date_print", "output_interval")] %>%
-    .[!is.na(names(.))] %>%
+  sim_period <- run_info$simulation_period %>%
     map_df(., ~ as.character(.x))
 
-  if(!('start_date_print' %in% names(date_config))) {
-    date_config <- add_column(date_config, start_date_print = NA,
-                              .after = 'years_skip')
-  }
-
-  if("date_config"%in% table_names) {
-    date_config_db <- dbReadTable(output_db, 'date_config')
-    if(!identical(as.matrix(date_config), as.matrix(date_config_db))) {
-      stop("Date settings in the  current SWAT simulations and the",
+  if("simulation_period"%in% table_names) {
+    sim_period_db <- dbReadTable(output_db, 'simulation_period')
+    if(!identical(as.matrix(sim_period), as.matrix(sim_period_db))) {
+      stop("Date settings in thecurrent SWAT simulations and the",
            "saved date of the simulations in 'save_file' differ!")
     }
   } else {
-    dbWriteTable(output_db, 'date_config', date_config)
+    dbWriteTable(output_db, 'simulation_period', sim_period)
   }
+
+  out_def <- run_info$output_definition
+  out_def$unit <- out_def$unit %>%
+    map(., ~ sort(.x)) %>%
+    map_chr(., ~ paste(.x, collapse = ', '))
+
+  if("output_definition"%in% table_names) {
+    out_def_db <- dbReadTable(output_db, 'output_definition')
+    if(!identical(as.matrix(out_def), as.matrix(out_def_db))) {
+      stop("The defined outputs in the current SWAT simulations and the",
+           "saved output definition in 'save_file' differ!")
+    }
+  } else {
+    dbWriteTable(output_db, 'output_definition', out_def)
+  }
+
+  sim_log <- run_info$simulation_log
+  if("simulation_log"%in% table_names) {
+    sim_log_db <- dbReadTable(output_db, 'simulation_log')
+    sim_log <- bind_rows(sim_log_db, sim_log)
+  }
+  dbWriteTable(output_db, 'simulation_log', sim_log)
 
   dbDisconnect(output_db)
 }
@@ -434,47 +463,53 @@ scan_save_files <- function(save_dir) {
     unlist(.)
 
   # split the files into parameter/date files and simulation files
-  par_dat_file <- sq_file[str_detect(sq_file, 'par_dat.sqlite$')]
+  inp_file <- sq_file[str_detect(sq_file, 'inputs.sqlite$')]
   sim_file <- sq_file[str_detect(sq_file, 'thread_[:digit:]+.sqlite$')]
   err_file <- sq_file[str_detect(sq_file, 'error_log.sqlite$')]
 
-  par_dat_db <- map(par_dat_file, ~ dbConnect(SQLite(), .x))
-  date_available <- map(par_dat_db, ~ 'date_config' %in% dbListTables(.x)) %>%
+  inputs_db <- map(inp_file, ~ dbConnect(SQLite(), .x))
+  is_correct_version <- map(inputs_db, ~ 'simulation_log' %in% dbListTables(.x)) %>%
     unlist(.) %>%
     any(.)
 
-  if(!date_available) {
-    walk(par_dat_db, dbDisconnect)
-    stop("'date_config' is missing in 'save_file'. A reason can be that ",
-         "simulations were saved with a 'SWATplusR' version < 0.6. ",
-         "To read these simulations downgrade to an older version of ",
-         "'SWATplusR' (e.g. version 0.5)!")
+  if(length(inp_file) == 0 | !is_correct_version) {
+    walk(input_db, dbDisconnect)
+    stop("\nThe tables saved in 'save_file' are not compatible with this version of SWATrunR.\n",
+         "A reason can be that the saved simulations were performed with a SWATrunR version < 1.0.0.\n",
+         "To read the saved simulations downgrade to older versions of SWATrunR/SWATplusR (e.g. 0.6).")
   }
 
-  date_config <- map(par_dat_db, ~dbReadTable(.x, 'date_config'))
+  sim_period <- map(inputs_db, ~dbReadTable(.x, 'simulation_period'))
 
-  if(!is_identical(date_config)) {
-    walk(par_dat_db, dbDisconnect)
-    stop('The dates in the provided save folders differ!')
+  if(!is_identical(sim_period)) {
+    walk(sim_period, dbDisconnect)
+    stop('The simulation periods in the provided save folders differ!')
   }
 
-  date_config <- as_tibble(date_config[[1]])
+  sim_period <- as_tibble(sim_period[[1]]) %>%
+    mutate(start_date = ymd(start_date),
+           end_date   = ymd(end_date),
+           years_skip = as.numeric(years_skip))
 
-  par_available <- map(par_dat_db, ~ 'parameter_values' %in% dbListTables(.x)) %>%
+  if ('start_date_print' %in% names(sim_period)) {
+    sim_period <- mutate(sim_period, start_date_print = ymd(start_date_print))
+  }
+
+  par_available <- map(inputs_db, ~ 'parameter_values' %in% dbListTables(.x)) %>%
     unlist(.) %>%
     any(.)
 
   if(par_available) {
-    par_val <- map(par_dat_db, ~dbReadTable(.x, 'parameter_values'))
+    par_val <- map(inputs_db, ~dbReadTable(.x, 'parameter_values'))
     if(!is_identical(par_val)) {
-      walk(par_dat_db, dbDisconnect)
+      walk(inputs_db, dbDisconnect)
       stop('The parameter sets in the provided save folders differ!')
     }
 
-    par_def <- map(par_dat_db, ~dbReadTable(.x, 'parameter_definition'))
+    par_def <- map(inputs_db, ~dbReadTable(.x, 'parameter_definition'))
 
     if(!is_identical(par_def)) {
-      walk(par_dat_db, dbDisconnect)
+      walk(inputs_db, dbDisconnect)
       stop('The parameter definitions in the provided save folders differ!')
     }
 
@@ -486,9 +521,25 @@ scan_save_files <- function(save_dir) {
     par_def  <- NULL
   }
 
-  walk(par_dat_db, dbDisconnect)
+  out_def <- map(inputs_db, ~dbReadTable(.x, 'output_definition'))
 
-  par_dat_db <- par_dat_db[[1]]
+  if(!is_identical(out_def)) {
+    walk(inputs_db, dbDisconnect)
+    stop('The output definitions in the provided save folders differ!')
+  }
+
+  out_def <- as_tibble(out_def[[1]])
+
+  sim_log <- map(inputs_db, ~dbReadTable(.x, 'simulation_log'))
+
+  sim_log <- list_rbind(sim_log) %>%
+    tibble(.) %>%
+    mutate(run_started  = ymd_hms("19700101 00:00:00") + run_started,
+           run_finished =  ymd_hms("19700101 00:00:00") + run_finished)
+
+  walk(inputs_db, dbDisconnect)
+
+  inputs_db <- inputs_db[[1]]
 
   if (length(sim_file) > 0) {
     sim_tbl <- list()
@@ -501,21 +552,9 @@ scan_save_files <- function(save_dir) {
 
     sim_tbl <- sim_tbl %>%
       map2_df(., 1:length(.), ~ mutate(.x, db_id = .y)) %>%
-      mutate(run_name = str_remove(tbl, '\\_[:digit:]+$'),
+      mutate(run_name = str_remove(tbl, '\\_[:digit:]+\\.[:digit:]+$'),
              run_idx  = str_remove(run_name, 'run\\_') %>% as.numeric(.),
              .before  = 1)
-
-    if(nrow(sim_tbl) > 0) {
-      first_run <- filter(sim_tbl, run_name == sim_tbl$run_name[1])
-      sim_db[[first_run$db_id[1]]] <- dbConnect(sim_db[[first_run$db_id[1]]])
-      variables_split <-   map(first_run$tbl, ~ dbListFields(sim_db[[first_run$db_id[1]]], .x))
-      dbDisconnect(sim_db[[first_run$db_id[1]]])
-      variables <- variables_split %>%
-        unlist(.) %>%
-        .[. != 'date']
-    } else {
-      variables <- NULL
-    }
   } else {
     sim_db <- NULL
     sim_tbl <- NULL
@@ -540,12 +579,14 @@ scan_save_files <- function(save_dir) {
 
   return(list(par_val         = par_val,
               par_def         = par_def,
-              date_config     = date_config,
-              variables       = variables,
-              variables_split = variables_split,
+              sim_period      = sim_period,
+              sim_log         = sim_log,
+              out_def         = out_def,
+              # variables       = variables,
+              # variables_split = variables_split,
               sim_tbl         = sim_tbl,
               err_log         = err_log,
-              par_dat_db      = par_dat_db,
+              inputs_db       = inputs_db,
               sim_db          = sim_db,
               err_db          = err_db))
 }

@@ -190,10 +190,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## simulation
   write_swatplus_setup(run_path, model_setup)
 
-  ## Initialize the save_file if defined
-  if(!is.null(save_file)) {
-    initialize_save_file(save_path, parameter, model_setup)
-  }
   #-------------------------------------------------------------------------------
   # Initiate foreach loop to run SWAT models
   ## make and register cluster, create table that links the parallel worker
@@ -211,10 +207,14 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## If not quiet a function for displaying the simulation progress is generated
   ## and provided to foreach via the SNOW options
   n_run <- length(run_index)
-  n_tot <- min(nrow(parameter$values), 1)
   t0 <- now()
 
   run_info <- initialize_run_info(model_setup, output, project_path, run_path, t0)
+
+    ## Initialize the save_file if defined
+  if(!is.null(save_file)) {
+    initialize_save_file(save_path, parameter, run_info)
+  }
 
   if(!quiet) {
     cat("Performing", n_run, "simulation"%&%plural(n_run),"on", n_thread,
@@ -292,7 +292,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     finish_progress(n_run, t0, "simulation")
   }
 
-  n_digit <- nchar(as.character(n_tot))
+  n_digit <- get_digit(parameter$values)
   sim_result <- set_names(sim_result,
                           "run"%_%sprintf("%0"%&%n_digit%&%"d", run_index))
 
