@@ -1,12 +1,12 @@
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+setwd("D:/Users/Svajunas/SWATrunR/template_climate")
 library(SWATrunR)
 library(tidyverse)
 
-n_thread <- 2
+n_thread <- 15
 
 test_path <-"../test/TxtInOut"
-climate_set <- list.dirs(path = "../test/cli3", full.names = TRUE, recursive = TRUE) %>%
-  .[grepl('N|E|H',.)]
+climate_set <- list.dirs(path = "E:/Users/Svajunas/SWATprepR/output/cli3", full.names = TRUE, recursive = TRUE) %>%
+  .[grepl('/N|/E|/H',.)]
 #
 # debug(run_swatplus)
 # options(error=recover)
