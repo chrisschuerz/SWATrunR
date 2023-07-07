@@ -5,7 +5,8 @@ library(tidyverse)
 n_thread <- 15
 
 test_path <-"../test/TxtInOut"
-climate_set <- list.dirs(path = "E:/Users/Svajunas/SWATprepR/output/cli3", full.names = TRUE, recursive = TRUE) %>%
+
+climate_set <- list.dirs(path = "../test/cli3", full.names = TRUE, recursive = TRUE) %>%
   .[grepl('/N|/E|/H',.)]
 #
 # debug(run_swatplus)
