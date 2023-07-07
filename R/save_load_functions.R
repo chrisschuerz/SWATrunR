@@ -161,9 +161,6 @@ initialize_save_file <- function(save_path, parameter, run_info) {
   }
 
   out_def <- run_info$output_definition
-  out_def$unit <- out_def$unit %>%
-    map(., ~ sort(.x)) %>%
-    map_chr(., ~ paste(.x, collapse = ', '))
 
   if("output_definition"%in% table_names) {
     out_def_db <- dbReadTable(output_db, 'output_definition')
@@ -394,7 +391,7 @@ scan_swat_run <- function(save_dir, return_full = FALSE) {
   if (length(run_index) > 0) {
     cat("\n")
     cat("Saved runs:\n")
-    cat(display_runs(run_index), '\n')
+    cat(group_values(run_index), '\n')
   } else {
     cat("\nNo successful simulations saved so far.\n")
   }
@@ -402,7 +399,7 @@ scan_swat_run <- function(save_dir, return_full = FALSE) {
   if (length(run_index_miss) > 0) {
     cat("\n")
     cat("Missing runs:\n")
-    cat(display_runs(run_index_miss), '\n')
+    cat(group_values(run_index_miss), '\n')
   } else {
     cat("\nNo missing runs. All simulations successful.\n")
   }
@@ -413,7 +410,7 @@ scan_swat_run <- function(save_dir, return_full = FALSE) {
     if (nrow(err_log) > 0) {
       cat("\n")
       cat("Unsaved runs due to errors in model execution :\n")
-      cat(display_runs(err_run_idx), '\n\n')
+      cat(group_values(err_run_idx), '\n\n')
     }
   }
 
@@ -616,8 +613,9 @@ is_identical <- function(tbl_list) {
 #' @importFrom purrr map map2 map2_chr
 #' @keywords internal
 #'
-display_runs <- function(runs, sep = ':') {
-  diff_runs <- diff(sort(runs))
+group_values <- function(runs, sep = ':') {
+  runs <- sort(runs)
+  diff_runs <- diff(runs)
 
   end_seq   <- unique(c(runs[diff_runs != 1], runs[length(runs)]))
   start_seq <- unique(c(runs[1], runs[which(diff_runs != 1) + 1]))
@@ -663,7 +661,7 @@ group_variable_units <- function(variable_names) {
   var_names <- map_chr(var_list, ~ .x$parent[1])
   var_list %>%
     set_names(., var_names) %>%
-    map(., ~display_runs(sort(.x$unit), sep = ' to ')) %>%
+    map(., ~group_values(sort(.x$unit), sep = ' to ')) %>%
     map2(., names(.), ~ paste(.y, .x, sep = '_')) %>%
     list_c(.) %>%
     str_remove(., '_$')
