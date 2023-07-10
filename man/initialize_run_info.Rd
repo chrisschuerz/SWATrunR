@@ -4,7 +4,7 @@
 \alias{initialize_run_info}
 \title{Prepare run info for the simulation experiment}
 \usage{
-initialize_run_info(model_setup, output, project_path, run_path, t0)
+initialize_run_info(model_setup, output, project_path, run_path)
 }
 \arguments{
 \item{model_setup}{List of model configurations}
@@ -14,8 +14,6 @@ initialize_run_info(model_setup, output, project_path, run_path, t0)
 \item{project_path}{Path to the SWAT project folder}
 
 \item{run_path}{Path to the SWAT project run folder}
-
-\item{t0}{Start date time stamp}
 
 \item{sim_results}{List of simulation results from the SWAT model runs}
 }

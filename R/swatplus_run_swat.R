@@ -144,6 +144,13 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     run_index <- 1:max(nrow(parameter$values), 1)
   }
 
+  ## Set the .model_run folder as the run_path
+  if (is.null(run_path)) {
+    run_path <- paste0(project_path, '/.model_run')
+  } else {
+    run_path <- paste0(run_path, '/.model_run')
+  }
+
   ## Convert output to named list in case single unnamed output was defined
   output <- prepare_output_definition(output, "plus", project_path)
 
@@ -153,14 +160,16 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                                 start_date, end_date, start_date_print,
                                 years_skip, unit_cons)
 
+  run_info <- initialize_run_info(model_setup, output, project_path, run_path)
+
+  # Check if weather inputs accord with start and end date
+  check_dates(project_path, model_setup)
+
   ## Define save_path and check if planned simulations already exist in save file
   if(!is.null(save_file)) {
     save_path <- set_save_path(project_path, save_path, save_file)
-    check_saved_data(save_path, parameter, output, run_index)
+    run_info <- initialize_save_file(save_path, parameter, run_info, run_index)
   }
-
-    # Check if weather inputs accord with start and end date
-  check_dates(project_path, model_setup)
 
 #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
@@ -170,8 +179,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                   max(length(run_index),1),
                   detectCores())
 
-  ## Set the .model_run folder as the run_path
-  run_path <- ifelse(is.null(run_path), project_path, run_path)%//%".model_run"
 
   ## Identify operating system and find the SWAT executable in the project folder
   os <- get_os()
@@ -208,13 +215,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## and provided to foreach via the SNOW options
   n_run <- length(run_index)
   t0 <- now()
-
-  run_info <- initialize_run_info(model_setup, output, project_path, run_path, t0)
-
-    ## Initialize the save_file if defined
-  if(!is.null(save_file)) {
-    initialize_save_file(save_path, parameter, run_info)
-  }
 
   if(!quiet) {
     cat("Performing", n_run, "simulation"%&%plural(n_run),"on", n_thread,
@@ -261,12 +261,14 @@ run_swatplus <- function(project_path, output, parameter = NULL,
       model_output <- err_msg
       if(!is.null(save_path)) {
         save_error_log(save_path, model_output, parameter, run_index, i_run)
+        # update_run_log(save_path, run_index[i_run], 'time_out')
       }
     } else if(nchar(msg$stderr) == 0) {
       model_output <- read_swatplus_output(output, thread_path, add_date, revision)
 
       if(!is.null(save_path)) {
         save_run(save_path, model_output, parameter, run_index, i_run, thread_id)
+        # update_run_log(save_path, run_index[i_run], 'finished')
       }
     } else {
       out_msg <- str_split(msg$stdout, '\r\n|\r|\n', simplify = TRUE) %>%
@@ -276,6 +278,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
       model_output <- err_msg
       if(!is.null(save_path)) {
         save_error_log(save_path, model_output, parameter, run_index, i_run)
+        # update_run_log(save_path, run_index[i_run], 'error')
       }
     }
 
@@ -296,8 +299,11 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   sim_result <- set_names(sim_result,
                           "run"%_%sprintf("%0"%&%n_digit%&%"d", run_index))
 
-  t1 <- now()
-  run_info <- add_run_info(run_info, sim_result, run_index, t1)
+  run_info <- add_run_info(run_info, sim_result, run_index)
+
+  if(!is.null(save_file)) {
+    update_sim_log(save_path, run_info)
+  }
 
   ##Tidy up results if return_output is TRUE
   if(return_output) {

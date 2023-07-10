@@ -62,7 +62,7 @@ split_out_tbl <- function(tbl, ncol_max) {
 #'
 #' @importFrom DBI dbConnect dbDisconnect dbExecute dbWriteTable
 #' @importFrom purrr map map2 set_names
-#' @importFrom RSQLite SQLite
+#' @importFrom RSQLite SQLite sqliteSetBusyHandler
 #' @importFrom tibble tibble
 #' @keywords internal
 #'
@@ -76,9 +76,11 @@ save_error_log <- function(save_path, model_output, parameter, run_index, i_run)
                          message = paste(model_output, collapse = '||'))
 
   output_db <- dbConnect(SQLite(), save_path%//%"error_log"%.%"sqlite")
-  dbExecute(output_db, "PRAGMA busy_timeout = 10000")
+  sqliteSetBusyHandler(output_db, 1e6)
+  dbExecute(output_db, "BEGIN IMMEDIATE")
 
   dbWriteTable(output_db, run_name, error_report)
+  dbExecute(output_db, "COMMIT")
 
   dbDisconnect(output_db)
 }
@@ -107,79 +109,156 @@ set_save_path <- function(project_path, save_path, save_dir) {
 
 #' Initialize the data base wher model outputs are saved
 #'
-#' @param save_path Character string. Path of the sql data base
-#' @param parameter Parameter set provided for simualtion
-#' @param run_info List with meta data on simulation
-#'   setup
+#' @param save_path Path of the sql data base for incrementally saving simulations
+#' @param parameter Parameter set provided for simulation
+#' @param run_info List with meta data on simulation setup
+#' @param run_index IDs of parameter sets for which simulations should be run
 #'
 #' @importFrom DBI dbConnect dbDisconnect dbListTables dbReadTable dbWriteTable
-#' @importFrom dplyr mutate select %>%
+#' @importFrom dplyr bind_cols mutate select %>%
 #' @importFrom lubridate year month day hour minute second
-#' @importFrom purrr map_df map_dfc
+#' @importFrom purrr map_chr map_df
 #' @importFrom RSQLite SQLite
 #' @importFrom tibble add_column
 #' @keywords internal
 #'
-initialize_save_file <- function(save_path, parameter, run_info) {
-  output_db <- dbConnect(SQLite(), save_path%//%"inputs.sqlite")
-  table_names <- dbListTables(output_db)
+initialize_save_file <- function(save_path, parameter, run_info, run_index) {
+  sim_period <-  map_df(run_info$simulation_period, ~ as.character(.x))
+  sim_log <- map_df(run_info$simulation_log, ~ as.character(.x))
 
-  if("parameter_values"%in% table_names) {
-    par_val_db <- dbReadTable(output_db, "parameter_values")
-    par_def_db <- dbReadTable(output_db, "parameter_definition")
+  if(length(dir(save_path)) > 0) {
+    saved_data <- scan_save_files(save_path)
 
-    if(is.null(parameter)) {
-      stop("No parameter set provided to current SWAT run.",
-           "A parameter set was however found in 'save_file'.")
-    }
+    compare_tables(saved_data$par_val, parameter$values, 'Parameter values')
+    compare_tables(saved_data$par_def, parameter$definition, 'Parameter definitions')
+    compare_tables(saved_data$sim_period, sim_period, 'Simulation dates', TRUE)
+    compare_tables(saved_data$out_def, run_info$output_definition,
+                   'Output definitions', TRUE)
 
-    compare_parameter(parameter$values, parameter$definition,
-                      par_val_db, par_def_db)
+    if(nrow(saved_data$sim_tbl) > 0) {
+      sim_all   <- 1:nrow(saved_data$par_val)
 
-  } else {
-    if(!is.null(parameter)){
-      if(!is.data.frame(parameter$values)) {
-        parameter$values <-  map_dfc(parameter$values, ~.x)
+      sim_compl <- saved_data$sim_tbl$run_idx[saved_data$sim_tbl$run_idx %in% run_index]
+      sim_msg <-  sim_compl %>%
+        group_values(.)
+
+      sim_miss  <- sim_all[! sim_all %in% unique(saved_data$sim_tbl$run_idx)]
+      miss_msg <-  sim_miss %>%
+        group_values(.)
+
+      if(length(unlist(sim_compl)) > 0) {
+        if (length(sim_miss) == 0) {
+          stop("All simulation runs for the defined parameter set are",
+               " already saved in 'save_file'!"
+          )
+        } else {
+          stop("The following simulation runs are already saved in 'save_file': \n",
+               '  ', sim_msg,
+               "\n  The following simulation runs failed or are missing in 'save_file': \n",
+               '  ', miss_msg,
+               "\n  Change the 'run_index' to run only missing simulations.")
+        }
       }
-
-      dbWriteTable(output_db,  "parameter_values", parameter$values)
-      dbWriteTable(output_db,  "parameter_definition", parameter$definition)
     }
   }
 
-  sim_period <- run_info$simulation_period %>%
-    map_df(., ~ as.character(.x))
+  inputs_db <- dbConnect(SQLite(), save_path%//%"inputs.sqlite")
+  table_names <- dbListTables(inputs_db)
 
-  if("simulation_period"%in% table_names) {
-    sim_period_db <- dbReadTable(output_db, 'simulation_period')
-    if(!identical(as.matrix(sim_period), as.matrix(sim_period_db))) {
-      stop("Date settings in thecurrent SWAT simulations and the",
-           "saved date of the simulations in 'save_file' differ!")
-    }
-  } else {
-    dbWriteTable(output_db, 'simulation_period', sim_period)
+  if(!is.null(parameter) & !"parameter_values"%in% table_names) {
+    dbWriteTable(inputs_db,  "parameter_values", parameter$values)
+    dbWriteTable(inputs_db,  "parameter_definition", parameter$definition)
   }
 
-  out_def <- run_info$output_definition
-
-  if("output_definition"%in% table_names) {
-    out_def_db <- dbReadTable(output_db, 'output_definition')
-    if(!identical(as.matrix(out_def), as.matrix(out_def_db))) {
-      stop("The defined outputs in the current SWAT simulations and the",
-           "saved output definition in 'save_file' differ!")
-    }
-  } else {
-    dbWriteTable(output_db, 'output_definition', out_def)
+  if(!"simulation_period"%in% table_names) {
+    dbWriteTable(inputs_db, 'simulation_period', sim_period)
   }
 
-  sim_log <- run_info$simulation_log
-  if("simulation_log"%in% table_names) {
-    sim_log_db <- dbReadTable(output_db, 'simulation_log')
-    sim_log <- bind_rows(sim_log_db, sim_log)
+  if(!"output_definition"%in% table_names) {
+    dbWriteTable(inputs_db, 'output_definition', run_info$output_definition)
   }
-  dbWriteTable(output_db, 'simulation_log', sim_log)
 
-  dbDisconnect(output_db)
+  # if(!"run_log"%in% table_names) {
+  #   run_log <- tibble(run_id = 1:nrow(parameter$values),
+  #                     finished = NA_character_,
+  #                     error = NA_character_,
+  #                     time_out = NA_character_)
+  #   dbWriteTable(inputs_db, 'run_log', run_log)
+  # }
+  if ('simulation_log' %in% table_names) {
+    sim_log_db <- dbReadTable(inputs_db, 'simulation_log')
+    sim_log_db <- sim_log_db %>%
+      as_tibble(.) %>%
+      mutate(run_started = ymd_hms(run_started, tz = Sys.timezone()),
+             run_finished = ymd_hms(run_finished, tz = Sys.timezone()),
+             run_time = get_time_interval(run_started, run_finished))
+    run_info$simulation_log <- bind_rows(sim_log_db, run_info$simulation_log)
+  }
+  dbWriteTable(inputs_db, 'simulation_log', sim_log, append = TRUE)
+
+  dbDisconnect(inputs_db)
+
+  return(run_info)
+}
+
+#' Update a time stamp in the run_log table
+#'
+#' @param save_path Path of the sql data base for incrementally saving simulations
+#' @param run_index IDs of parameter sets for which simulations should be run
+#'
+#' @importFrom DBI dbConnect dbDisconnect dbWriteTable
+#' @importFrom RSQLite SQLite sqliteSetBusyHandler
+#'
+#' @keywords internal
+#'
+update_sim_log <- function(save_path, run_info) {
+  inputs_db <- dbConnect(SQLite(), paste0(save_path, "/inputs.sqlite"))
+  sim_log <- map_df(run_info$simulation_log, ~ as.character(.x))
+  dbWriteTable(inputs_db, 'simulation_log', sim_log, overwrite = TRUE)
+  dbDisconnect(inputs_db)
+}
+
+#' Update a time stamp in the run_log table
+#'
+#' @param save_path Path of the sql data base for incrementally saving simulations
+#' @param run_index IDs of parameter sets for which simulations should be run
+#'
+#' @importFrom DBI dbConnect dbDisconnect dbExecute dbSendQuery
+#' @importFrom lubridate now
+#' @importFrom RSQLite SQLite sqliteSetBusyHandler
+#'
+#' @keywords internal
+#'
+# update_run_log <- function(save_path, run_id, col_name) {
+#   log_time <- as.character(now())
+#   inputs_db <- dbConnect(SQLite(), paste0(save_path, "/inputs.sqlite"))
+#   sqliteSetBusyHandler(inputs_db, 1e4)
+#   dbExecute(inputs_db, "BEGIN IMMEDIATE")
+#
+#   dbSendQuery(inputs_db, paste0("UPDATE run_log SET ",  col_name, " = '",
+#                                  log_time, "' WHERE run_id = ", run_id, ";"))
+#   dbExecute(inputs_db, "COMMIT")
+#
+#   dbDisconnect(inputs_db)
+# }
+
+#' Compare a table in the current SWAT simulation with the one saved in 'save_file'
+#'
+#' @param tbl_sim Table defined for the current simulation
+#' @param tbl_df  Corresponding table saved in the data bases
+#' @param txt Text string to be added in the error message.
+#'
+#' @keywords internal
+#'
+compare_tables <- function(tbl_sim, tbl_df, txt, convert = FALSE) {
+  if(convert) {
+    tbl_sim <- as.matrix(tbl_sim)
+    tbl_df  <- as.matrix(tbl_df)
+  }
+  if(!is_identical_tbl(tbl_sim, tbl_df)) {
+    stop(txt, " of current SWAT simulation and the ones ",
+         "saved in 'save_file' differ!")
+  }
 }
 
 #' Load saved SWAT simulations
@@ -447,7 +526,8 @@ scan_swat_run <- function(save_dir, return_full = FALSE) {
 #'
 #' @importFrom DBI dbConnect dbListFields dbListTables dbReadTable
 #' @importFrom dplyr bind_rows collect filter mutate %>%
-#' @importFrom purrr list_rbind map map2 map2_df
+#' @importFrom lubridate ymd ymd_hms
+#' @importFrom purrr list_rbind map map2 map2_df walk
 #' @importFrom RSQLite SQLite
 #' @importFrom stringr str_detect str_remove
 #' @importFrom tibble as_tibble tibble
@@ -478,7 +558,7 @@ scan_save_files <- function(save_dir) {
 
   sim_period <- map(inputs_db, ~dbReadTable(.x, 'simulation_period'))
 
-  if(!is_identical(sim_period)) {
+  if(!is_identical_lst(sim_period)) {
     walk(sim_period, dbDisconnect)
     stop('The simulation periods in the provided save folders differ!')
   }
@@ -486,7 +566,7 @@ scan_save_files <- function(save_dir) {
   sim_period <- as_tibble(sim_period[[1]]) %>%
     mutate(start_date = ymd(start_date),
            end_date   = ymd(end_date),
-           years_skip = as.numeric(years_skip))
+           years_skip = as.integer(years_skip))
 
   if ('start_date_print' %in% names(sim_period)) {
     sim_period <- mutate(sim_period, start_date_print = ymd(start_date_print))
@@ -498,14 +578,14 @@ scan_save_files <- function(save_dir) {
 
   if(par_available) {
     par_val <- map(inputs_db, ~dbReadTable(.x, 'parameter_values'))
-    if(!is_identical(par_val)) {
+    if(!is_identical_lst(par_val)) {
       walk(inputs_db, dbDisconnect)
       stop('The parameter sets in the provided save folders differ!')
     }
 
     par_def <- map(inputs_db, ~dbReadTable(.x, 'parameter_definition'))
 
-    if(!is_identical(par_def)) {
+    if(!is_identical_lst(par_def)) {
       walk(inputs_db, dbDisconnect)
       stop('The parameter definitions in the provided save folders differ!')
     }
@@ -520,7 +600,7 @@ scan_save_files <- function(save_dir) {
 
   out_def <- map(inputs_db, ~dbReadTable(.x, 'output_definition'))
 
-  if(!is_identical(out_def)) {
+  if(!is_identical_lst(out_def)) {
     walk(inputs_db, dbDisconnect)
     stop('The output definitions in the provided save folders differ!')
   }
@@ -531,8 +611,8 @@ scan_save_files <- function(save_dir) {
 
   sim_log <- list_rbind(sim_log) %>%
     tibble(.) %>%
-    mutate(run_started  = ymd_hms("19700101 00:00:00") + run_started,
-           run_finished =  ymd_hms("19700101 00:00:00") + run_finished)
+    mutate(run_started  = ymd_hms(run_started, tz = Sys.timezone()),
+           run_finished =  ymd_hms(run_finished, tz = Sys.timezone()))
 
   walk(inputs_db, dbDisconnect)
 
@@ -596,11 +676,27 @@ scan_save_files <- function(save_dir) {
 #' @importFrom purrr map
 #' @keywords internal
 #'
-is_identical <- function(tbl_list) {
+is_identical_lst <- function(tbl_list) {
   tbl_list %>%
     map2(.,.[1], ~identical(.x,.y)) %>%
     unlist(.) %>%
     all(.)
+}
+
+
+#' Check if two tables are identical
+#'
+#' @param x First table
+#' @param y Second table
+#'
+#' @keywords internal
+#'
+is_identical_tbl <- function(x,y) {
+  if(all(dim(x) == dim(y))) {
+    identical(x,y)
+  } else {
+    FALSE
+  }
 }
 
 #' Convert the information on available runs for the simulated variables into
@@ -665,86 +761,6 @@ group_variable_units <- function(variable_names) {
     map2(., names(.), ~ paste(.y, .x, sep = '_')) %>%
     list_c(.) %>%
     str_remove(., '_$')
-}
-
-#' Do general checkups for a SQLite database that already holds saved data and
-#' compare with the current run_swat inputs
-#'
-#' @param save_path Path to the folder that holds the saved data
-#' @param parameter List that provides Parameter set for the simualtion and the
-#'   parameter definition table
-#'
-#' @importFrom dplyr %>%
-#' @importFrom purrr map map2
-#' @keywords internal
-#'
-check_saved_data <- function(save_path, parameter, output, run_index, model_setup) {
-  if(length(dir(save_path)) > 0) {
-    saved_data <- scan_save_files(save_path)
-
-    compare_parameter(parameter$values, parameter$definition,
-                      saved_data$par_val, saved_data$par_def)
-
-    if(nrow(saved_data$sim_tbl) > 0) {
-      sim_all   <- 1:nrow(saved_data$par_val)
-
-      sim_compl <- saved_data$sim_tbl$run_idx[saved_data$sim_tbl$run_idx %in% run_index]
-      sim_msg <-  sim_compl %>%
-        sort() %>%
-        display_runs(.)
-
-      sim_miss  <- sim_all[! sim_all %in% sim_compl]
-      miss_msg <-  sim_miss %>%
-        sort() %>%
-        display_runs(.)
-      # sim_msg <-  truncate(sim_compl, 10)
-        # map(., as.character) %>%
-
-      #   map(., ~ truncate(.x , 10)) %>%
-      #   map2(., names(.), ~ paste0("  ",.y, ": ", .x,  " \n")) %>%
-      # unlist()
-
-      if(length(unlist(sim_compl)) > 0) {
-        if (length(sim_miss) == 0) {
-          stop("All simulation runs for the defined parameter set are",
-               " already saved in 'save_file'!"
-               )
-        } else {
-          stop("The following simulation runs are already saved in 'save_file': \n",
-               '  ', sim_msg,
-               "\n  The following simulation runs are missing in 'save_file': \n",
-               '  ', miss_msg,
-               "\n  Change the 'run_index' to run only missing simulations.")
-        }
-      }
-    }
-  }
-}
-
-
-#' Compare if parameters saved in the database and parameters of simulation
-#' match
-#'
-#' @param par_val Parameter values table in simulation
-#' @param par_val_db Parameter values table in data base
-#' @param par_def Parameter definition table in simulation
-#' @param par_def_db Parameter definition table in data base
-#'
-#' @keywords internal
-#'
-compare_parameter <- function(par_val, par_def, par_val_db, par_def_db) {
-  if(!is.null(par_val_db)) {
-    if(!identical(as.matrix(par_val),
-                  as.matrix(par_val_db))) {
-      stop("Parameters of current SWAT simulations and the parameters"%&&%
-             "saved in 'save_file' differ!")
-    }
-    if(!identical(as.matrix(par_def),
-                  as.matrix(par_def_db))) {
-      stop("Parameter definition of current SWAT simulation and the"%&&%
-             "parameter definition saved in 'save_file' differ!")
-    }
-  }
 }
 
 #' Truncate long character vectors

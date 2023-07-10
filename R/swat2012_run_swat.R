@@ -151,14 +151,17 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                                 rch_out_var, sub_out_var,
                                 hru_out_var, hru_out_nr)
 
-  ## Define save_path and check if planned simulations already exist in save file
-  if(!is.null(save_file)) {
-    save_path <- set_save_path(project_path, save_path, save_file)
-    check_saved_data(save_path, parameter, output, run_index, model_setup)
-  }
+  run_info <- initialize_run_info(model_setup, output, project_path, run_path)
 
   # Check if weather inputs accord with start and end date
   check_dates(project_path, model_setup)
+
+  ## Define save_path and check if planned simulations already exist in save file
+  if(!is.null(save_file)) {
+    save_path <- set_save_path(project_path, save_path, save_file)
+    run_info <- initialize_save_file(save_path, parameter, run_info, run_index)
+  }
+
 
 #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
@@ -199,8 +202,6 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## and provided to foreach via the SNOW options
   n_run <- length(run_index)
   t0 <- now()
-
-  run_info <- initialize_run_info(model_setup, output, project_path, run_path, t0)
 
   ## Initialize the save_file if defined
   if(!is.null(save_file)) {
@@ -274,8 +275,11 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   sim_result <- set_names(sim_result,
                           "run"%_%sprintf("%0"%&%n_digit%&%"d", run_index))
 
-  t1 <- now()
-  run_info <- add_run_info(run_info, sim_result, run_index, t1)
+  run_info <- add_run_info(run_info, sim_result, run_index)
+
+  if(!is.null(save_file)) {
+    update_sim_log(save_path, run_info)
+  }
 
   ## Delete the parallel threads if keep_folder is not TRUE
   if(!keep_folder) unlink(run_path, recursive = TRUE)

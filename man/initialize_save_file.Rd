@@ -4,15 +4,16 @@
 \alias{initialize_save_file}
 \title{Initialize the data base wher model outputs are saved}
 \usage{
-initialize_save_file(save_path, parameter, run_info)
+initialize_save_file(save_path, parameter, run_info, run_index)
 }
 \arguments{
-\item{save_path}{Character string. Path of the sql data base}
+\item{save_path}{Path of the sql data base for incrementally saving simulations}
 
-\item{parameter}{Parameter set provided for simualtion}
+\item{parameter}{Parameter set provided for simulation}
 
-\item{run_info}{List with meta data on simulation
-setup}
+\item{run_info}{List with meta data on simulation setup}
+
+\item{run_index}{IDs of parameter sets for which simulations should be run}
 }
 \description{
 Initialize the data base wher model outputs are saved

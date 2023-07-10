@@ -4,12 +4,10 @@
 \alias{add_run_info}
 \title{Prepare run info for the simulation experiment}
 \usage{
-add_run_info(run_info, sim_result, run_index, t1)
+add_run_info(run_info, sim_result, run_index)
 }
 \arguments{
 \item{run_index}{Vector of run IDs}
-
-\item{t1}{End date time stamp}
 
 \item{sim_results}{List of simulation results from the SWAT model runs}
 

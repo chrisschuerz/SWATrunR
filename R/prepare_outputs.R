@@ -8,21 +8,22 @@
 #' @param output Table of defined output variables
 #' @param project_path Path to the SWAT project folder
 #' @param run_path Path to the SWAT project run folder
-#' @param t0 Start date time stamp
 #'
 #' @importFrom dplyr bind_cols %>%
+#' @importFrom lubridate as.period now
+#' @importFrom stringr str_remove
 #' @importFrom tibble tibble
 #'
 #' @keywords internal
 #'
-initialize_run_info <- function(model_setup, output, project_path, run_path, t0) {
+initialize_run_info <- function(model_setup, output, project_path, run_path) {
   run_info <- list()
 
-  run_info$simulation_log <- tibble(run_started  = t0,
-                                    run_finished = NA,
-                                    run_time = NA,
+  run_info$simulation_log <- tibble(run_started  = now(),
+                                    run_finished = ymd_hms(NA, tz = Sys.timezone()),
+                                    run_time = as.period(NA),
                                     project_path = project_path,
-                                    run_path = run_path)
+                                    run_path = dirname(run_path))
 
   run_info$simulation_period <-   model_setup[c("start_date", "end_date", "years_skip",
                                                 "start_date_print", "output_interval")] %>%
@@ -30,7 +31,8 @@ initialize_run_info <- function(model_setup, output, project_path, run_path, t0)
     bind_cols(.)
 
   run_info$output_definition <- output
-  run_info$output_definition$unit <- map_chr(run_info$output_definition$unit, group_values)
+  run_info$output_definition$unit <- map_chr(run_info$output_definition$unit,
+                                             group_values)
 
   return(run_info)
 }
@@ -41,26 +43,26 @@ initialize_run_info <- function(model_setup, output, project_path, run_path, t0)
 #' @param output Table of defined output variables
 #' @param run_index Vector of run IDs
 #' @param project_path Path to the SWAT project folder
-#' @param t1 End date time stamp
 #'
 #' @importFrom dplyr %>%
-#' @importFrom lubridate as.period interval
+#' @importFrom lubridate now ymd_hms
 #' @importFrom purrr map_lgl
 #' @importFrom tibble tibble
 #'
 #' @keywords internal
 #'
-add_run_info <- function(run_info, sim_result, run_index, t1) {
-  is_result <- map_lgl(sim_result, is.list)
-  run_info$simulation_log$run_index_finished <- list(run_index[is_result])
-  run_info$simulation_log$run_index_error    <- list(run_index[!is_result])
+add_run_info <- function(run_info, sim_result, run_index) {
+  # is_result <- map_lgl(sim_result, is.list)
+  # run_info$simulation_log$run_index_finished <- list(run_index[is_result])
+  # run_info$simulation_log$run_index_error    <- list(run_index[!is_result])
+  n <- nrow(run_info$simulation_log)
 
-  t_diff <- interval(run_info$simulation_log$run_started, t1) %>%
-    round(.) %>%
-    as.period(.)
+  log_time <- now()
+  start_time <- ymd_hms(run_info$simulation_log$run_started[n], tz = Sys.timezone())
+  run_time <- get_time_interval(start_time, log_time)
 
-  run_info$simulation_log$run_finished <- t1
-  run_info$simulation_log$run_time <- t_diff
+  run_info$simulation_log$run_finished[n] <- log_time
+  run_info$simulation_log$run_time[n] <- run_time
 
   return(run_info)
 }

@@ -16,6 +16,21 @@ get_digit <- function(tbl) {
   }
 }
 
+#' Get the time interval between to time stamps
+#'
+#' @param start_time start time stamp
+#' @param end_time end time stamp
+#'
+#' @importFrom lubridate as.period interval
+#'
+#' @keywords internal
+#'
+get_time_interval <- function(start_time, end_time) {
+  interval(start_time, end_time) %>%
+    round(.) %>%
+    as.period(.)
+}
+
 #' Display the progress if iterative processes
 #'
 #' @param n Iteration step
