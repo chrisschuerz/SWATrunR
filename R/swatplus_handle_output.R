@@ -167,7 +167,7 @@ add_id <- function(tbl){
 #'
 mutate_output_i <- function(out_tbl_i, output_i) {
   is_multi_unit <- map_lgl(output_i$unit, ~ length(.x) > 1)
-  if(!grepl('yld', output_i$expr, fixed = TRUE)){
+  if(all(!grepl('yld', output_i$expr, fixed = TRUE))){
     map(output_i$expr, ~ select(out_tbl_i, id, unit, .x)) %>%
       map2(., output_i$unit, ~ filter(.x, unit %in% .y)) %>%
       map2(., output_i$name, ~ set_names(.x, c('id', 'unit', .y))) %>%
