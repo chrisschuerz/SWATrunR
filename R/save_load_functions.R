@@ -550,7 +550,7 @@ scan_save_files <- function(save_dir) {
     any(.)
 
   if(length(inp_file) == 0 | !is_correct_version) {
-    walk(input_db, dbDisconnect)
+    walk(inputs_db, dbDisconnect)
     stop("\nThe tables saved in 'save_file' are not compatible with this version of SWATrunR.\n",
          "A reason can be that the saved simulations were performed with a SWATrunR version < 1.0.0.\n",
          "To read the saved simulations downgrade to older versions of SWATrunR/SWATplusR (e.g. 0.6).")
