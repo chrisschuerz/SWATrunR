@@ -371,6 +371,9 @@ sim_result <- foreach(i_run = 1:n_run,
     }
     ## Tidy up the simulation results and arrange them in clean tibbles before
     ## returning them
+    if(!exists('parameter_bck')){
+      parameter_bck <- NULL
+    }
 
     sim_result <- tidy_results(sim_result, parameter_bck, date, add_parameter,
                                add_date, run_index)
