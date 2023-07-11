@@ -13,6 +13,9 @@ collect_cols(col_name, tbl_name, db, handle_conn = TRUE)
 to collect the columns}
 
 \item{db}{SQLite database connection}
+
+\item{handle_conn}{Logical value to decide whether data base should be
+connected and disconnected}
 }
 \description{
 Collect selected columns from table in SQLite database

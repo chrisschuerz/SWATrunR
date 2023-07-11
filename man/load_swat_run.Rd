@@ -9,7 +9,8 @@ load_swat_run(
   variable = NULL,
   run = NULL,
   add_parameter = TRUE,
-  add_date = TRUE
+  add_date = TRUE,
+  add_run_info = TRUE
 )
 }
 \arguments{
@@ -27,6 +28,9 @@ set for the SWAT runs is added to the loaded data}
 
 \item{add_date}{Logical. If \code{add_date = TRUE} a date column is added to
 the simulation results of each variable}
+
+\item{add_run_info}{Logical. If \code{add_run_info = TRUE} the meta information
+for the simulation runs is added to the outputs}
 }
 \description{
 Load simuation results that were saved in sqlite data bases in one or

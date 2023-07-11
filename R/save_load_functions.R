@@ -276,102 +276,105 @@ compare_tables <- function(tbl_sim, tbl_df, txt, convert = FALSE) {
 #'   set for the SWAT runs is added to the loaded data
 #' @param add_date Logical. If \code{add_date = TRUE} a date column is added to
 #'   the simulation results of each variable
+#' @param add_run_info Logical. If \code{add_run_info = TRUE} the meta information
+#'   for the simulation runs is added to the outputs
 #'
-#' @importFrom DBI dbConnect dbDisconnect dbListFields
-#' @importFrom dplyr filter group_by group_split mutate %>%
-#' @importFrom lubridate ymd
-#' @importFrom purrr map map_lgl walk
+#' @importFrom DBI dbConnect dbDisconnect
+#' @importFrom dplyr arrange bind_cols filter mutate %>%
+#' @importFrom lubridate now ymd
+#' @importFrom purrr map
 #' @importFrom RSQLite SQLite
-#' @importFrom stringr str_remove
+#' @importFrom stringr str_split
 #' @export
 #'
 load_swat_run <- function(save_dir, variable = NULL, run = NULL,
-                          add_parameter = TRUE, add_date = TRUE) {
+                          add_parameter = TRUE, add_date = TRUE,
+                          add_run_info = TRUE) {
   cat('Scan saved runs...')
   save_list <- scan_save_files(save_dir)
   cat('Done!\n')
 
-  if(add_date) {
-    cat('Read date vector...')
-    db <- dbConnect(save_list$sim_db[[save_list$sim_tbl$db_id[1]]])
-    col_names <- dbListFields(db, save_list$sim_tbl$tbl[1])
-    dbDisconnect(db)
-
-    if ('date' %in% col_names) {
-      date <- collect_cols('date', save_list$sim_tbl$tbl[1],
-                   save_list$sim_db[[save_list$sim_tbl$db_id[1]]]) %>%
-        mutate(date = ymd(19700101) + date)
-    } else {
-      date_config <- save_list$date_config %>%
-        mutate(start_date = ymd(start_date),
-               end_date   = ymd(end_date))
-      date <- get_date_vector_2012(date_config)
-    }
-   cat('Done!\n')
-  }
-
   if(is.null(variable)) {
-    variable <- save_list$variables
-  } else if (any(!(variable %in% save_list$variables))) {
-      no_var <- variable[which(!(variable %in% save_list$variables))]
+    variable <- save_list$variables$variable
+  } else if (any(!(variable %in% save_list$variables$variable))) {
+      no_var <- variable[which(!(variable %in% save_list$variables$variable))]
       stop("The following variables wer not simulated and saved in 'save_dir':\n  ",
            paste(no_var, collapse = ', '))
   }
 
+  run_sim <- unique(save_list$sim_tbl$run_idx)
+  run_all <- 1:nrow(save_list$par_val)
+
   if(is.null(run)) {
     run <- sort(unique(save_list$sim_tbl$run_idx))
-  } else if (any(!(run %in% 1:nrow(save_list$par_val)))) {
-    no_run <- run[which(!(run %in% 1:nrow(save_list$par_val)))]
+  } else if (any(!(run %in% run_all))) {
+    no_run <- run[which(!(run %in% run_all))]
     stop("The following runs are not defined for this simulation project:\n  ",
-         paste(no_run, collapse = ', '))
-  } else if (any(!(run %in% save_list$sim_tbl$run_idx))) {
+         group_values(no_run))
+  } else if (any(!(run %in% run_sim))) {
     no_run <- run[which(!(run %in% save_list$sim_tbl$run_idx))]
     stop("The following runs are not saved in 'save_dir':\n  ",
-         paste(no_run, collapse = ', '))
+         group_values(no_run))
   }
-
-  if(add_parameter) {
-    cat('Read parameters...')
-    cat('Done!\n')
-  }
-  parameter <- list(values = save_list$par_val,
-                    definition = save_list$par_def)
 
   cat('Read variables...\n')
-  variable <- map(save_list$variables_split, ~ variable[variable %in% .x])
-  tbl_ids <- which(map_lgl(variable, ~ length(.x) > 0))
 
-  sim_tbl_col <- filter(save_list$sim_tbl, run_idx %in% run) %>%
-    mutate(., tbl_id = as.numeric(str_remove(tbl, 'run_[:digit:]+_')))
-
-  if(!is.na(sim_tbl_col$tbl_id[1])) {
-    sim_tbl_col <- filter(sim_tbl_col, tbl_id %in% tbl_ids)
+  if(!is.null(save_list$err_log)) {
+    run_err <- save_list$err_log$idx
+    if (any(run %in% run_err)) {
+      err_run <- run[which((run %in% run_err & ! run %in% run_sim))]
+      message("The following runs had errors and cannot be read and returned:\n  ",
+              group_values(err_run), '\n')
+    }
   }
 
-  # sim_tbl_list <- sim_tbl_col %>%
-  #   group_by(run_name) %>%
-  #   group_split() %>%
-  #   map(., ~ group_by(.x, tbl)) %>%
-  #   map(., ~ group_split(.x))
-  #
-  db_ids <- unique(sim_tbl_col$db_id)
+  var_sel <- unique(variable)
+  if(add_date) {
+    has_date <- 'date' %in% save_list$variables$variable
+    if(!has_date) {
+      message("Variables were saved without 'date' vectors.",
+              " Variables will be read and returned without dates.\n")
+    }
+  } else {
+    var_sel <- var_sel[var_sel != 'date']
+  }
+
+  var_tbl <- filter(save_list$variables, variable %in% var_sel)
+  tbl_ids <- unique(var_tbl$tbl_id)
+  sim_tbl <- filter(save_list$sim_tbl, run_idx %in% run & tbl_ids %in% tbl_ids)
+
+  db_ids <- unique(sim_tbl$db_id)
 
   sim_results <- list()
   i <- 1
-  n <- nrow(sim_tbl_col)
+  n <- nrow(sim_tbl)
   t0 <- now()
   for(i_db in db_ids) {
     save_list$sim_db[[i_db]] <- dbConnect(save_list$sim_db[[i_db]])
-    sim_tbl_col_i <- filter(sim_tbl_col, db_id == i_db)
-    for (i_row in 1:nrow(sim_tbl_col_i)) {
-      if (is.null(sim_results[[sim_tbl_col_i$run_name[i_row]]])) {
-        sim_results[[sim_tbl_col_i$run_name[i_row]]] <- list()
+    sim_tbl_i <- filter(sim_tbl, db_id == i_db) %>%
+      arrange(tbl_id)
+
+    for (i_row in 1:nrow(sim_tbl_i)) {
+      if (is.null(sim_results[[sim_tbl_i$run_name[i_row]]])) {
+        sim_results[[sim_tbl_i$run_name[i_row]]] <- list()
       }
-      sim_results[[sim_tbl_col_i$run_name[i_row]]][[sim_tbl_col_i$tbl[i_row]]] <-
-        collect_cols(variable[[sim_tbl_col_i$tbl_id[i_row]]],
-                     sim_tbl_col_i$tbl[i_row],
-                     save_list$sim_db[[i_db]],
-                     handle_conn = F)
+      tbl_i <- sim_tbl_i$tbl[i_row]
+      tbl_id_i <- sim_tbl_i$tbl_id[i_row]
+      tbl_id_i_sub <- as.numeric(str_split(tbl_id_i, '\\.', simplify = TRUE))
+      var_i <- var_tbl$variable[var_tbl$tbl_id %in% tbl_id_i]
+      sim_i <- collect_cols(var_i, tbl_i, save_list$sim_db[[i_db]],
+                            handle_conn = F)
+
+      if('date' %in% names(sim_i)) {
+        sim_i$date <- ymd(19700101) + sim_i$date
+      }
+
+      if (tbl_id_i_sub[2] == 1) {
+        sim_results[[sim_tbl_i$run_name[i_row]]][[tbl_id_i_sub[1]]] <- sim_i
+      } else {
+        sim_results[[sim_tbl_i$run_name[i_row]]][[tbl_id_i_sub[1]]] <-
+          bind_cols(sim_results[[sim_tbl_i$run_name[i_row]]][[tbl_id_i_sub[1]]], sim_i)
+      }
     display_progress_pct(n = i, nmax = n, t0 = t0)
     i <- i + 1
     }
@@ -379,11 +382,25 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
   }
   finish_progress(nmax = n, t0 = t0, word = 'Table')
   cat('Return simulation results...')
-  sim_results <-  map(sim_results, bind_cols)
-  sim_results <- sim_results[order(names(sim_results))] %>%
-    tidy_results(., parameter, date, add_parameter, add_date, run)
+  output_list <- list()
+
+
+  if(add_parameter) {
+    output_list$parameter <- list(values = save_list$par_val,
+                                  definition = save_list$par_def)
+  }
+
+  output_list$simulation <- sim_results[order(names(sim_results))] %>%
+    tidy_simulations(.)
+
+  if (add_run_info) {
+    output_list$run_info <- list(simulation_log = save_list$sim_log,
+                                 simulation_period = save_list$sim_period,
+                                 output_definition = save_list$out_def)
+  }
+
   cat('Done!\n')
-  return(sim_results)
+  return(output_list)
 }
 
 #' Collect selected columns from table in SQLite database
@@ -392,6 +409,8 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
 #' @param tbl_name String that defines the name of the table from which
 #'   to collect the columns
 #' @param db SQLite database connection
+#' @param handle_conn Logical value to decide whether data base should be
+#'    connected and disconnected
 #'
 #' @importFrom DBI dbClearResult dbConnect dbDisconnect dbFetch dbSendQuery
 #' @importFrom dplyr %>%
@@ -404,7 +423,8 @@ collect_cols <- function(col_name, tbl_name, db, handle_conn = TRUE) {
     if (handle_conn) {
       db <- dbConnect(db)
     }
-    var_str <- paste0("SELECT ", paste(col_name , collapse=","), " FROM ", tbl_name)
+    var_str <- paste0("SELECT ", paste(col_name , collapse=","), " FROM '",
+                      tbl_name, "'")
     tbl_qry <- dbSendQuery(db, var_str)
     tbl <- tbl_qry %>%
       dbFetch(.) %>%
@@ -438,31 +458,13 @@ collect_cols <- function(col_name, tbl_name, db, handle_conn = TRUE) {
 scan_swat_run <- function(save_dir, return_full = FALSE) {
   save_list <- scan_save_files(save_dir)
 
-  if (is.na(save_list$date_config$start_date_print)) {
-    start_date_print <- ymd(save_list$date_config$start_date) +
-                        years(as.numeric(save_list$date_config$years_skip))
-  } else {
-    start_date_print <- save_list$date_config$start_date_print
-  }
-
-  if(nchar(save_list$date_config$output_interval) == 1) {
-    save_list$date_config$output_interval <-
-      case_when(save_list$date_config$output_interval == 'd' ~ 'daily',
-                save_list$date_config$output_interval == 'm' ~ 'monthly',
-                save_list$date_config$output_interval == 'y' ~ 'yearly')
-  }
-
-  cat("Simulation period:\n", save_list$date_config$start_date, "to",
-      save_list$date_config$end_date,"\n")
+  cat("Simulation period definition:\n")
+  print(save_list$sim_period, n = Inf)
 
   cat("\n")
-  cat("Printed outputs:\n", as.character(start_date_print), "to",
-      save_list$date_config$end_date, "with", save_list$date_config$output_interval,
-      "time steps.","\n")
-
-  cat("\n")
-  cat("Saved variables:\n")
-  cat(truncate(group_variable_units(save_list$variables), 20), '\n')
+  cat("Output variable definition:\n")
+  save_list$out_def$file_full <- NULL
+  print(save_list$out_def, n = Inf)
 
   run_index <- sort(unique(save_list$sim_tbl$run_idx))
   run_index_miss <- which(! 1:nrow(save_list$par_val) %in% run_index)
@@ -489,7 +491,7 @@ scan_swat_run <- function(save_dir, return_full = FALSE) {
     if (nrow(err_log) > 0) {
       cat("\n")
       cat("Unsaved runs due to errors in model execution :\n")
-      cat(group_values(err_run_idx), '\n\n')
+      cat(group_values(err_log$idx), '\n\n')
     }
   }
 
@@ -499,7 +501,7 @@ scan_swat_run <- function(save_dir, return_full = FALSE) {
     cat("Parameter values:\n")
     print(save_list$par_val)
     cat("\nParameter definition:\n")
-    print(save_list$par_def)
+    print(save_list$par_def, n = Inf)
   } else {
     cat("No data set provided in the save files.")
   }
@@ -507,7 +509,7 @@ scan_swat_run <- function(save_dir, return_full = FALSE) {
   if(return_full) {
     parameter <- list(values = save_list$par_val,
                       definition = save_list$par_def)
-    return_list <- list(variables = save_list$variables,
+    return_list <- list(variables = save_list$out_def,
                         run_index_finished = run_index,
                         run_index_missing  = run_index_miss,
                         parameter = parameter)
@@ -544,12 +546,17 @@ scan_save_files <- function(save_dir) {
   sim_file <- sq_file[str_detect(sq_file, 'thread_[:digit:]+.sqlite$')]
   err_file <- sq_file[str_detect(sq_file, 'error_log.sqlite$')]
 
+  if (length(inp_file) == 0 & length(sim_file) == 0) {
+    stop("No data bases with the names 'inputs.sqlite' and 'thread_<int>.sqlite'",
+         ' were found in the provided paths.')
+  }
+
   inputs_db <- map(inp_file, ~ dbConnect(SQLite(), .x))
   is_correct_version <- map(inputs_db, ~ 'simulation_log' %in% dbListTables(.x)) %>%
     unlist(.) %>%
     any(.)
 
-  if(length(inp_file) == 0 | !is_correct_version) {
+  if(length(inp_file) == 0 & !is_correct_version) {
     walk(inputs_db, dbDisconnect)
     stop("\nThe tables saved in 'save_file' are not compatible with this version of SWATrunR.\n",
          "A reason can be that the saved simulations were performed with a SWATrunR version < 1.0.0.\n",
@@ -624,6 +631,14 @@ scan_save_files <- function(save_dir) {
     for (i in 1:length(sim_file)) {
       sim_db[[i]] <- dbConnect(SQLite(), sim_file[i])
       sim_tbl[[i]] <- tibble(tbl = dbListTables(sim_db[[i]]))
+
+      if(i == 1) {
+        tbls_1 <- sim_tbl[[i]]$tbl
+        tbl_id  <- str_extract(tbls_1, '[:digit:]+\\.[:digit:]+$')
+        var_tbl <- map(tbls_1, ~ dbListFields(sim_db[[i]], .x)) %>%
+          map2(., tbl_id,  ~ tibble(variable = .x, tbl_id = .y)) %>%
+          list_rbind(.)
+      }
       dbDisconnect(sim_db[[i]])
     }
 
@@ -631,6 +646,7 @@ scan_save_files <- function(save_dir) {
       map2_df(., 1:length(.), ~ mutate(.x, db_id = .y)) %>%
       mutate(run_name = str_remove(tbl, '\\_[:digit:]+\\.[:digit:]+$'),
              run_idx  = str_remove(run_name, 'run\\_') %>% as.numeric(.),
+             tbl_id   = str_extract(tbl, '[:digit:]+\\.[:digit:]+$'),
              .before  = 1)
   } else {
     sim_db <- NULL
@@ -647,6 +663,7 @@ scan_save_files <- function(save_dir) {
       }
     }
     err_log <- list_rbind(err_log)
+    err_log$message <- str_split(err_log$message, '\\|\\|')
     walk(err_db, dbDisconnect)
 
   } else {
@@ -659,8 +676,7 @@ scan_save_files <- function(save_dir) {
               sim_period      = sim_period,
               sim_log         = sim_log,
               out_def         = out_def,
-              # variables       = variables,
-              # variables_split = variables_split,
+              variables       = var_tbl,
               sim_tbl         = sim_tbl,
               err_log         = err_log,
               inputs_db       = inputs_db,
