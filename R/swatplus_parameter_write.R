@@ -44,32 +44,37 @@ write_calibration <- function(thread_path, parameter, calibration, run_index,
   # parameters which are updated with the calibration.cal file
   parameter$definition <- parameter$definition[!is_plant_par,]
   parameter$values     <- parameter$values[ ,!is_plant_par]
+  if(nrow(parameter$definition) > 0) {
+    cal_pos <- which(is.na(calibration$VAL))
+    # cal_names <- calibration$NAME[cal_pos]
 
-  cal_pos <- which(is.na(calibration$VAL))
-  # cal_names <- calibration$NAME[cal_pos]
+    calibration$VAL[cal_pos] <- parameter$values[run_index[i_run],] %>%
+      unlist(.) %>%
+      # map_dbl(., ~.x) %>%
+      set_names(., parameter$definition$parameter) %>%
+      sprintf("%.15f", .) %>%
+      str_sub(., 1, 15)
 
-  calibration$VAL[cal_pos] <- parameter$values[run_index[i_run],] %>%
-    unlist(.) %>%
-    # map_dbl(., ~.x) %>%
-    set_names(., parameter$definition$parameter) %>%
-    sprintf("%.15f", .) %>%
-    str_sub(., 1, 15)
+    col_format <- c("%-12s", "%8s", "%16s", "%16s", rep("%8s", ncol(calibration) - 4))
 
-  col_format <- c("%-12s", "%8s", "%16s", "%16s", rep("%8s", ncol(calibration) - 4))
+    col_names <- names(calibration) %>%
+      sprintf(col_format, .) %>%
+      paste(., collapse = "") %>%
+      str_remove_all(., 'OBJ\\_[:digit:]') %>%
+      str_trim(.)
 
-  col_names <- names(calibration) %>%
-    sprintf(col_format, .) %>%
-    paste(., collapse = "") %>%
-    str_remove_all(., 'OBJ\\_[:digit:]') %>%
-    str_trim(.)
+    calibration <- map2(calibration, col_format, ~sprintf(.y, .x)) %>%
+      map_df(., ~ str_replace_all(.x, 'NA', '')) %>%
+      apply(., 1, paste, collapse = "") %>%
+      c("Number of parameters:", sprintf("%2d",length(cal_pos)), col_names, .) %>%
+      str_trim(.)
 
-  calibration <- map2(calibration, col_format, ~sprintf(.y, .x)) %>%
-    map_df(., ~ str_replace_all(.x, 'NA', '')) %>%
-    apply(., 1, paste, collapse = "") %>%
-    c("Number of parameters:", sprintf("%2d",length(cal_pos)), col_names, .) %>%
-    str_trim(.)
-
-  write_lines(calibration, thread_path%//%"calibration.cal")
+    write_lines(calibration, thread_path%//%"calibration.cal")
+  } else {
+    if(file.exists(thread_path%//%"calibration.cal")) {
+      file.remove(thread_path%//%"calibration.cal")
+    }
+  }
 }
 
 #' Modify plants.plt parameters
@@ -104,7 +109,7 @@ update_plant_par <- function(thread_path, parameter, is_plant_par, run_index, i_
 
     par_val <- update_par(par_val, par_up_i, def_i$change)
 
-    plant_par[[def_i$par_name]][idx] <- par_val
+    plant_par[[def_i$parameter]][idx] <- par_val
 
   }
   plant_par <- select(plant_par, - file_name, - file_code)
