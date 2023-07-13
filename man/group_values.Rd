@@ -5,7 +5,7 @@
 \title{Convert the information on available runs for the simulated variables into
 strings that are printed}
 \usage{
-group_values(runs, sep = ":")
+group_values(vals, sep = ":")
 }
 \arguments{
 \item{tbl}{overview table that provides meta data for all simulation runs for

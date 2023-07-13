@@ -20,8 +20,9 @@ read_swatplus_output <- function(output, thread_path, add_date, revision) {
   }
 
   # Split into time series outputs and other outputs (yields, FDC)
-  output_ts <- filter(output, !file %in% c('basin_crop_yld', 'fdcout'))
+  output_ts <- filter(output, !file %in% c('basin_crop_yld', 'fdcout', 'mgtout'))
   output_yld <- filter(output,  file %in% c('basin_crop_yld'))
+  output_mgt <- filter(output,  file %in% c('mgtout'))
   output_fdc <- filter(output,  file %in% c('fdcout'))
 
   if(nrow(output_ts) > 0) {
@@ -66,14 +67,20 @@ read_swatplus_output <- function(output, thread_path, add_date, revision) {
     out_tables_yld <- NULL
   }
 
+  if (nrow(output_mgt) > 0) {
+    out_tables_mgt <- list(read_mgtout(output_mgt, thread_path))
+  } else {
+    out_tables_mgt <- NULL
+  }
+
   if (nrow(output_fdc) > 0) {
     output_fdc <- list(output_fdc)
-    out_tables_fdc <- map(output_fdc, ~ read_fdcout(.x, thread_path))
+    out_tables_fdc <- list(read_fdcout(output_fdc, thread_path))
   } else {
     out_tables_fdc <- NULL
   }
 
-  out_tables <- c(out_tables_ts, out_tables_yld, out_tables_fdc)
+  out_tables <- c(out_tables_ts, out_tables_yld, out_tables_mgt, out_tables_fdc)
 
   return(out_tables)
 }
@@ -148,12 +155,67 @@ read_mgtout <- function(output_i, thread_path) {
     matrix(., nrow = 21) %>%
     t() %>%
     as_tibble(., .name_repair = 'minimal') %>%
-    set_names(., c('hru', 'year', 'mon', 'day', 'op_typ', 'operation',
+    set_names(., c('hru', 'year', 'mon', 'day', 'plant_name', 'operation',
                    'phubase', 'phu', 'soil_water', 'bioms',
-                   'surf_rsd', 'soil_no3', 'soil_solp', 'op_var',
-                   paste0('var', 1:7)))
+                   'surf_rsd', 'soil_no3', 'soil_solp', 'yld',
+                   'p_strs', 'n_strs', 'tmp_strs', 'wat_strs', 'aer_strs',
+                   'v6', 'v7')) %>%
+    filter(operation == 'HARVEST') %>%
+    select(hru, year, plant_name, all_of(output_i$variable))
+  mgt[,1:2] <- map_df(mgt[,1:2], as.integer)
+  mgt[,4:ncol(mgt)] <- map_df(mgt[,4:ncol(mgt)], as.numeric)
 
-  mgt[,c(1:4, 7:21)] <- map_df(mgt[,c(1:4, 7:21)], as.numeric)
+  unit <- unique(unlist(output_i$unit))
+
+  if(length(unit) > 0) {
+    if(is.numeric(unit[1])) {
+      mgt <- filter(mgt, hru %in% unit)
+    } else {
+      mgt <- filter(mgt, plant_name %in% unit)
+    }
+  }
+
+  mgt <- mutate(mgt, label = paste(mgt$hru, mgt$year, mgt$plant_name, sep = '_'))
+  multi_harv <- table(mgt$label)
+  mgt <- select(mgt, -label)
+
+  if(any(multi_harv > 1)) {
+    mgt_multi  <- filter(mgt, label %in% names(multi_harv)[multi_harv > 1])
+    mgt_single <- mgt %>%
+      filter(., !label %in% names(multi_harv)[multi_harv > 1]) %>%
+      select(-label)
+
+    if('yld' %in% output_i$variable & length(unique(output_i$variable)) > 1) {
+      mgt_multi_yld <- mgt_multi %>%
+        select(label, yld) %>%
+        group_by(label) %>%
+        summarise(., yld = sum(yld), .groups = 'drop')
+
+      mgt_multi_other <- mgt_multi %>%
+        select(-yld, -hru, -year, -plant_name) %>%
+        group_by(label) %>%
+        summarise(., across(everything(),  max), .groups = 'drop')
+
+      mgt_multi <- mgt_multi %>%
+        select(hru, year, plant_name, label) %>%
+        left_join(., mgt_multi_yld, by = 'label') %>%
+        left_join(., mgt_multi_other, by = 'label') %>%
+        select(-label)
+
+      mgt_multi <- mgt_multi[names(mgt_single)]
+      mgt <- bind_rows(mgt_single, mgt_multi)
+    } else {
+      agg_fun <- ifelse('yld' %in% output_i$variable, sum, max)
+      mgt_multi <- mgt_multi %>%
+        select(-label) %>%
+        group_by(hru, year, plant_name) %>%
+        summarise(., across(everything(),  agg_fun), .groups = 'drop')
+
+      mgt_multi <- mgt_multi[names(mgt_single)]
+      mgt <- bind_rows(mgt_single, mgt_multi)
+    }
+  }
+  mgt <- arrange(mgt, hru, year, plant_name)
 
   return(mgt)
 }

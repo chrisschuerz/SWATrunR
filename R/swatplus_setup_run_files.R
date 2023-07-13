@@ -152,8 +152,8 @@ setup_swatplus <- function(project_path, parameter, output,
   # }
   print_table[,2:5] <- "n"
 
-  # Remove crop and FDC outputs from objects as they are not defined there
-  objects_in_tbl <- filter(output, ! file %in% c('basin_crop_yld', 'fdcout'))
+  # Remove crop, mgt, and FDC outputs from objects as they are not defined there
+  objects_in_tbl <- filter(output, ! file %in% c('basin_crop_yld', 'fdcout', 'mgtout'))
   # Change from channel_sdmorph to channel_sd as the first is written when the
   # second is defined
   objects_in_tbl[objects_in_tbl == 'channel_sdmorph'] <- 'channel_sd'
@@ -182,12 +182,13 @@ setup_swatplus <- function(project_path, parameter, output,
   # So far avoid any other output files types to be written
   model_setup$print.prt[7] <- "n             n             n             "
 
-  # Print also FDC output file if defined in outputs
-  if ('fdcout' %in% output$file) {
-    model_setup$print.prt[9] <- 'n             n             n             y'
-  } else {
-    model_setup$print.prt[9] <- 'n             n             n             n'
-  }
+  # Print also FDC and mgt output files if defined in outputs
+  prt_9 <- rep('n', 4)
+  if ('mgtout' %in% output$file) prt_9[2] <- 'y'
+  if ('fdcout' %in% output$file) prt_9[4] <- 'y'
+  prt_9 <- paste(sprintf('%-14s',prt_9), collapse = '')
+
+  model_setup$print.prt[9] <- prt_9
 
   if(!is.null(parameter)) {
     parameter$definition <- filter(parameter$definition, file_name != 'pdb')

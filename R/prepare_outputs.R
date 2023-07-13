@@ -148,6 +148,8 @@ extract_non_var_cols <- function(tbl) {
     col_extr <- tbl[1]
   } else if(all(names(tbl)[c(1,2)] == c('year', 'plant_name'))) {
     col_extr <- tbl[1:2]
+  } else if (all(names(tbl)[c(1:3)] == c('hru', 'year', 'plant_name'))) {
+    col_extr <- tbl[1:3]
   } else if (names(tbl)[1] == 'p' & all(tbl[[1]][1:3] == c(0, 0.1, 0.5))) {
     col_extr <- tbl[1]
   } else {
@@ -167,6 +169,8 @@ remove_non_var_cols <- function(tbl) {
     tbl <- tbl[2:ncol(tbl)]
   } else if(all(names(tbl)[c(1,2)] == c('year', 'plant_name'))) {
     tbl <- tbl[3:ncol(tbl)]
+  } else if (all(names(tbl)[c(1:3)] == c('hru', 'year', 'plant_name'))) {
+    tbl <- tbl[4:ncol(tbl)]
   } else if (names(tbl)[1] == 'p' & all(tbl[[1]][1:3] == c(0, 0.1, 0.5))) {
     tbl <- tbl[2:ncol(tbl)]
   }
