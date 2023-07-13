@@ -4,6 +4,7 @@
 #'
 #' @param output Output defined to read from the SWAT model results
 #' @param thread_path Path to respective thread where SWAT was executed
+#' @param add_date Logical wheter to add date column
 #' @param revision Numeric. The revision number of the SWAT+ executable
 #'
 #' @importFrom dplyr %>%
@@ -111,8 +112,8 @@ read_output_i <- function(output_i, col_names_i, thread_path, date_cols) {
 
 #' Read basin yield output tables.
 #'
-#' @param thread_path String path to the thread where to read the output file
 #' @param output_i i_th part from the output table which defines what to
+#' @param thread_path String path to the thread where to read the output file
 #'   read from the SWAT model results
 #'
 #' @importFrom data.table fread
@@ -131,15 +132,17 @@ read_basin_yld <- function(output_i, thread_path) {
     set_names(c('year', 'plant_name', output_i$name))
 }
 
-#' Read SWAT+ management output file and return the read output in a tibble
+#' Read and process SWAT+ management outputs.
 #'
-#' @param run_path Path to the folder where simulations are performed
+#' @param output_i i_th part from the output table which defines what to
+#' @param thread_path String path to the thread where to read the output file
 #'
-#' @importFrom dplyr %>%
+#' @importFrom dplyr across arrange bind_rows filter group_by left_join select summarise %>%
 #' @importFrom purrr map map_df set_names
 #' @importFrom readr read_lines
 #' @importFrom stringr str_trim str_split
 #' @importFrom tibble as_tibble
+#' @importFrom tidyselect all_of everything
 #'
 #' @keywords internal
 #'

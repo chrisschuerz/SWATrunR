@@ -11,6 +11,7 @@
 #'
 #' @importFrom dplyr bind_cols %>%
 #' @importFrom lubridate as.period now
+#' @importFrom purrr map_chr
 #' @importFrom stringr str_remove
 #' @importFrom tibble tibble
 #'
@@ -39,22 +40,16 @@ initialize_run_info <- function(model_setup, output, project_path, run_path) {
 
 #' Prepare run info for the simulation experiment
 #'
-#' @param sim_results List of simulation results from the SWAT model runs
-#' @param output Table of defined output variables
+#' @param run_info Existing list of run information
+#' @param sim_result List of simulation results from the SWAT model runs
 #' @param run_index Vector of run IDs
-#' @param project_path Path to the SWAT project folder
 #'
 #' @importFrom dplyr %>%
 #' @importFrom lubridate now ymd_hms
-#' @importFrom purrr map_lgl
-#' @importFrom tibble tibble
 #'
 #' @keywords internal
 #'
 add_run_info <- function(run_info, sim_result, run_index) {
-  # is_result <- map_lgl(sim_result, is.list)
-  # run_info$simulation_log$run_index_finished <- list(run_index[is_result])
-  # run_info$simulation_log$run_index_error    <- list(run_index[!is_result])
   n <- nrow(run_info$simulation_log)
 
   log_time <- now()
@@ -69,7 +64,7 @@ add_run_info <- function(run_info, sim_result, run_index) {
 
 #' Prepare error report in case of failed simulations
 #'
-#' @param sim_results List of simulation results from the SWAT model runs
+#' @param sim_result List of simulation results from the SWAT model runs
 #'
 #' @importFrom dplyr %>%
 #' @importFrom purrr map_chr map_lgl set_names
@@ -99,7 +94,7 @@ prepare_error_report <- function(sim_result) {
 
 #' Tidy up and rearrange simulation results before returning them
 #'
-#' @param sim_results List of simulation results from the SWAT model runs
+#' @param sim_result List of simulation results from the SWAT model runs
 #'
 #' @importFrom dplyr bind_cols %>%
 #' @importFrom purrr list_flatten map map2 map_lgl set_names list_transpose

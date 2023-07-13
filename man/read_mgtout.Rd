@@ -2,14 +2,16 @@
 % Please edit documentation in R/swatplus_handle_output.R
 \name{read_mgtout}
 \alias{read_mgtout}
-\title{Read SWAT+ management output file and return the read output in a tibble}
+\title{Read and process SWAT+ management outputs.}
 \usage{
 read_mgtout(output_i, thread_path)
 }
 \arguments{
-\item{run_path}{Path to the folder where simulations are performed}
+\item{output_i}{i_th part from the output table which defines what to}
+
+\item{thread_path}{String path to the thread where to read the output file}
 }
 \description{
-Read SWAT+ management output file and return the read output in a tibble
+Read and process SWAT+ management outputs.
 }
 \keyword{internal}

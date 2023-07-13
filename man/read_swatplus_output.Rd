@@ -11,6 +11,8 @@ read_swatplus_output(output, thread_path, add_date, revision)
 
 \item{thread_path}{Path to respective thread where SWAT was executed}
 
+\item{add_date}{Logical wheter to add date column}
+
 \item{revision}{Numeric. The revision number of the SWAT+ executable}
 }
 \description{

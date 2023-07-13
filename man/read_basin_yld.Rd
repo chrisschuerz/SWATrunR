@@ -7,10 +7,10 @@
 read_basin_yld(output_i, thread_path)
 }
 \arguments{
-\item{output_i}{i_th part from the output table which defines what to
-read from the SWAT model results}
+\item{output_i}{i_th part from the output table which defines what to}
 
-\item{thread_path}{String path to the thread where to read the output file}
+\item{thread_path}{String path to the thread where to read the output file
+read from the SWAT model results}
 }
 \description{
 Read basin yield output tables.

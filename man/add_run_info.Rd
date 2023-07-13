@@ -7,13 +7,11 @@
 add_run_info(run_info, sim_result, run_index)
 }
 \arguments{
+\item{run_info}{Existing list of run information}
+
+\item{sim_result}{List of simulation results from the SWAT model runs}
+
 \item{run_index}{Vector of run IDs}
-
-\item{sim_results}{List of simulation results from the SWAT model runs}
-
-\item{output}{Table of defined output variables}
-
-\item{project_path}{Path to the SWAT project folder}
 }
 \description{
 Prepare run info for the simulation experiment

@@ -7,7 +7,7 @@
 tidy_simulations(sim_result)
 }
 \arguments{
-\item{sim_results}{List of simulation results from the SWAT model runs}
+\item{sim_result}{List of simulation results from the SWAT model runs}
 }
 \description{
 Tidy up and rearrange simulation results before returning them

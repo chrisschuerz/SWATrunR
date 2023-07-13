@@ -7,7 +7,7 @@
 prepare_error_report(sim_result)
 }
 \arguments{
-\item{sim_results}{List of simulation results from the SWAT model runs}
+\item{sim_result}{List of simulation results from the SWAT model runs}
 }
 \description{
 Prepare error report in case of failed simulations
