@@ -725,15 +725,19 @@ is_identical_tbl <- function(x,y) {
 #' @importFrom purrr map map2 map2_chr
 #' @keywords internal
 #'
-group_values <- function(runs, sep = ':') {
-  runs <- sort(runs)
-  diff_runs <- diff(runs)
+group_values <- function(vals, sep = ':') {
+  if (is.numeric(vals[1])) {
+    vals <- sort(vals)
+    diff_vals <- diff(vals)
 
-  end_seq   <- unique(c(runs[diff_runs != 1], runs[length(runs)]))
-  start_seq <- unique(c(runs[1], runs[which(diff_runs != 1) + 1]))
+    end_seq   <- unique(c(vals[diff_vals != 1], vals[length(vals)]))
+    start_seq <- unique(c(vals[1], vals[which(diff_vals != 1) + 1]))
 
-  map2_chr(start_seq, end_seq, ~paste_runs(.x, .y, sep = sep)) %>%
-    truncate(., 10, side = 'both')
+    map2_chr(start_seq, end_seq, ~paste_runs(.x, .y, sep = sep)) %>%
+      truncate(., 10, side = 'both')
+  } else {
+    paste(vals, collapse = ', ')
+  }
 }
 
 #' Paste run indexes if start and end of sequence differ. Otherwise only use
