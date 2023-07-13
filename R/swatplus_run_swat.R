@@ -60,9 +60,6 @@
 #'   \code{Default = FALSE}
 #' @param quiet (optional) Logical. If \code{quiet = TRUE} no messages are
 #'   written.  \code{Default = FALSE}
-#' @param revision (optional) Numeric. If \code{revision} is defined
-#'   \code{run_swatplus()} uses the input revision number (e.g. \code{revision = 59.3}.
-#'   Otherwise the revision number is acquired from the SWAT executable.
 #' @param time_out (optional) Numeric. Timeout for simulation in seconds.
 #'   Simulations may get stuck due to specific parameter combinations. A timeout
 #'   kills any simulation if the runtime exceeds the set time in seconds.
@@ -97,8 +94,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                          save_file = NULL, return_output = TRUE,
                          add_parameter = TRUE, add_date = TRUE,
                          refresh = TRUE, keep_folder = FALSE,
-                         quiet = FALSE, revision = NULL,
-                         time_out = Inf) {
+                         quiet = FALSE, time_out = Inf) {
 
 #-------------------------------------------------------------------------------
 
@@ -186,11 +182,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## Manage the handling of the '.model_run' folder structure.
   swat_exe <- manage_model_run(project_path, run_path, n_thread, os,
                                "plus", refresh, quiet)
-  if(is.null(revision)){
-    revision <- check_revision(project_path, run_path, os, swat_exe)
-  }
-  # cat("SWAT revision is ",swat_rev,"\n")
-  # output <- translate_outfile_names(output, model_setup$output_interval, revision)
+
 #-------------------------------------------------------------------------------
   # Write files
   ## Write model setup: Files that define the time range etc. of the SWAT
@@ -264,7 +256,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
         # update_run_log(save_path, run_index[i_run], 'time_out')
       }
     } else if(nchar(msg$stderr) == 0) {
-      model_output <- read_swatplus_output(output, thread_path, add_date, revision)
+      model_output <- read_swatplus_output(output, thread_path, add_date)
 
       if(!is.null(save_path)) {
         save_run(save_path, model_output, parameter, run_index, i_run, thread_id)

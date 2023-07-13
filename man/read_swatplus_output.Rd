@@ -4,7 +4,7 @@
 \alias{read_swatplus_output}
 \title{Read SWAT+ output files}
 \usage{
-read_swatplus_output(output, thread_path, add_date, revision)
+read_swatplus_output(output, thread_path, add_date)
 }
 \arguments{
 \item{output}{Output defined to read from the SWAT model results}
@@ -12,8 +12,6 @@ read_swatplus_output(output, thread_path, add_date, revision)
 \item{thread_path}{Path to respective thread where SWAT was executed}
 
 \item{add_date}{Logical wheter to add date column}
-
-\item{revision}{Numeric. The revision number of the SWAT+ executable}
 }
 \description{
 Read SWAT+ output files

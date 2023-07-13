@@ -23,7 +23,6 @@ run_swatplus(
   refresh = TRUE,
   keep_folder = FALSE,
   quiet = FALSE,
-  revision = NULL,
   time_out = Inf
 )
 }
@@ -98,10 +97,6 @@ case '.model_run' is reused in a new model run if \code{refresh = FALSE}.
 
 \item{quiet}{(optional) Logical. If \code{quiet = TRUE} no messages are
 written.  \code{Default = FALSE}}
-
-\item{revision}{(optional) Numeric. If \code{revision} is defined
-\code{run_swatplus()} uses the input revision number (e.g. \code{revision = 59.3}.
-Otherwise the revision number is acquired from the SWAT executable.}
 
 \item{time_out}{(optional) Numeric. Timeout for simulation in seconds.
 Simulations may get stuck due to specific parameter combinations. A timeout
