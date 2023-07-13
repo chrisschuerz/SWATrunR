@@ -124,6 +124,40 @@ read_basin_yld <- function(output_i, thread_path) {
     set_names(c('year', 'plant_name', output_i$name))
 }
 
+#' Read SWAT+ management output file and return the read output in a tibble
+#'
+#' @param run_path Path to the folder where simulations are performed
+#'
+#' @importFrom dplyr %>%
+#' @importFrom purrr map map_df set_names
+#' @importFrom readr read_lines
+#' @importFrom stringr str_trim str_split
+#' @importFrom tibble as_tibble
+#'
+#' @keywords internal
+#'
+read_mgtout <- function(output_i, thread_path) {
+  file_path <- paste0(thread_path, '/mgt_out.txt')
+
+  mgt <- read_lines(file_path, skip = 3, lazy = FALSE) %>%
+    unlist() %>%
+    str_trim(.) %>%
+    str_split(., '\t[:space:]+|[:space:]+') %>%
+    map(., ~ .x[1:21]) %>%
+    unlist() %>%
+    matrix(., nrow = 21) %>%
+    t() %>%
+    as_tibble(., .name_repair = 'minimal') %>%
+    set_names(., c('hru', 'year', 'mon', 'day', 'op_typ', 'operation',
+                   'phubase', 'phu', 'soil_water', 'bioms',
+                   'surf_rsd', 'soil_no3', 'soil_solp', 'op_var',
+                   paste0('var', 1:7)))
+
+  mgt[,c(1:4, 7:21)] <- map_df(mgt[,c(1:4, 7:21)], as.numeric)
+
+  return(mgt)
+}
+
 #' Reading the FDC output table.
 #'
 #' @param output_i i_th part from the output table which defines what to

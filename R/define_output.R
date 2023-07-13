@@ -75,7 +75,14 @@ define_output <- function(file, variable = NULL, unit = NULL){
   if (is.null(unit)) {
     unit <- list(NA_integer_)
   } else {
-    unit <- list(as.integer(unit))
+    if (file %in% c('mgtout', paste0('basin_crop_yld_', c('aa', 'yr'))) &
+        is.character(unit[1])) {
+      unit <- list(unit)
+    } else if (is.character(unit[1])){
+      stop("'unit' of type 'character' is not allowed for ", file, ' outputs.')
+    } else {
+      unit <- list(as.integer(unit))
+    }
   }
 
   output <- tibble(file     = file,
@@ -103,7 +110,8 @@ prepare_output_definition <- function(output, swat_vers, project_path) {
     output <- map2_df(output, names(output), ~ mutate(.x, name = .y, .before = 1))
   }
 
-  has_no_unit <- is.na(output$unit) & !output$file %in% paste0('basin_crop_yld_', c('aa', 'yr'))
+  has_no_unit <- is.na(output$unit) &
+                 !output$file %in% c('mgtout', paste0('basin_crop_yld_', c('aa', 'yr')))
   if(any(has_no_unit)) {
     stop("\nThe following output variables were defined without defining a 'unit':\n",
          paste(output$name[has_no_unit], collapse = ', '))
@@ -115,6 +123,17 @@ prepare_output_definition <- function(output, swat_vers, project_path) {
   if(any(is_no_yld_output)) {
     stop("\n Wrong 'variable' defined for 'basin_crop_yld' output.\n",
          "'variable' must be either 'harv_area', 'yld_total', or 'yld'.")
+  }
+
+  is_no_mgt_output <- output$file == 'mgtout' &
+                      !output$variable %in% c('yld', 'phu', 'bioms', 'wat_strs',
+                                              'aer_strs','tmp_strs', 'n_strs',
+                                              'p_strs')
+
+  if(any(is_no_mgt_output)) {
+    stop("\n Wrong 'variable' defined for 'mgtout' output. ",
+         "'variable' must one of:\n 'yld', 'phu', 'bioms', 'wat_strs', ",
+         "'aer_strs','tmp_strs', 'n_strs', 'p_strs'.")
   }
 
   if(swat_vers == "2012") {
@@ -144,7 +163,7 @@ prepare_output_definition <- function(output, swat_vers, project_path) {
       c('channel_sdmorph') %>%
       rep(., each = 4) %>%
       paste0(., c('_aa', '_yr', '_mon', '_day')) %>%
-      c('fdcout', paste0('basin_crop_yld_', c('aa', 'yr')))
+      c('fdcout', 'mgtout', paste0('basin_crop_yld_', c('aa', 'yr')))
 
     is_plus_outfile <- output$file %in% out_names
 
@@ -166,6 +185,7 @@ prepare_output_definition <- function(output, swat_vers, project_path) {
       mutate(time_interval = str_extract(file, '[^_]+$'), .after = file) %>%
       mutate(file = str_remove(file, '_[^_]+$')) %>%
       mutate(file_full = paste0(file, '_', time_interval, '.txt'), .before = file) %>%
+      mutate(file_full = ifelse(file == 'mgtout', 'mgt_out.txt', file_full)) %>%
       mutate(file_full = ifelse(file == 'fdcout', 'flow_duration_curve.out', file_full))
   }
 
