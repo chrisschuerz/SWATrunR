@@ -122,6 +122,8 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
   if(!is.null(parameter)) {
     parameter <- format_swat2012_parameter(parameter, '2012')
+    file_meta <- read_file_meta(project_path, parameter$definition)
+    swat_parameter <- read_swat2012_files(project_path,file_meta)
   }
 
   ## Check values provided with run_index and prepare run_index for simulation
@@ -131,18 +133,15 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     run_index <- 1:max(nrow(parameter$values), 1)
   }
 
-  ## Convert output to named list in case single unnamed output was defined
-  output <- prepare_output_definition(output, "2012", project_path)
-
-  ## Read the meta information on the parameters and the required parameter files
-  if(!is.null(parameter)) {
-    file_meta <- read_file_meta(project_path, parameter$definition)
-    swat_parameter <- read_swat2012_files(project_path,file_meta)
-  # here would be clever to implement parameter boundary checkup
-  # keep parameter boundary file in R package and write to project folder when
-  # it does not exist. Otherwise read boundary file from there and do check!
+  ## Set the .model_run folder as the run_path
+  if (is.null(run_path)) {
+    run_path <- paste0(project_path, '/.model_run')
+  } else {
+    run_path <- paste0(run_path, '/.model_run')
   }
 
+  ## Convert output to named list in case single unnamed output was defined
+  output <- prepare_output_definition(output, "2012", project_path)
 
   ## Read and modify the projects' file.cio, internal variable checks done.
   model_setup <- setup_swat2012(project_path, output,
@@ -170,9 +169,6 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                   max(n_thread,1),
                   max(length(run_index),1),
                   detectCores())
-
-  ## Set the .model_run folder as the run_path
-  run_path <- ifelse(is.null(run_path), project_path, run_path)%//%".model_run"
 
   ## Identify operating system and find the SWAT executable in the project folder
   os <- get_os()
