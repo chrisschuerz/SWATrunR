@@ -1,6 +1,7 @@
 #' Generate folder structure for parallel SWAT execution
 #'
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #' @param run_path Path where the '.model_run' folder is built. If NULL the
 #'   executable model is built in the 'project_path'
 #' @param n_thread Number of parallel threads that will be created. This number
@@ -53,7 +54,8 @@ manage_model_run <- function(project_path, run_path, n_thread, os,
 
 #' Generate folder structure for parallel SWAT execution
 #'
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #' @param run_path Path where the '.model_run' folder is built. If NULL the
 #'   executable model is built in the 'project_path'
 #' @param n_thread Number of parallel threads that will be created. This number
@@ -147,7 +149,8 @@ run_os <- function(exe, os) {
 
 #' Check the Revision of used SWAT+ executable
 #'
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #' @param run_path Path where the '.model_run' folder is built. If NULL the
 #'   executable model is built in the 'project_path'
 #' @param os Character string that gives the operationg system
@@ -179,7 +182,8 @@ check_revision <- function(project_path, run_path, os, swat_exe) {
 
 #' Check if input start and end dates are given in the weather inputs
 #'
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #' @param model_setup list of model setup features
 #'
 #' @importFrom dplyr %>%

@@ -11,7 +11,8 @@ initialize_run_info(model_setup, output, project_path, run_path)
 
 \item{output}{Table of defined output variables}
 
-\item{project_path}{Path to the SWAT project folder}
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder)}
 
 \item{run_path}{Path to the SWAT project run folder}
 

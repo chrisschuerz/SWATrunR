@@ -8,7 +8,8 @@ parameter conditioning.}
 read_unit_conditions(project_path, parameter)
 }
 \arguments{
-\item{project_path}{Path to the SWAT+ project}
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder)}
 }
 \description{
 Read the unit numbers (for hru, aqu, cha, res) and the textures etc for later

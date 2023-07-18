@@ -21,7 +21,8 @@ format_swat2012_parameter <- function(parameter, swat_vers) {
 #' Read the original swat parameter values from the parameter files in
 #' project_path
 #'
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #' @param par_constrain Table providing the file constraints for the respective
 #'   parameter that will be modified
 #'
@@ -56,7 +57,8 @@ read_swat2012_files <- function(project_path, file_meta) {
 
 #' Read the meta information for the parameter files
 #'
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #'
 #' @importFrom dplyr %>% distinct left_join mutate
 #' @importFrom purrr map_df
@@ -83,7 +85,8 @@ read_file_meta <- function(project_path, par_constrain) {
 #' Read all '.hru' files in the project_path and extract the meta data from
 #' these files and return them as a meta data tibble
 #'
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #'
 #' @importFrom dplyr %>%
 #' @importFrom purrr map_df
@@ -122,7 +125,8 @@ get_hru_meta <- function(hru_file_i) {
 #' @param file_meta Table that provides the file meta data
 #' @param file_suffix Suffix of the parameter files from which parameters are
 #'   read
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #'
 #' @importFrom dplyr %>% filter mutate
 #' @importFrom purrr map map_df map_int set_names
@@ -167,7 +171,8 @@ read_par_list <- function(file_meta, file_suffix, project_path, n_row = NULL){
 #' Read parameters from the '.chm' file (as it has an individual file structure)
 #'
 #' @param file_meta Table that provides the file meta data
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #'
 #' @importFrom dplyr %>% filter mutate bind_rows
 #' @importFrom purrr map map2 map_dfc set_names
@@ -195,7 +200,8 @@ read_chm <- function(file_meta, project_path) {
 #' Read parameters from the '.sol' file (as it has an individual file structure)
 #'
 #' @param file_meta Table that provides the file meta data
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #'
 #' @importFrom dplyr %>% filter mutate bind_rows left_join
 #' @importFrom purrr map map2 map_dfc set_names
@@ -234,7 +240,8 @@ read_sol <- function(file_meta, project_path) {
 #' Read parameters from the '.mgt' file (as it has an individual file structure)
 #'
 #' @param file_meta Table that provides the file meta data
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #'
 #' @importFrom dplyr %>% filter mutate bind_rows
 #' @importFrom purrr map map2 set_names

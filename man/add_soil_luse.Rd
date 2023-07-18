@@ -7,14 +7,23 @@
 add_soil_luse(cond, var, cond_all)
 }
 \arguments{
-\item{cond}{Character string that defines condition for the variable 'var'}
+\item{cond}{Character string that defines condition for the variable \code{var}.}
 
-\item{var}{Character string. Variable for which condition is applied}
+\item{var}{Variable to which the condition is applied}
 
-\item{cond_all}{List of vectors that define all possible values for the
-condition variables.}
+\item{conds_all}{List of possible values for condition variables ('hsg',
+'texture', 'plant', 'landuse').}
+}
+\value{
+A tibble with the columns \code{NAME} which gives the variable for which
+the condition is applied. the column \code{CHG_TYPE} which gives the Boolean
+operator of the condition and \code{VAL} which is the change value. The names
+do not really well represent the columns' meaning but are required for
+binding to the rows of calibration.cal.
 }
 \description{
-Add condition lines based on soil and land use variables
+The function translates the condition \code{cond} defined for the variable \code{var}
+into a tibble which can be added to the calibration.cal initialization for
+parameter i.
 }
 \keyword{internal}

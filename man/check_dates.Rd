@@ -7,7 +7,8 @@
 check_dates(project_path, model_setup)
 }
 \arguments{
-\item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder)}
 
 \item{model_setup}{list of model setup features}
 }

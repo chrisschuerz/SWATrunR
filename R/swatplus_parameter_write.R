@@ -120,7 +120,8 @@ update_plant_par <- function(thread_path, parameter, is_plant_par, run_index, i_
 
 #' Check if the names of the defined parameters are available in 'cal_parms.cal'.
 #'
-#' @param project_path Path to the SWAT+ project
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #' @param parameter Model parameter data set
 #'
 #' @importFrom dplyr %>%
@@ -168,7 +169,8 @@ check_swatplus_parameter <- function(project_path, parameter) {
 #' Read the unit numbers (for hru, aqu, cha, res) and the textures etc for later
 #' parameter conditioning.
 #'
-#' @param project_path Path to the SWAT+ project
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #'
 #' @importFrom dplyr filter select %>%
 #' @importFrom purrr map

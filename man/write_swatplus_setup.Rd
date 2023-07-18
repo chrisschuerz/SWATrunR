@@ -9,7 +9,11 @@ write_swatplus_setup(run_path, model_setup)
 \arguments{
 \item{run_path}{Path to the .model_run folder}
 
-\item{model_setup}{List of files that define the SWAT+ model setup}
+\item{model_setup}{List with the prepared SWAT+ input settings for the files
+\code{file.cio}, \code{print.prt}, \code{time.sim}, and \code{calibration.cal}.}
+}
+\value{
+No return value. Writes input text files into the \code{run_path}.
 }
 \description{
 Write the updated init files to all parallel folders

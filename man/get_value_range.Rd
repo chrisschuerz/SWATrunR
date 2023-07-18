@@ -2,14 +2,19 @@
 % Please edit documentation in R/swatplus_setup_run_files.R
 \name{get_value_range}
 \alias{get_value_range}
-\title{Get the value range from a condition in the par_def table}
+\title{Extract the value range for a condition from the parameter definition table
+\code{parameter$definition}.}
 \usage{
-get_value_range(condition)
+get_value_range(cond)
 }
 \arguments{
-\item{condition}{Character string that defines a condition}
+\item{cond}{Character string that defines a condition.}
+}
+\value{
+A numeric vector with the unit values
 }
 \description{
-Get the value range from a condition in the par_def table
+The conditions are defined as text strings with Boolean operators. These are
+removed and the remaining values are evaluated and returned.
 }
 \keyword{internal}

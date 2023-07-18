@@ -2,20 +2,24 @@
 % Please edit documentation in R/swatplus_setup_run_files.R
 \name{add_value_range}
 \alias{add_value_range}
-\title{Add the value range 'val' for the condition variable 'var' for a parameter to
-calibration.cal}
+\title{Add values for parameter conditions 'lyr', 'year', 'day', or 'unit' to the
+initialized calibration.cal line of parameter i.}
 \usage{
-add_value_range(par_cal, val, var)
+add_value_range(par_cal_i, val, var)
 }
 \arguments{
-\item{par_cal}{The calibration.cal tibble for the parameter i}
+\item{par_cal_i}{The calibration.cal one line tibble for the parameter i.}
 
-\item{val}{Vector that defines the value range}
+\item{val}{Vector that defines the value range.}
 
-\item{var}{Character string. Name of the variable}
+\item{var}{Name of the variable for which the value range should be added.}
+}
+\value{
+The calibration.cal one line tibble for the parameter i with the
+updated value range for the variable 'var'.
 }
 \description{
-Add the value range 'val' for the condition variable 'var' for a parameter to
-calibration.cal
+Add values for parameter conditions 'lyr', 'year', 'day', or 'unit' to the
+initialized calibration.cal line of parameter i.
 }
 \keyword{internal}

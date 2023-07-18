@@ -7,7 +7,8 @@
 build_model_run(project_path, run_path, n_thread, os, swat_vers, quiet)
 }
 \arguments{
-\item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder)}
 
 \item{run_path}{Path where the '.model_run' folder is built. If NULL the
 executable model is built in the 'project_path'}

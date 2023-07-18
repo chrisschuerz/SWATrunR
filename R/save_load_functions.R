@@ -87,7 +87,8 @@ save_error_log <- function(save_path, model_output, parameter, run_index, i_run)
 
 #' Set the save path to the sqlite data base file
 #'
-#' @param project_path Character string. Path of SWAT project
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
 #' @param save_path (optional) character string. save path if different to
 #'   project path
 #' @param save_dir character string. Name of the sqlite data base directory

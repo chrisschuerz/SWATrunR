@@ -2,7 +2,7 @@
 % Please edit documentation in R/swatplus_run_swat.R
 \name{run_swatplus}
 \alias{run_swatplus}
-\title{Run SWAT+}
+\title{Run simulations for a SWAT+ project}
 \usage{
 run_swatplus(
   project_path,
@@ -15,8 +15,8 @@ run_swatplus(
   run_index = NULL,
   run_path = NULL,
   n_thread = NULL,
-  save_path = NULL,
   save_file = NULL,
+  save_path = NULL,
   return_output = TRUE,
   add_parameter = TRUE,
   add_date = TRUE,
@@ -27,82 +27,155 @@ run_swatplus(
 )
 }
 \arguments{
-\item{project_path}{Character string that provides the path to the SWAT project
-folder (i.e. TxtInOut).}
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder).}
 
-\item{output}{Define the output variables to extract from the SWAT model
-runs. See function \code{\link{define_output}} help file to see how to
-define simulation outputs.}
+\item{output}{Output variables to extract and return for each SWAT model run.
 
-\item{parameter}{(optional) SWAT model parameters either provided as named
-vector or a tibble. The parameter changes provided with \code{parameter}
-are performed during the model execution accordingly. To learn how to
-modify parameters see the \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html}{Get started} page of \code{SWATplusR}.}
+Each output variable which should be returned is defined with \code{\link{define_output}}.
+If multiple output variables should be returned for a model run, the output
+definitions must be concatenated in a named list. See the examples in the
+section below and on the help page of \code{\link{define_output}}.}
 
-\item{start_date}{(optional) Start date of the SWAT simulation. Provided as
-character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
-in the form yyyymmdd, or in Date format.}
+\item{parameter}{(optional) Model parameter changes to be implemented in the
+model simulation runs.
 
-\item{end_date}{(optional) End date of the SWAT simulation. Provided as
-character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
-in the form yyyymmdd, or in Date format.}
+Parameter changes can be defined by providing a named vector with the
+changes for a single parameter combination or a tibble where each row is
+a parameter combinantion which should be used in a model simulation.
 
-\item{years_skip}{(optional) Integer value to define the number of simulation
-years that are skipped before writing SWAT model outputs.}
+For examples of the implementation of parameter changes in model simulations
+see the
+\href{https://chrisschuerz.github.io/SWATplusR/articles/SWATrunR.html}{\code{SWATrunR}}
+github page and the examples in corresponding section below.}
 
-\item{start_date_print}{(optional) Start date for printing of the simulation
-outputs. \code{start_date_print} overrules \code{years_skip}. Provided
-as character string in any ymd format (e.g. 'yyyy-mm-dd'), numeric value
-in the form yyyymmdd, or in Date format.}
+\item{start_date, end_date}{(optional) Start and end dates of the SWAT simulation.
 
-\item{run_index}{(optional) Numeric vector (e.g.\code{run_index = c(1:100,
-  110, 115)}) to run a subset of the provided \code{parameter} sets. If NULL
-all provided parameter sets are used in the simulation.}
+Start and end dates have to be defined together. Default values are
+\code{NULL}. In this case the start and end dates which are defined in file
+'time.sim' of the SWAT+ project are used in the simulation runs.
 
-\item{run_path}{(optional) Character string that provides the path where the
-'.model_run' folder is written and the SWAT models are executed. If NULL
-'.model_run' is built in the project folder.}
+The dates can be provided as character strings in any ymd format
+(e.g. 'yyyy-mm-dd'), as numeric values (yyyymmdd) or in a \code{Date}
+format.}
 
-\item{n_thread}{(optional) Number of threads to be used for the parallel
-model run. If not provided models are run on single core. The parameter is
-ineffective for single simulations.}
+\item{years_skip, start_date_print}{(optional) Start year/date for output printing.
 
-\item{save_path}{(optional) Character string to define the path where the
-model runs are saved if \code{save_file} is defined. If \code{save_path = NULL}
-the \code{save_file} is saved in the project_path.}
+\code{years_skip} or \code{start_date_print} can be used to define the start year/date
+in which the first simulation outputs should be written. The two arguments
+are useful to define a 'warm-up' period for the simulation runs for which
+the simulation results are not considered.
 
-\item{save_file}{(optional) Character string to define the name of the folder
-where data bases are generated that store the simulations incrementally.}
+\code{years_skip} is provided as an integer value which defines the number of
+years to skip before writing outputs.
 
-\item{return_output}{(optional) Logical. Whether outputs should be returned
-or not. Set \code{return_out = FALSE} and provide \code{save_file} if
-outputs should only be saved on the hard drive and not be returned in R.
-'\code{Default = TRUE}}
+\code{start_date_print} can be provided as character string in any ymd format
+(e.g. 'yyyy-mm-dd'), as a numeric value (yyyymmdd) or in a \code{Date}
+format.
 
-\item{add_parameter}{(optional) Logical. If \code{add_parameter = TRUE}, the
-values of the parameter changes and information on the changes are saved
-and/or returned together with the model outputs. \code{Default = TRUE}}
+For the simulation of hydrological years (which do not start at Jan 1.)
+the use of \code{start_date_print} is the preferred option to define the actual
+start date of the hydrological year (e.g. '2000-10-01').
 
-\item{add_date}{(optional) Logical. If \code{add_date = TRUE} a date column
-is added to every simulation output table.  \code{Default = TRUE}}
+\code{start_date_print} is always overruled by the definition of \code{years_skip}.
 
-\item{refresh}{(optional) Logical. \code{refresh = TRUE} always forces that
-'.model_run' is newly written when SWAT run ins started. \code{Default =
-  TRUE}}
+The default values of \code{years_skip} and \code{start_date_print} are \code{NULL}.
+If both are \code{NULL} the projects' default setting for output printing which
+is defined in the input file 'print.prt' is used.}
 
-\item{keep_folder}{(optional) Logical. If \code{keep_folder = TRUE}
-'.model_run' is kept and not deleted after finishing model runs. In this
-case '.model_run' is reused in a new model run if \code{refresh = FALSE}.
-\code{Default = FALSE}}
+\item{run_index}{(optional) Vector of IDs of parameter combinations for which
+simulations should be performed.
 
-\item{quiet}{(optional) Logical. If \code{quiet = TRUE} no messages are
-written.  \code{Default = FALSE}}
+\code{run_index} is useful to only perform a subset of simulations for a defined
+parameter set (e.g. when distributing simulations between several computers,
+or when rerunning failed simulations for certain parameter combinations).
 
-\item{time_out}{(optional) Numeric. Timeout for simulation in seconds.
-Simulations may get stuck due to specific parameter combinations. A timeout
-kills any simulation if the runtime exceeds the set time in seconds.
-Be careful with this setting as a timeout set too short will also kill
-all potentially sucessful runs before finishing.}
+\code{run_index} is defined as a numeric vector where the values correspond to
+the row IDs of the parameter input table. (e.g.\code{run_index = c(1:100,
+  110, 115)}). The default value is \code{NULL}. Then the simulations for all
+provided parameter combinations are performed.}
+
+\item{run_path}{(optional) Path to a location where the simulations should be
+performed.
+
+\code{run_path} is useful if the project folder (in \code{project_path}) is in a
+location where the simulations should not be performed (e.g. because of
+limited space, or a virtual or slow drive). In such a case it can help to
+perform the simulations on a different hard drive (e.g. local drive).
+
+In the path which is defined with \code{run_path} the folder '.model_run' is
+generated and the SWAT project is copied there into a number of sub-folders
+'thread_\if{html}{\out{<i>}}', depending on the number of parallel runs which were defined.
+
+With the default value of \code{run_path = NULL} the folder '.model_run' is
+generated in the \code{project_path}.}
+
+\item{n_thread}{(optional) Number parallel threads in which the simulations
+are performed. Default \code{n_thread} is \code{NULL} and all simulations are run in
+the folder '.model_run/thread_1' and on a single core. If \code{n_thread} is
+defined with a number greater than 1 multiple thread folders are generated
+and the simulations are performed in parallel on that number of cores.
+\code{n_thread} is always limited by the number of cores of the used computer.}
+
+\item{save_file}{(optional) Name of the folder where simulation runs should be
+saved incrementally.
+
+If a \code{save_file} is provided a folder with that name is generated and the
+simulation results are incrementally saved in several SQLite data bases in
+the folder. This option is useful when very long simulation experiments are
+performed and computer/simulation crashes may result in the loss of days or
+weeks of simulation runs, or when simulation outputs are returned which
+would not fit into the computers RAM.
+
+Default is \code{NULL} and simulations are not saved incrementally.}
+
+\item{save_path}{(optional) Path where the \code{save_file} folder should be
+generated.
+
+In the default case \code{save_path = NULL} the \code{save_file} folder is generated
+in the \code{project_path}. If a \code{save_path} is provided the \code{save_file} folder
+is generated there if \code{save_file} in not \code{NULL}.}
+
+\item{return_output}{(optional) Return outputs in \code{R}. If \code{TRUE} (default
+value) then the defined simulated output variables are returned at the end
+of all simulation runs. If \code{FALSE} no simulations are returned in \code{R}.
+
+\strong{Caution:} Please only set \code{return_output = FALSE} if the simulations are
+saved in a \code{save_file}. Otherwise the simulations are performed but no
+simulations are returned.}
+
+\item{add_parameter}{(optional)  Add the used parameter changes in the
+simulation outputs. If \code{TRUE} (default value and recommended) the returned
+list with the simulation outputs includes the list element \code{.$parameter}
+which provides the definition of the parameters \code{.$parameter$definition}
+and the values of the parameter changes \code{.$parameter$values}}
+
+\item{add_date}{(optional) Add a date vector to simulated time series. If
+\code{TRUE} (default value) a date vector is added.}
+
+\item{refresh}{(optional) Rewrite existing '.model_run' folder. If \code{TRUE}
+(default value and recommended) always forces that .model_run' is newly
+written when SWAT run ins started.}
+
+\item{keep_folder}{(optional) Keep the thread folders in '.model_run' after
+finishing the simulation runs. If \code{FALSE} (default value) the '.model_run'
+folder is deleted after the last simulation. Keeping the thread folders
+(\code{keep_folder = TRUE}) can be useful to manually check input and output
+files in the thread folders after the simulation.}
+
+\item{quiet}{(optional) Printing the progress of the simulations. If
+\code{TRUE} (default value) the progress of the simulation runs is printed in the
+console.}
+
+\item{time_out}{(optional) Timeout for simulation runs in seconds.
+
+Simulations may hang up due to specific parameter combinations. A timeout
+kills any simulation if the run time exceeds the set time in seconds.
+Be careful with this setting. A timeout which is set shorter than the
+actual run time of a simulation will also kill all potentially successful
+runs before finishing.
+
+Default \code{time_out} is set to \code{Inf} to not kill any simulations.}
 }
 \value{
 Returns the simulation results for the defined output variables as a
@@ -111,13 +184,19 @@ returned where each column is a model run and each list entry is an output
 variable.
 }
 \description{
-This function allows to run a SWAT+ project in R. Basic
-settings for the SWAT run such as the simulation period or the time interval
-for the outputs can be done directly. SWAT simulation outputs can be
-defined that are returned in a 'tidy' format in R. Functionality such as model
-parametrization, parallel execution of simulations, or incremental saving of
-simulation runs is provided.
+\code{run_swatplus()} performs simulations for a SWAT+ model setup that is located
+in the folder \code{project_path} and returns simulated output variables which are
+defined with \code{output} in a tidy format. Optionally, a set of parameter changes
+can be defined with \code{parameter} which are then applied in the simulation runs.
+
+Several settings such as the definition of the simulation period, incremental
+saving of simulation results into SQLite data bases, or the use of multiple
+cores for the simulation runs can be defined.
 }
+\section{Examples for output definition}{
+
+}
+
 \section{Examples}{
 
 To learn the basics on how to use \code{SWATplusR} see the

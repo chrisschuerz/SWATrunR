@@ -4,14 +4,18 @@
 \alias{add_obj}
 \title{Add the unit values for which objects the parameter change should be applied}
 \usage{
-add_obj(par_cal, unit, unit_all)
+add_obj(par_cal_i, unit, unit_all)
 }
 \arguments{
-\item{par_cal}{The calibration.cal tibble for the parameter i}
+\item{par_cal_i}{The calibration.cal one line tibble for the parameter i.}
 
 \item{unit}{Character string that defines condition for the object units (ids of e.g. hru objects)}
 
 \item{unit_all}{List of vectors that define the unit ids of all object types.}
+}
+\value{
+The calibration.cal one line tibble for the parameter i with the
+updated 'OBJ_*' columns which define the object units for parameter change.
 }
 \description{
 Add the unit values for which objects the parameter change should be applied

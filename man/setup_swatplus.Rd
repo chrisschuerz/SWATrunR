@@ -2,8 +2,7 @@
 % Please edit documentation in R/swatplus_setup_run_files.R
 \name{setup_swatplus}
 \alias{setup_swatplus}
-\title{Reads and modifies the SWAT+ projects' files that define the basic settings
-of the simulation and set them according tu respective input parameters}
+\title{Initialize the SWAT+ settings input files}
 \usage{
 setup_swatplus(
   project_path,
@@ -13,24 +12,64 @@ setup_swatplus(
   end_date,
   start_date_print,
   years_skip,
-  unit_cons
+  unit_conds
 )
 }
 \arguments{
-\item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder).}
 
-\item{start_date}{Start date of the SWAT simulation. Provided as character
-string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are
-located}
+\item{start_date, end_date}{Start and end dates of the SWAT simulation.
 
-\item{end_date}{End date of the SWAT simulation. Provided as character string
-in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are located}
+Start and end date always have to be provided together. Default values are
+\code{NULL}. In this case the projects' date definition is used.
 
-\item{years_skip}{Integer value that provides the numbe of years to be
-skipped during writing the SWAT model outputs}
+The date can be provided as character string in any ymd format
+(e.g. 'yyyy-mm-dd'), as a numeric value (yyyymmdd) or in a \code{Date}
+format.}
+
+\item{start_date_print}{Start date for printing SWAT simulations.
+
+\code{start_date_print} is always overruled by the definition of \code{years_skip}.
+The default value of \code{start_date_print} is \code{NULL}. In this case either the
+\code{years_skip} is used, or if both are \code{NULL} the projects' definition of
+output printing is used.
+
+The date can be provided as character string in any ymd format
+(e.g. 'yyyy-mm-dd'), as a numeric value (yyyymmdd) or in a \code{Date}
+format.}
+
+\item{years_skip}{Number of simulated years to skip in the printed outputs.
+
+An integer value to define the number of years. Default value is \code{NULL}.
+In this case either \code{start_date_print} is used or the projects' definition
+of output printing is used.}
+
+\item{unit_conds}{List of possible values for condition variables ('hsg',
+'texture', 'plant', 'landuse') and object unit ids ('hru', 'sol', 'cha',
+'res', and 'aqu') which will be used in the calibration.cal for
+conditioning of parameter changes.}
+}
+\value{
+A list with the prepared SWAT+ input settings:
+\itemize{
+\item \verb{$file.cio} Updated file.cio as string vector
+\item \verb{$print.prt} Updated print.prt as string vector
+\item \verb{$time.sim} Updated time.sim as string vector
+\item \verb{$start_date} Date value
+\item \verb{$end_date} Date value
+\item \verb{$years_skip} Numeric value
+\item \verb{$start_date_print} Date value
+\item \verb{$calibration.cal} Tibble with initial structure of calibration.cal which
+will be completed in a simulation run with the respective parameter values.
+}
 }
 \description{
-Reads and modifies the SWAT+ projects' files that define the basic settings
-of the simulation and set them according tu respective input parameters
+The routine reads the settings input files file.cio, print.prt, and time.sim
+from the project folder. Based on the defined input arguments of the SWAT+
+simulation in R, parameters in the input files are changed. An initial
+calibration.cal file is generated if parameter values should be changed.
+The updated input files are saved in a list for further writing of the input
+setting files in the thread folders.
 }
 \keyword{internal}

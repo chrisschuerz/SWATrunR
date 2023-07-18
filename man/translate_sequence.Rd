@@ -7,7 +7,10 @@
 translate_sequence(val_seq)
 }
 \arguments{
-\item{val_seq}{Numeric vector with the unit values}
+\item{val_seq}{Numeric vector with the unit values.}
+}
+\value{
+A numeric vector of length 2 with c(min(val_seq), -max(val_seq))
 }
 \description{
 Translate the unit sequences to calibration.cal syntax

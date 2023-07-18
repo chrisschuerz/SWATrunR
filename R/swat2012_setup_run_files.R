@@ -1,6 +1,7 @@
 #' Reads and modifies the SWAT projects' filo.cio according to provided inputs
 #'
-#' @param project_path Path to the SWAT project folder (i.e. TxtInOut)
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder).
 #' @param start_date Start date of the SWAT simulation. Provided as character
 #'   string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are
 #'   located

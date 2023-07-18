@@ -7,7 +7,8 @@
 set_save_path(project_path, save_path, save_dir)
 }
 \arguments{
-\item{project_path}{Character string. Path of SWAT project}
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder)}
 
 \item{save_path}{(optional) character string. save path if different to
 project path}

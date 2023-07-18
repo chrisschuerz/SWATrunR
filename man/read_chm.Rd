@@ -9,7 +9,8 @@ read_chm(file_meta, project_path)
 \arguments{
 \item{file_meta}{Table that provides the file meta data}
 
-\item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder)}
 }
 \description{
 Read parameters from the '.chm' file (as it has an individual file structure)

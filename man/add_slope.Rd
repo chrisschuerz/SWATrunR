@@ -11,7 +11,11 @@ add_slope(cond, cond_tbl)
 
 \item{cond_tbl}{Tibble with conditions defined based on soil and land use}
 }
+\value{
+The conditions table with the slope row added.
+}
 \description{
-Add condition lines based on slope
+The function translates the condition \code{cond} defined for the slope into a
+tibble which can be added to the already existing conditions tibble \code{cond_tbl}.
 }
 \keyword{internal}

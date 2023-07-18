@@ -2,20 +2,27 @@
 % Please edit documentation in R/swatplus_setup_run_files.R
 \name{setup_calibration_cal}
 \alias{setup_calibration_cal}
-\title{Setup the calibration.cal file and include all parameter conditions
-of the simulation and set them according to respective input parameters}
+\title{Initialize a line in the calibration.cal table for the parameter i and add
+parameter conditions}
 \usage{
-setup_calibration_cal(par_def, unit_cons)
+setup_calibration_cal(par_def_i, unit_conds)
 }
 \arguments{
-\item{par_def}{Tibble with one line that includes the parameter definition of
-parameter i}
+\item{par_def_i}{Definition of parameter i (i.e. the ith line of parameter$definition)}
 
-\item{unit_cons}{List of tibbles that contains the meta information of hru, aqu,
-etc. units and constrain variables (e.g. texture, plant)}
+\item{unit_conds}{List of possible values for condition variables ('hsg',
+'texture', 'plant', 'landuse') and object unit ids ('hru', 'sol', 'cha',
+'res', and 'aqu') which will be used in the calibration.cal for
+conditioning of parameter changes.}
+}
+\value{
+A tibble with initial lines for calibration.cal for the parameter i.
 }
 \description{
-Setup the calibration.cal file and include all parameter conditions
-of the simulation and set them according to respective input parameters
+The function takes the definition of parameter i and translates it into a
+tibble row while leaving the change value for the parameter \code{NA}. This will
+be filled in when running the simulation.
+If any conditions are defined for the parameter additional lines with the
+constraints are added in the tibble.
 }
 \keyword{internal}

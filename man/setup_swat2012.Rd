@@ -18,7 +18,8 @@ setup_swat2012(
 )
 }
 \arguments{
-\item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder).}
 
 \item{start_date}{Start date of the SWAT simulation. Provided as character
 string in any ymd format (e.g. 'yyyy-mm-dd') or in Date format project are

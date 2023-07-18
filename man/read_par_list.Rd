@@ -12,7 +12,8 @@ read_par_list(file_meta, file_suffix, project_path, n_row = NULL)
 \item{file_suffix}{Suffix of the parameter files from which parameters are
 read}
 
-\item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder)}
 }
 \description{
 Read parameters that are arranged in a simple list (1 parameter per row)

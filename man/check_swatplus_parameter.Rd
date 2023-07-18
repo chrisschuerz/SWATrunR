@@ -7,7 +7,8 @@
 check_swatplus_parameter(project_path, parameter)
 }
 \arguments{
-\item{project_path}{Path to the SWAT+ project}
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder)}
 
 \item{parameter}{Model parameter data set}
 }

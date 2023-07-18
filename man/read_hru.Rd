@@ -8,7 +8,8 @@ these files and return them as a meta data tibble}
 read_hru(project_path)
 }
 \arguments{
-\item{project_path}{Path to the SWAT project folder (i.e. TxtInOut)}
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder)}
 }
 \description{
 Read all '.hru' files in the project_path and extract the meta data from
