@@ -195,6 +195,58 @@ cores for the simulation runs can be defined.
 }
 \section{Examples for output definition}{
 
+
+Outputs are defined with the function \code{define_output()}. The function has the
+three input arguments \code{file} which defines the output file into which the
+variable of interest is written, \code{variable} which is the variable name as it is
+defined in the output file (without the unit), and \code{unit} which is the spatial
+unit for which the variable is extracted (e.g. channel ID, or HRU, etc., but
+also the crop names in the case of management outputs).
+
+The following examples show definitions for output variables. In a simulation
+run with \code{run_swatplus()} these definitions must be passed with the input
+argument \code{output}.
+
+A single output variable can be defined like in the following examples:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{# Define monthly basin wide ET
+# Basin ET is in written to basin_wb.
+# The definition of the time interval with the file name is required (here 'mon').
+define_output(file = 'basin_wb_mon',
+              variable = 'et', # This is the variable name in the file.
+              unit = 1 # Basin output have unit = 1 as there is 1 basin
+              )
+
+# Define daily 'flo_out' for the channels 1 to 3 and 7
+# Channel outputs can be extracted either from 'channel_sd' or 'channel_sdmorph'.
+ define_output(file = 'channel_sdmorph_day',
+               variable = 'flo_out',
+               unit = c(1:3, 7) # To define the channel IDs of interest.
+              )
+}\if{html}{\out{</div>}}
+
+More than one variable must be defined in a named list. The name of each
+output definition is then assigned to the returned outputs together with the
+unit ID if more than one ID was defined. \code{SWATrunR} > 1.0.0 allows to return
+outputs with different output intervals at the same time. Further non-time
+series outputs such as flow duration curve (FDC) outputs, average annual crop
+yields, and annual management outputs such as crop yields, biomass, or growth
+stress factors can also be returned now.
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{# Define the outputs for
+# - Average annual ET for the HRUs 1 to 847
+# - Channel discharge for the channels 1, 34, and 57
+# - FDC outputs for the channels 1, 34, and 57
+# - Average annual crop yields
+# - HRU and year specific crop yields for 'corn' and 'pnut'
+#
+list(et_hru  = define_output('hru_wb', 'et', 1:847),
+     cha_q   = define_output('channel_sd', 'flo_out', c(1, 34, 57)),
+     fdc     = define_output(file = 'fdcout', unit = c(1, 34, 57)),
+     yld_aa  = define_output('basin_crop_yld_aa', 'yld'),
+     yld_mgt = define_output('mgtout', 'yld', c('corn', 'pnut')))
+
+}\if{html}{\out{</div>}}
 }
 
 \section{Examples}{
