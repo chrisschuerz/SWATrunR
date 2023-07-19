@@ -131,6 +131,13 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     run_index <- 1:max(nrow(parameter$values), 1)
   }
 
+  ## Set the .model_run folder as the run_path
+  if (is.null(run_path)) {
+    run_path <- paste0(project_path, '/.model_run')
+  } else {
+    run_path <- paste0(run_path, '/.model_run')
+  }
+
   ## Convert output to named list in case single unnamed output was defined
   output <- prepare_output_definition(output, "2012", project_path)
 
@@ -170,9 +177,6 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                   max(n_thread,1),
                   max(length(run_index),1),
                   detectCores())
-
-  ## Set the .model_run folder as the run_path
-  run_path <- ifelse(is.null(run_path), project_path, run_path)%//%".model_run"
 
   ## Identify operating system and find the SWAT executable in the project folder
   os <- get_os()
