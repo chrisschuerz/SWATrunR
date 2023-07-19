@@ -101,6 +101,25 @@ finish_progress <- function(nmax, t0, word) {
       cat("\r","Completed",nmax, word%&%plural(nmax), "in", ., "\n")
 }
 
+#' Build filter expressions from the parameter constraint table'
+#'
+#' @param constraints Constraint table
+#'
+#' @importFrom dplyr %>% mutate select
+#' @importFrom purrr map map_chr map2_chr
+#' @importFrom tidyselect any_of
+#' @keywords internal
+#'
+build_expression <- function(constraints) {
+  constraints %>%
+    mutate(file_name = paste0("== '", file_name, "'")) %>%
+    select(-par_name, -parameter, - change, - full_name, - any_of('layer')) %>%
+    transpose() %>%
+    map(., ~.x[!is.na(.)]) %>%
+    map(., ~map2_chr(.x, names(.), ~ paste0('filter(., ',.y, .x, ')'))) %>%
+    map(., ~ c("table", .x)) %>%
+    map_chr(., ~ paste(.x, collapse = " %>% "))
+}
 
 #' Evaluate the expression defined for a variable in 'output'
 #'
