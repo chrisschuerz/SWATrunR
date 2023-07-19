@@ -21,7 +21,7 @@
 #'   section below and on the help page of \code{\link{define_output}}.
 #'
 #' @param parameter (optional) Model parameter changes to be implemented in the
-#'   model simulation runs.
+#'   simulation runs.
 #'
 #'   Parameter changes can be defined by providing a named vector with the
 #'   changes for a single parameter combination or a tibble where each row is

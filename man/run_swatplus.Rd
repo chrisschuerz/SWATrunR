@@ -245,7 +245,6 @@ list(et_hru  = define_output('hru_wb', 'et', 1:847),
      fdc     = define_output(file = 'fdcout', unit = c(1, 34, 57)),
      yld_aa  = define_output('basin_crop_yld_aa', 'yld'),
      yld_mgt = define_output('mgtout', 'yld', c('corn', 'pnut')))
-
 }\if{html}{\out{</div>}}
 }
 
