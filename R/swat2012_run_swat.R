@@ -238,6 +238,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     run_path <- paste0(project_path, '/.model_run')
   } else {
     run_path <- paste0(run_path, '/.model_run')
+  }
 
   ## Convert output to named list in case single unnamed output was defined
   output <- prepare_output_definition(output, "2012", project_path)
@@ -313,7 +314,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     opts <- list()
   }
 
- sim_result <- foreach(i_run = 1:n_run,
+sim_result <- foreach(i_run = 1:n_run,
                        .packages = c("dplyr", "lubridate", "stringr", "processx"),
                        .options.snow = opts) %dopar% {
    # for(i_run in 1:max(nrow(parameter$values), 1)) {
