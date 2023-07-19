@@ -18,6 +18,8 @@ knitr::opts_chunk$set(
 )
 ```
 
+**Note:** The `SWATrunR` GitHub is currently not up to date with the current `SWATrunR` version > 0.9.0 due to significant changes in the output definition and the returning/saving of simulation outputs. Some parts of the website content are still useful. The website will be updated in the following days. 
+
 ## Loading `SWATrunR`
 
 If you did not install `SWATrunR` yet you can do that now running the following lines in `R`.
@@ -102,7 +104,7 @@ The simple example below defines only one output that is returned to `R`. The de
 
 ```{r, echo=FALSE}
 path_plus <- 'C:/swat_demo/swatplus_rev57_demo'
-path_plus <- 'C:/Users/schuerz/Documents/swatplus/swatplus_rev60_demo'
+path_plus <- 'C:/Users/schuerz/Documents/swatplus/swatplus_demo_rev6057/'
 ```
 ```{r, echo=FALSE}
 path_2012 <- 'C:/swat_demo/swat2012_rev622_demo'
@@ -112,7 +114,7 @@ path_2012 <- 'C:/Users/schuerz/Documents/swat_test/swat2012_rev622_demo/'
 
 ```{r, eval=FALSE}
 q_sim_plus <- run_swatplus(project_path = path_plus,
-                           output = define_output(file = 'channel_sd',
+                           output = define_output(file = 'channel_sd_day',
                                                   variable = 'flo_out',
                                                   unit = 1))
 
@@ -160,6 +162,11 @@ q_sim_2012_2 <- run_swat2012(project_path = path_2012,
 The two examples for our first SWAT simulations use very basic output definitions. The `output` definition in `run_swat*()` can be more complex and more comprehensive. A more detailed insight with further examples is provided in an article that focuses on simulation output definition. I recommend to go the examples in this article as well, as your model simulations should very likely return more than just the discharge at your catchment outlet *(The article is currently in preparation and will be online soon. Please be patient in the meantime)*. 
 
 ```{r, echo=FALSE}
+
+# saveRDS(q_sim_plus, here::here('vignettes/datasets/q_sim_plus.rds'))
+# saveRDS(q_sim_2012, here::here('vignettes/datasets/q_sim_2012.rds'))
+# saveRDS(q_sim_2012_2, here::here('vignettes/datasets/q_sim_2012_2.rds'))
+
 q_sim_plus <- readRDS(here::here('vignettes/datasets/q_sim_plus.rds'))
 q_sim_2012 <- readRDS(here::here('vignettes/datasets/q_sim_2012.rds'))
 q_sim_2012_2 <- readRDS(here::here('vignettes/datasets/q_sim_2012_2.rds'))
@@ -201,13 +208,12 @@ library(ggplot2)
 library(tidyr)
 
 # Prepare the SWAT+ simulation output
-q_plus <- q_sim_plus %>%
-  rename(q_plus = flo_out) # Rename the output to q_plus
+q_plus <- q_sim_plus$simulation$flo_out %>%
+  rename(q_plus = run_1) # Rename the output to q_plus
 
 # Prepare the SWAT2012 simulation output
-q_2012 <- q_sim_2012 %>%
-  select(date, FLOW_OUT_3) %>% # Only select the columns date and FLOW_OUT_3
-  rename(q_2012 = FLOW_OUT_3)  # Rename the output to q_plus
+q_2012 <- q_sim_2012$simulation$FLOW_OUT_3 %>%
+  rename(q_2012 = run_1)  # Rename the output to q_plus
 
 # Prepare the table for plotting
 q_plot <- q_obs %>% 
@@ -302,7 +308,7 @@ The generated parameter combination can be included in the SWAT+ model execution
 
 ```{r, eval=F}
 q_sim1 <- run_swatplus(project_path = path_plus,
-                       output = define_output(file = "channel_sd",
+                       output = define_output(file = "channel_sd_day",
                                               variable = "flo_out",
                                               unit = 1),
                        parameter = par_comb)
@@ -316,6 +322,8 @@ q_sim1 <- run_swatplus(project_path = path_plus,
 ```
 
 ```{r, echo=FALSE}
+# saveRDS(q_sim1, here::here('vignettes/datasets/q_sim1.rds'))
+
 q_sim1 <- readRDS(here::here('vignettes/datasets/q_sim1.rds'))
 q_simn <- readRDS(here::here('vignettes/datasets/q_simn.rds'))
 ```
@@ -340,7 +348,7 @@ q_sim1$parameter$definition
 The second part of the simulation outputs provides the `simulation` results for the defined output variables in a `tibble`. The structure of this table is the same as the one of the outputs where no parameter changes were implemented. If the parameter changes should have an effect on the simulation of `flo_out`, the simulated values simulated values stored in `simulation` should of course be different. 
 
 ```{r}
-q_sim1$simulation
+q_sim1$simulation$flo_out
 ```
 
 To see if the parameter change was effective we compare the simulated outputs of `q_sim1` where we implemented the parameter set `par_comb` to the initial simulation `q_sim_plus` from our [first SWAT model runs](https://chrisschuerz.github.io/SWATrunR/articles/SWATrunR.html#first-swat-model-runs) in a simple plot. 
@@ -351,15 +359,16 @@ library(dplyr)
 library(ggplot2)
 
 # Adding a column that indicates the par change to q_sim1
-q_sim1_sim <- mutate(q_sim1$simulation, par_change = 'yes') 
+q_sim1_sim <- mutate(q_sim1$simulation$flo_out, par_change = 'yes') 
 
 # Preparing the plot table
-q_plot <- q_sim_plus %>% 
+q_plot <- q_sim_plus$simulation$flo_out %>% 
   mutate(., par_change = 'no') %>% # Also add par change column to q_sim_plus
-  bind_rows(., q_sim1_sim)
+  bind_rows(., q_sim1_sim) %>% 
+  rename(discharge = run_1)
 
 ggplot(data = q_plot) +
-  geom_line(aes(x = date, y = flo_out, col = par_change, linetype = par_change)) +
+  geom_line(aes(x = date, y = discharge, col = par_change, linetype = par_change)) +
   scale_color_manual(values = c('tomato3', 'steelblue3')) +
   scale_linetype_manual(values = c('solid', 'dashed')) + 
   theme_bw()
@@ -392,13 +401,13 @@ The implementation in `run_swat*()` works the same way as with a single paramete
 
 ```{r, eval=F}
 q_simn <- run_swatplus(project_path = path_plus,
-                       output = list(q_cha = define_output(file = 'channel_sd',
+                       output = list(q_cha = define_output(file = 'channel_sd_day',
                                                            variable = 'flo_out',
                                                            unit = 1),
-                                     q_sur = define_output(file = "basin_wb",
+                                     q_sur = define_output(file = "basin_wb_day",
                                                            variable = "surq_gen",
                                                            unit = 1),
-                                     q_lat = define_output(file = "basin_wb",
+                                     q_lat = define_output(file = "basin_wb_day",
                                                            variable = "latq",
                                                            unit = 1)),
                        parameter = par_set)
@@ -410,6 +419,11 @@ q_simn <- run_swatplus(project_path = path_plus,
 #>  Simulation 4 of 5   Time elapsed: 16S   Time remaining: 4S
 #>  Completed 5 simulations in 20S
 ```
+
+```{r}
+saveRDS(q_simn, here::here('vignettes/datasets/q_simn.rds'))
+```
+
 
 ### Exploring results with a parameter set
 
@@ -451,7 +465,7 @@ You can control the simulation period with the two input arguments `start_date` 
 
 ```{r, eval=FALSE}
 sim_set_date <- run_swatplus(project_path = path_plus,
-                             output = define_output('channel_sd', 'flo_out', 1),
+                             output = define_output('channel_sd_day', 'flo_out', 1),
                              start_date = 20000101,
                              end_date = 20051231,
                              years_skip = 3)
@@ -477,7 +491,7 @@ A situation where `start_date_print` can be favored is when hydrological years s
 
 ```{r, eval=FALSE}
 sim_yskip <- run_swatplus(project_path = path_plus,
-                          output = define_output('channel_sd', 'flo_out', 1),
+                          output = define_output('channel_sd_day', 'flo_out', 1),
                           start_date = 20001101,
                           end_date = 20051031,
                           years_skip = 3)
@@ -489,7 +503,7 @@ sim_yskip <- run_swatplus(project_path = path_plus,
 
 ```{r, eval=FALSE}
 sim_stprint <- run_swatplus(project_path = path_plus,
-                            output = define_output('channel_sd', 'flo_out', 1),
+                            output = define_output('channel_sd_day', 'flo_out', 1),
                             start_date = 20001101,
                             end_date = 20051031,
                             start_date_print = 20031101)
@@ -532,28 +546,26 @@ par_set <- tibble('cn2.hru | change = abschg' = runif(n,-15,10),
                   'k.sol | change = pctchg' = runif(n,-20,100),
                   'awc.sol | change = pctchg' = runif(n,-20,20),
                   'alpha.aqu | change = absval' = runif(n,0.1,0.8))
-
-par_set
 ```
 
 The only difference when we want to perform the simulations in parallel is to define the number of cores with the input argument `n_thread`. In the example below we define `n_thread = 4`. This means that we use 4 cores of the computer (if the computer has 4 cores, otherwise it uses the maximum number) and always run 4 different parameter combinations in parallel. We can see that the run time per parameter combination was reduced. How large the reduction is depends on many parameters and is not always a one-to-one reduction (i.e. doubling the number of cores does not necessarily halve the run time).
 
 ```{r, eval=F}
 q_simn <- run_swatplus(project_path = path_plus, 
-                       output = list(q_cha = define_output(file = 'channel_sd',
+                       output = list(q_cha = define_output(file = 'channel_sd_day',
                                                            variable = 'flo_out',
                                                            unit = 1),
-                                     q_sur = define_output(file = "basin_wb",
+                                     q_sur = define_output(file = "basin_wb_day",
                                                            variable = "surq_gen",
                                                            unit = 1),
-                                     q_lat = define_output(file = "basin_wb",
+                                     q_lat = define_output(file = "basin_wb_day",
                                                            variable = "latq",
                                                            unit = 1)),
                        parameter = par_set,
                        n_thread = 4)
 
 #> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
-#>  Thread 1 of 1   Time elapsed: 0S   Time remaining: 1S    
+#>  Thread 1 of 4   Time elapsed: 0S   Time remaining: 1S    
 #>  Completed 4 thread in 1S
 #> Performing 16 simulations on 4 cores:
 #>  Simulation 8 of 16   Time elapsed: 22S   Time remaining: 20S
@@ -572,13 +584,13 @@ In the following small example we assume that the simulations with the parameter
 
 ```{r, eval=F}
 q_simn_sub <- run_swatplus(project_path = path_plus, 
-                           output = list(q_cha = define_output(file = 'channel_sd',
+                           output = list(q_cha = define_output(file = 'channel_sd_day',
                                                                variable = 'flo_out',
                                                                unit = 1),
-                                         q_sur = define_output(file = "basin_wb",
+                                         q_sur = define_output(file = "basin_wb_day",
                                                                variable = "surq_gen",
                                                                unit = 1),
-                                         q_lat = define_output(file = "basin_wb",
+                                         q_lat = define_output(file = "basin_wb_day",
                                                                variable = "latq",
                                                                unit = 1)),
                            parameter = par_set,
@@ -586,7 +598,7 @@ q_simn_sub <- run_swatplus(project_path = path_plus,
                            n_thread = 4)
 
 #> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
-#>  Thread 1 of 1   Time elapsed: 0S   Time remaining: 1S    
+#>  Thread 1 of 4   Time elapsed: 0S   Time remaining: 1S    
 #>  Completed 4 thread in 1S
 #> Performing 4 simulations on 4 cores:
 #>  Completed 4 simulations in 9S
@@ -598,20 +610,20 @@ You may ask why you should use `run_index` and not manually subset the parameter
 par_subset <- par_set[c(3:5,7), ]
 
 q_simn_sub1 <- run_swatplus(project_path = path_plus,
-                            output = list(q_cha = define_output(file = 'channel_sd',
+                            output = list(q_cha = define_output(file = 'channel_sd_day',
                                                                 variable = 'flo_out',
                                                                 unit = 1),
-                                          q_sur = define_output(file = "basin_wb",
+                                          q_sur = define_output(file = "basin_wb_day",
                                                                 variable = "surq_gen",
                                                                 unit = 1),
-                                          q_lat = define_output(file = "basin_wb",
+                                          q_lat = define_output(file = "basin_wb_day",
                                                                 variable = "latq",
                                                                 unit = 1)),
                             parameter = par_subset,
                             n_thread = 4)
 
 #> Building 4 threads in 'Define:/your/path/swatplus_demo/.model_run':
-#>  Thread 1 of 1   Time elapsed: 0S   Time remaining: 1S    
+#>  Thread 1 of 4   Time elapsed: 0S   Time remaining: 1S    
 #>  Completed 4 thread in 0S
 #> Performing 4 simulations on 4 cores:
 #>  Completed 4 simulations in 10S
@@ -659,13 +671,13 @@ To incrementally save simulation outputs you just define the name of your simula
 
 ```{r, eval=F}
 run_swatplus(project_path = path_plus,
-             output = list(q_cha = define_output(file = 'channel_sd',
+             output = list(q_cha = define_output(file = 'channel_sd_day',
                                                  variable = 'flo_out',
                                                  unit = 1),
-                           q_sur = define_output(file = "basin_wb",
+                           q_sur = define_output(file = "basin_wb_day",
                                                  variable = "surq_gen",
                                                  unit = 1),
-                           q_lat = define_output(file = "basin_wb",
+                           q_lat = define_output(file = "basin_wb_day",
                                                  variable = "latq",
                                                  unit = 1)),
              parameter = par_set,
