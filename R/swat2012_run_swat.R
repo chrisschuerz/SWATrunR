@@ -288,6 +288,11 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## Delete the parallel threads if keep_folder is not TRUE
   if(!keep_folder) unlink(run_path, recursive = TRUE)
 
+  if("error_report" %in% names(sim_result)) {
+    warning("Some simulations runs failed! Check '.$error_report' in your",
+            " simulation results for further information.")
+  }
+
   ##Tidy up and return simulation results if return_output is TRUE
   if(return_output) {
     output_list <- list()
@@ -308,10 +313,6 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
     output_list$run_info <- run_info
 
-    if("error_report" %in% names(sim_result)) {
-      warning("Some simulations runs failed! Check '.$error_report' in your",
-              " simulation results for further information.")
-    }
     return(output_list)
   }
 }
