@@ -238,7 +238,6 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     run_path <- paste0(project_path, '/.model_run')
   } else {
     run_path <- paste0(run_path, '/.model_run')
-  }
 
   ## Convert output to named list in case single unnamed output was defined
   output <- prepare_output_definition(output, "2012", project_path)
@@ -250,17 +249,16 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                                 rch_out_var, sub_out_var,
                                 hru_out_var, hru_out_nr)
 
-  run_info <- initialize_run_info(model_setup, output, project_path, run_path)
-
   # Check if weather inputs accord with start and end date
   check_dates(project_path, model_setup)
+
+  run_info <- initialize_run_info(model_setup, output, project_path, run_path)
 
   ## Define save_path and check if planned simulations already exist in save file
   if(!is.null(save_file)) {
     save_path <- set_save_path(project_path, save_path, save_file)
     run_info <- initialize_save_file(save_path, parameter, run_info, run_index)
   }
-
 
 #-------------------------------------------------------------------------------
   # Build folder structure where the model will be executed
@@ -380,6 +378,11 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## Delete the parallel threads if keep_folder is not TRUE
   if(!keep_folder) unlink(run_path, recursive = TRUE)
 
+  if("error_report" %in% names(sim_result)) {
+    warning("Some simulations runs failed! Check '.$error_report' in your",
+            " simulation results for further information.")
+  }
+
   ##Tidy up and return simulation results if return_output is TRUE
   if(return_output) {
     output_list <- list()
@@ -400,10 +403,6 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
 
     output_list$run_info <- run_info
 
-    if("error_report" %in% names(sim_result)) {
-      warning("Some simulations runs failed! Check '.$error_report' in your",
-              " simulation results for further information.")
-    }
     return(output_list)
   }
 }

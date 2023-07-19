@@ -296,14 +296,14 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
   cat('Done!\n')
 
   if(is.null(variable)) {
-    variable <- save_list$variables$variable
+    variable <- unique(save_list$variables$variable)
   } else if (any(!(variable %in% save_list$variables$variable))) {
       no_var <- variable[which(!(variable %in% save_list$variables$variable))]
       stop("The following variables wer not simulated and saved in 'save_dir':\n  ",
            paste(no_var, collapse = ', '))
   }
 
-  run_sim <- unique(save_list$sim_tbl$run_idx)
+  run_sim <- sort(unique(save_list$sim_tbl$run_idx))
   run_all <- 1:nrow(save_list$par_val)
 
   if(is.null(run)) {
@@ -362,7 +362,8 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
       tbl_i <- sim_tbl_i$tbl[i_row]
       tbl_id_i <- sim_tbl_i$tbl_id[i_row]
       tbl_id_i_sub <- as.numeric(str_split(tbl_id_i, '\\.', simplify = TRUE))
-      var_i <- var_tbl$variable[var_tbl$tbl_id %in% tbl_id_i]
+      var_tbl_i <- unique(var_tbl$variable[var_tbl$tbl_id %in% tbl_id_i])
+      var_i <- var_sel[var_sel %in% var_tbl_i]
       sim_i <- collect_cols(var_i, tbl_i, save_list$sim_db[[i_db]],
                             handle_conn = F)
 
