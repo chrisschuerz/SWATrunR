@@ -1,0 +1,12 @@
+pandoc: 3.1.1
+pkgdown: 2.0.7
+pkgdown_sha: ~
+articles:
+  par_sampl_calib: par_sampl_calib.html
+  par_sensitivity: par_sensitivity.html
+  SWATrunR: SWATrunR.html
+last_built: 2023-07-19T12:52Z
+urls:
+  reference: https://chrisschuerz.github.io/SWATrunR/reference
+  article: https://chrisschuerz.github.io/SWATrunR/articles
+
