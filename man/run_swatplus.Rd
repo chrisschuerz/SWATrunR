@@ -38,7 +38,7 @@ definitions must be concatenated in a named list. See the examples in the
 section below and on the help page of \code{\link{define_output}}.}
 
 \item{parameter}{(optional) Model parameter changes to be implemented in the
-model simulation runs.
+simulation runs.
 
 Parameter changes can be defined by providing a named vector with the
 changes for a single parameter combination or a tibble where each row is
@@ -46,7 +46,7 @@ a parameter combinantion which should be used in a model simulation.
 
 For examples of the implementation of parameter changes in model simulations
 see the
-\href{https://chrisschuerz.github.io/SWATplusR/articles/SWATrunR.html}{\code{SWATrunR}}
+\href{https://chrisschuerz.github.io/SWATrunR/articles/SWATrunR.html#changing-parameter-values}{\code{SWATrunR}}
 github page and the examples in corresponding section below.}
 
 \item{start_date, end_date}{(optional) Start and end dates of the SWAT simulation.
@@ -240,11 +240,53 @@ stress factors can also be returned now.
 # - Average annual crop yields
 # - HRU and year specific crop yields for 'corn' and 'pnut'
 #
-list(et_hru  = define_output('hru_wb', 'et', 1:847),
-     cha_q   = define_output('channel_sd', 'flo_out', c(1, 34, 57)),
+list(et_hru  = define_output('hru_wb_aa', 'et', 1:847),
+     cha_q   = define_output('channel_sd_day', 'flo_out', c(1, 34, 57)),
      fdc     = define_output(file = 'fdcout', unit = c(1, 34, 57)),
      yld_aa  = define_output('basin_crop_yld_aa', 'yld'),
      yld_mgt = define_output('mgtout', 'yld', c('corn', 'pnut')))
+}\if{html}{\out{</div>}}
+}
+
+\section{Examples for parameter definition}{
+
+
+The definition of parameter changes follows a strict syntax in the parameter
+names which have to be assigned to the change values. Therefore it is highly
+recommended to read the corresponding section on the
+\href{https://chrisschuerz.github.io/SWATrunR/articles/SWATrunR.html#changing-parameter-values}{\code{SWATrunR}}
+github page. The following examples show very basic parameter definitions and
+do not cover specific naming of parameters, or parameter conditions which are
+topics covered on the github page.
+
+In a nutshell the name definition of a parameter requires at least the name
+of the parameter how it is defined in the calibration.cal input file, the
+file suffix, and the type of change, as shown in this example:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{# Change cn2 by -5\% and alpha by an absolute value of 0.35
+par_condplus <- c("cn2.hru | change = relchg" = - 0.05,
+"                 "alpha.aqu | change = absval" = 0.35)
+}\if{html}{\out{</div>}}
+
+As shown in the example above, single parameter changes can be passed as a
+named vector. Multiple parameter combinations must be passed in a tibble
+(caution here, base R data.frames might not be able to handle all special
+characters in the parameter names). Below an example for a more comprehensive
+parameter set with uniform randomly sampled parameter changes:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{# Draw 100 samples for each parameter
+n <- 100
+
+# Sample each parameter change uniformly n times in their upper/lower bounds
+par_set <- tibble('cn2.hru | change = abschg' = runif(n,-15,10),
+                  'lat_ttime.hru | change = absval' = runif(n,0.5,5),
+                  'lat_len.hru | change = abschg' = runif(n,-10,50),
+                  'epco.hru | change = absval' = runif(n,0.1,1),
+                  'esco.hru | change = absval' = runif(n,0.1,1),
+                  'perco.hru | change = absval' = runif(n,0.1,0.8),
+                  'k.sol | change = pctchg' = runif(n,-20,100),
+                  'awc.sol | change = pctchg' = runif(n,-20,20),
+                  'alpha.aqu | change = absval' = runif(n,0.1,0.8))
 }\if{html}{\out{</div>}}
 }
 
