@@ -160,6 +160,33 @@
 #'
 #'   Default `time_out` is set to `Inf` to not kill any simulations.
 #'
+#' @returns
+#' Returns the simulation results as list with the following elements:
+#'
+#' - `.$parameter` is only available if parameter changes were implemented in
+#'   the simulation runs. `.$parameter` is a list with 2 elements:
+#'      * `.$parameter$definition` is a tibble which shows how the parameter
+#'      changes were defined.
+#'      * `.$parameter$values` is a tibble with the values of the defined
+#'        parameter changes. Each row is a parameter set. The names of the
+#'        columns correspond to the `par_name` which are defined in
+#'        `.$parameter$definition`.
+#' - `.$simulation` is a list with the defined and simulated output variables.
+#'   Each list element is one defined output variable. The name of each list
+#'   element is the name which was defined with `define_output()`.
+#' - `.$error_report` is only available if simulation runs failed. This element
+#'   is a tibble which summarizes the failed simulations and the triggered errors
+#'   of the SWAT executable which caused a simulation to fail.
+#' - `.$run_info` is a list with meta information on the simulation run. The
+#'   saved information is:
+#'     * `.$run_info$simulation_log` is a tibble which logs simulation start and
+#'       end time_stamps, duration and paths of the project folder.
+#'    * `.$run_info$simulation_period` is a tibble which provides dates, and skipped
+#'      years of the saved output variables.
+#'    * `.$run_info$output_definition` is a tibble which summarizes the defined
+#'      output variables which were passed with the input argument `output` and
+#'      defined with `define_output()`.
+#'
 #' @section Examples for output definition:
 #'
 #' Outputs are defined with the function `define_output()`. The function has the
@@ -259,14 +286,38 @@
 #'                   'alpha.aqu | change = absval' = runif(n,0.1,0.8))
 #' ```
 #'
-#' @section Examples:
-#'   To learn the basics on how to use \code{SWATplusR} see the
-#'   \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#first-swat-model-runs}{Get started}
-#'   page on the package's github page.
-#' @return Returns the simulation results for the defined output variables as a
-#'   tibble. If more than one parameter set was provided a list of tibbles is
-#'   returned where each column is a model run and each list entry is an output
-#'   variable.
+#' @examples
+#' # Install the SWATdata R package which provides a SWAT+ demo project
+#' if(!'SWATdata' %in% installed.packages()) {
+#'   remotes::install_github('chrisschuerz/SWATdata')
+#' }
+#'
+#' # Use a temporary dir for the demo project
+#' tmp_dir <- tempdir()
+#'
+#' # Load a SWAT+ demo project
+#' proj_path <- load_demo(dataset = 'project',
+#'                        path = tmp_dir,
+#'                        version = 'plus')
+#'
+#' # Perform simulations for the demo project and return
+#' # daily simulated discharge for channel 1
+#' q_sim <- run_swatplus(project_path = proj_path,
+#'                       output = define_output(file = 'channel_sd_day',
+#'                                              variable = 'flo_out',
+#'                                              unit = 1))
+#'
+#' # The simulated time series in a tibble format
+#' q_sim$simulation$flo_out
+#'
+#' # Plot the simulated time series
+#' plot(q_sim$simulation$flo_out, type = 'l')
+#'
+#' # Print the meta information for the simulation run
+#' q_sim$run_info
+#'
+#' # Delete demo project folder
+#' unlink(tmp_dir, recursive = TRUE, force = TRUE)
 #'
 #' @importFrom data.table fread
 #' @importFrom doSNOW registerDoSNOW

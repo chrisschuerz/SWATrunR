@@ -179,10 +179,33 @@
 #'   To learn the basics on how to use \code{SWATplusR} see the
 #'   \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#first-swat-model-runs}{Get started}
 #'   page on the package's github page.
-#' @return Returns the simulation results for the defined output variables as a
-#'   tibble. If more than one parameter set was provided a list of tibbles is
-#'   returned where each column is a model run and each list entry is an output
-#'   variable.
+#'
+#' @returns
+#' Returns the simulation results as list with the following elements:
+#'
+#' - `.$parameter` is only available if parameter changes were implemented in
+#'   the simulation runs. `.$parameter` is a list with 2 elements:
+#'      * `.$parameter$definition` is a tibble which shows how the parameter
+#'      changes were defined.
+#'      * `.$parameter$values` is a tibble with the values of the defined
+#'        parameter changes. Each row is a parameter set. The names of the
+#'        columns correspond to the `par_name` which are defined in
+#'        `.$parameter$definition`.
+#' - `.$simulation` is a list with the defined and simulated output variables.
+#'   Each list element is one defined output variable. The name of each list
+#'   element is the name which was defined with `define_output()`.
+#' - `.$error_report` is only available if simulation runs failed. This element
+#'   is a tibble which summarizes the failed simulations and the triggered errors
+#'   of the SWAT executable which caused a simulation to fail.
+#' - `.$run_info` is a list with meta information on the simulation run. The
+#'   saved information is:
+#'     * `.$run_info$simulation_log` is a tibble which logs simulation start and
+#'       end time_stamps, duration and paths of the project folder.
+#'    * `.$run_info$simulation_period` is a tibble which provides dates, and skipped
+#'      years of the saved output variables.
+#'    * `.$run_info$output_definition` is a tibble which summarizes the defined
+#'      output variables which were passed with the input argument `output` and
+#'      defined with `define_output()`.
 #'
 #' @importFrom doSNOW registerDoSNOW
 #' @importFrom dplyr mutate %>%
