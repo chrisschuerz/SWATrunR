@@ -163,7 +163,8 @@ read_mgtout <- function(output_i, thread_path) {
                    'p_strs', 'n_strs', 'tmp_strs', 'wat_strs', 'aer_strs',
                    'v6', 'v7')) %>%
     filter(operation == 'HARVEST') %>%
-    select(hru, year, plant_name, all_of(output_i$variable))
+    select(hru, year, plant_name, all_of(output_i$variable)) %>%
+    set_names(c('hru', 'year', 'plant_name', output_i$name))
   mgt[,1:2] <- map_df(mgt[,1:2], as.integer)
   mgt[,4:ncol(mgt)] <- map_df(mgt[,4:ncol(mgt)], as.numeric)
 

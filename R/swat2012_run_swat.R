@@ -45,6 +45,7 @@
 #' @param output_interval (optional) Time interval in which the SWAT model
 #'   outputs are written.
 #'
+#'   If `NULL` (default) the value which is defined in the file.cio is used.
 #'   `output_interval` can be defined either with a character string where `'d'`
 #'   would result in daily output, and `'m'` in monthly, and `'y'` in yearly
 #'   outputs. Alternatively also the as SWAT2012 input values (0 for monthly,
@@ -175,11 +176,6 @@
 #'   `TRUE` (default value) the progress of the simulation runs is printed in the
 #'   console.
 #'
-#' @section Examples:
-#'   To learn the basics on how to use \code{SWATplusR} see the
-#'   \href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#first-swat-model-runs}{Get started}
-#'   page on the package's github page.
-#'
 #' @returns
 #' Returns the simulation results as list with the following elements:
 #'
@@ -206,6 +202,40 @@
 #'    * `.$run_info$output_definition` is a tibble which summarizes the defined
 #'      output variables which were passed with the input argument `output` and
 #'      defined with `define_output()`.
+#'
+#' @examples
+#' # Install the SWATdata R package which provides a SWAT+ demo project
+#' if(!'SWATdata' %in% installed.packages()) {
+#'   remotes::install_github('chrisschuerz/SWATdata')
+#' }
+#'
+#' # Use a temporary dir for the demo project
+#' tmp_dir <- tempdir()
+#'
+#' # Load a SWAT2012 demo project
+#' proj_path <- load_demo(dataset = 'project',
+#'                        path = tmp_dir,
+#'                        version = '2012')
+#'
+#' # Perform simulations for the demo project and return
+#' # daily simulated discharge for channel 1
+#' q_sim <- run_swat2012(project_path = proj_path,
+#'                       output = define_output(file = 'rch',
+#'                                              variable = 'FLOW_OUT',
+#'                                              unit = 1))
+#'
+#' # The simulated time series in a tibble format
+#' q_sim$simulation$FLOW_OUT
+#'
+#' # Plot the simulated time series
+#' plot(q_sim$simulation$FLOW_OUT, type = 'l')
+#'
+#' # Print the meta information for the simulation run
+#' q_sim$run_info
+#'
+#' # Delete demo project folder
+#' unlink(tmp_dir, recursive = TRUE, force = TRUE)
+#'
 #'
 #' @importFrom doSNOW registerDoSNOW
 #' @importFrom dplyr mutate %>%
