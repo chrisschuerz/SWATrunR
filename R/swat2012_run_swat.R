@@ -257,7 +257,8 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                          n_thread = NULL, save_file = NULL,
                          save_path = NULL, return_output = TRUE,
                          add_parameter = TRUE, add_date = TRUE,
-                         refresh = TRUE, keep_folder = FALSE, quiet = FALSE) {
+                         split_units = FALSE, refresh = TRUE,
+                         keep_folder = FALSE, quiet = FALSE) {
 
 #-------------------------------------------------------------------------------
   # Check settings before starting to set up '.model_run'
@@ -267,6 +268,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   stopifnot(is.numeric(n_thread)|is.null(n_thread))
   stopifnot(is.logical(add_parameter))
   stopifnot(is.logical(add_date))
+  stopifnot(is.logical(split_units))
   stopifnot(is.logical(return_output))
   stopifnot(is.logical(refresh))
   stopifnot(is.logical(keep_folder))

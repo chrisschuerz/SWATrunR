@@ -337,6 +337,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                          n_thread = NULL, save_file = NULL,
                          save_path = NULL, return_output = TRUE,
                          add_parameter = TRUE, add_date = TRUE,
+                         split_units = TRUE,
                          refresh = TRUE, keep_folder = FALSE,
                          quiet = FALSE, time_out = Inf) {
 
@@ -355,6 +356,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   stopifnot(is.numeric(years_skip)|is.null(years_skip))
   stopifnot(is.logical(add_parameter))
   stopifnot(is.logical(add_date))
+  stopifnot(is.logical(split_units))
   stopifnot(is.logical(return_output))
   stopifnot(is.logical(refresh))
   stopifnot(is.logical(keep_folder))
@@ -500,7 +502,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
         # update_run_log(save_path, run_index[i_run], 'time_out')
       }
     } else if(nchar(msg$stderr) == 0) {
-      model_output <- read_swatplus_output(output, thread_path, add_date)
+      model_output <- read_swatplus_output(output, thread_path, add_date, split_units)
 
       if(!is.null(save_path)) {
         save_run(save_path, model_output, parameter, run_index, i_run, thread_id)
@@ -540,7 +542,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   if(!is.null(save_file)) {
     update_sim_log(save_path, run_info)
   }
-
 
   ## Delete the parallel threads if keep_folder is not TRUE
   if(!keep_folder) unlink(run_path, recursive = TRUE)

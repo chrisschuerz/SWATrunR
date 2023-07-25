@@ -6,12 +6,13 @@
 #' @param thread_path Path to respective thread where SWAT was executed
 #' @param add_date Logical wheter to add date column
 #'
-#' @importFrom dplyr %>%
+#' @importFrom dplyr arrange filter group_by group_split mutate relocate select %>%
+#' @importFrom lubridate ymd
 #' @importFrom purrr map map2 map_chr set_names
 #' @importFrom readr fwf_positions read_fwf
 #' @keywords internal
 #'
-read_swatplus_output <- function(output, thread_path, add_date) {
+read_swatplus_output <- function(output, thread_path, add_date, split_units) {
 
   if(add_date){
     date_cols <- c('yr', 'mon', 'day')
@@ -51,8 +52,8 @@ read_swatplus_output <- function(output, thread_path, add_date) {
     }
 
     out_tables_ts <- out_tables_ts %>%
-      map(., ~ add_id(.x)) %>%
-      map2(., output_ts, ~mutate_output_i(.x, .y))
+        map(., ~ add_id(.x)) %>%
+        map2(., output_ts, ~mutate_output_i(.x, .y, split_units))
   } else {
     out_tables_ts <- NULL
   }
@@ -299,27 +300,44 @@ add_id <- function(tbl){
 #' @importFrom tidyr pivot_wider
 #' @keywords internal
 #'
-mutate_output_i <- function(out_tbl_i, output_i) {
-  is_multi_unit <- map_lgl(output_i$unit, ~ length(.x) > 1)
+mutate_output_i <- function(out_tbl_i, output_i, split_units) {
 
-  out_tbl_wide <- map(output_i$variable, ~ select(out_tbl_i, id, unit, .x)) %>%
-    map2(., output_i$unit, ~ filter(.x, unit %in% .y)) %>%
-    map2(., output_i$name, ~ set_names(.x, c('id', 'unit', .y))) %>%
-    map(., ~ mutate(.x, unit = paste0('_', unit))) %>%
-    map2(., is_multi_unit, ~ mutate(.x, unit = ifelse(rep(.y, nrow(.x)), unit, ''))) %>%
-    map(.,  ~ pivot_wider(.x, id_cols = id, names_from = unit, names_glue = "{.value}{unit}", values_from = 3)) %>%
-    map(., ~ select(.x, -id)) %>%
-    bind_cols()
+  tbl_list <- map(output_i$variable, ~ select(out_tbl_i, id, unit, .x)) %>%
+    map(., ~ set_names(.x, c('id', 'unit', 'variable')))
 
-  if('date' %in% names(out_tbl_i)) {
-    date_col <- out_tbl_i %>%
-      filter(., unit == unique(out_tbl_i$unit)[1]) %>%
-      select(date)
+  if(split_units) {
+    is_multi_unit <- map_lgl(output_i$unit, ~ length(.x) > 1)
 
-    out_tbl_wide <- bind_cols(date_col, out_tbl_wide)
+    tbl_mutate <- tbl_list %>%
+      map2(., output_i$unit, ~ filter(.x, unit %in% .y)) %>%
+      map2(., output_i$name, ~ set_names(.x, c('id', 'unit', .y))) %>%
+      map(., ~ mutate(.x, unit = paste0('_', unit))) %>%
+      map2(., is_multi_unit, ~ mutate(.x, unit = ifelse(rep(.y, nrow(.x)), unit, ''))) %>%
+      map(.,  ~ pivot_wider(.x, id_cols = id, names_from = unit, names_glue = "{.value}{unit}", values_from = 3)) %>%
+      map(., ~ select(.x, -id)) %>%
+      bind_cols()
+
+    if('date' %in% names(out_tbl_i)) {
+      date_col <- out_tbl_i %>%
+        filter(., unit == unique(out_tbl_i$unit)[1]) %>%
+        select(date)
+
+      tbl_mutate <- bind_cols(date_col, tbl_mutate)
+    }
+  } else {
+    tbl_mutate <- tbl_list %>%
+      map2(., output_i$unit, ~ mutate(.x, variable = ifelse(unit %in% .y, variable, NA))) %>%
+      map(., ~ select(.x, variable)) %>%
+      map2(., output_i$name, ~ set_names(.x, .y)) %>%
+      bind_cols(out_tbl_i[c('unit', 'date')], .)
+
+    all_na <- apply(tbl_mutate[,3:ncol(tbl_mutate)], 1, is.na) %>%
+      apply(., 2, all)
+
+    tbl_mutate <- tbl_mutate[!all_na, ]
   }
 
-  return(out_tbl_wide)
+  return(tbl_mutate)
 }
 
 #' Remove the units from variable names in output files of SWAT+ Revisions before 56

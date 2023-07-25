@@ -20,6 +20,7 @@ run_swatplus(
   return_output = TRUE,
   add_parameter = TRUE,
   add_date = TRUE,
+  split_units = TRUE,
   refresh = TRUE,
   keep_folder = FALSE,
   quiet = FALSE,

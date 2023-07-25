@@ -18,6 +18,14 @@ save_run <- function(save_path, model_output, parameter, run_index, i_run, i_thr
 
   model_output <- set_names(model_output, run_name%_%1:length(model_output))
   # Convert date to numeric if date column is in table
+  has_unit <- which(map_lgl(model_output, ~ names(.x)[1] == 'unit'))
+
+  if(length(has_unit) > 0) {
+    model_output[has_unit] <- model_output[has_unit] %>%
+      map(., ~ add_id(.x)) %>%
+      map2(., output_ts, ~mutate_output_i(.x, .y))
+  }
+
   has_date <- which(map_lgl(model_output, ~ 'date' %in% names(.x)))
 
   if('date' %in% colnames(model_output)) {

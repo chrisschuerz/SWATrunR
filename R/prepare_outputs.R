@@ -122,9 +122,15 @@ tidy_simulations <- function(sim_result) {
 
     add_cols <- add_cols[var_add_assgn]
 
+
     sim_result <- map2(add_cols, var_cols, ~bind_cols(.x, .y)) %>%
       set_names(names(var_cols))
 
+    is_all_na <- sim_result %>%
+      map(., ~ .x[[ncol(.x)]]) %>%
+      map(., is.na)
+
+    sim_result <- map2(sim_result, is_all_na, ~ .x[!.y, ])
 
   } else {
     sim_result <- NULL
@@ -141,6 +147,10 @@ tidy_simulations <- function(sim_result) {
 #'
 extract_non_var_cols <- function(tbl) {
   if (names(tbl)[1] == 'date') {
+    col_extr <- tbl[1]
+  } else if (all(names(tbl)[c(1,2)] == c('unit', 'date'))) {
+    col_extr <- tbl[1:2]
+  } else if (names(tbl)[1] == 'unit') {
     col_extr <- tbl[1]
   } else if(all(names(tbl)[c(1,2)] == c('year', 'plant_name'))) {
     col_extr <- tbl[1:2]
@@ -162,6 +172,10 @@ extract_non_var_cols <- function(tbl) {
 #'
 remove_non_var_cols <- function(tbl) {
   if (names(tbl)[1] == 'date') {
+    tbl <- tbl[2:ncol(tbl)]
+  } else if (all(names(tbl)[c(1,2)] == c('unit', 'date'))) {
+    tbl <- tbl[3:ncol(tbl)]
+  } else if (names(tbl)[1] == 'unit') {
     tbl <- tbl[2:ncol(tbl)]
   } else if(all(names(tbl)[c(1,2)] == c('year', 'plant_name'))) {
     tbl <- tbl[3:ncol(tbl)]
