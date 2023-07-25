@@ -8,7 +8,7 @@
 #'
 #' @importFrom DBI dbConnect dbDisconnect dbWriteTable
 #' @importFrom dplyr mutate %>%
-#' @importFrom purrr map map2 set_names walk2
+#' @importFrom purrr map map_lgl map2 set_names walk2
 #' @importFrom RSQLite SQLite
 #' @keywords internal
 #'
@@ -21,9 +21,7 @@ save_run <- function(save_path, model_output, parameter, run_index, i_run, i_thr
   has_unit <- which(map_lgl(model_output, ~ names(.x)[1] == 'unit'))
 
   if(length(has_unit) > 0) {
-    model_output[has_unit] <- model_output[has_unit] %>%
-      map(., ~ add_id(.x)) %>%
-      map2(., output_ts, ~mutate_output_i(.x, .y))
+    model_output[has_unit] <- map(model_output[has_unit], unit_output_to_wide)
   }
 
   has_date <- which(map_lgl(model_output, ~ 'date' %in% names(.x)))
@@ -43,6 +41,46 @@ save_run <- function(save_path, model_output, parameter, run_index, i_run, i_thr
   walk2(out_split, names(out_split), ~dbWriteTable(output_db, .y, .x))
 
   dbDisconnect(output_db)
+}
+
+#' Convert output tables with unit column to wide table with variable name and
+#' unit
+#'
+#' @param model_output_i Table with model output variables and unit column
+#'
+#' @importFrom dplyr bind_cols filter mutate select %>%
+#' @importFrom purrr map map_lgl map2 set_names walk2
+#' @importFrom stringr str_remove
+#' @importFrom tidyr pivot_wider
+#' @importFrom tidyselect all_of
+#' @keywords internal
+#'
+unit_output_to_wide <- function(model_output_i) {
+  var_names <- names(model_output_i)[!names(model_output_i) %in% c('id','unit', 'date')]
+  model_output_i <- add_id(model_output_i)
+
+  out_list_wide <- map(var_names, ~ select(model_output_i, all_of(c('id', 'unit', 'date')), .x)) %>%
+    map(., ~ .x[!is.na(.x[[ncol(.x)]]), ]) %>%
+    map(., ~ mutate(.x, unit = paste0('_', unit))) %>%
+    map(.,  ~ pivot_wider(.x, id_cols = id, names_from = unit, names_glue = "{.value}{unit}", values_from = ncol(.x))) %>%
+    map(., ~ select(.x, -id))
+
+  is_multi_unit <- map_lgl(out_list_wide, ~ncol(.x) > 1)
+
+  out_list_wide[!is_multi_unit] <- out_list_wide[!is_multi_unit] %>%
+    map(., ~ set_names(.x, str_remove(names(.x), '_[:digit:]+$')))
+
+  out_tbl_wide <- bind_cols(out_list_wide)
+
+  if('date' %in% names(model_output_i)) {
+    date_col <- model_output_i %>%
+      filter(., unit == unique(model_output_i$unit)[1]) %>%
+      select(date)
+
+    out_tbl_wide <- bind_cols(date_col, out_tbl_wide)
+  }
+
+  return(out_tbl_wide)
 }
 
 #' Split tables with more than ncol_max columns into list of tables
