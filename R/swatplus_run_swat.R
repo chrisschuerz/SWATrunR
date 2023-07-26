@@ -127,14 +127,21 @@
 #'   saved in a `save_file`. Otherwise the simulations are performed but no
 #'   simulations are returned.
 #'
-#' @param add_date (optional) Add a date vector to simulated time series. If
-#'   `TRUE` (default value) a date vector is added.
-#'
 #' @param add_parameter (optional)  Add the used parameter changes in the
 #'   simulation outputs. If `TRUE` (default value and recommended) the returned
 #'   list with the simulation outputs includes the list element `.$parameter`
 #'   which provides the definition of the parameters `.$parameter$definition`
-#'   and the values of the parameter changes `.$parameter$values`
+#'   and the values of the parameter changes `.$parameter$values`.
+#'
+#' @param add_date (optional) Add a date vector to simulated time series. If
+#'   `TRUE` (default value) a date vector is added.
+#'
+#' @param split_units (optional) Split simulated outputs of the same variable into
+#'   separate tables in the `.$simulation` list. If `TRUE` (default value) outputs
+#'   are split (e.g. for `define_output('channel_sd_day', 'flo_out', 1:3)`) the
+#'   output tables `flo_out_1`, `flo_out_2`, and `flo_out_3` will be generated.
+#'   If `FALSE` in the same example a single table is generated with an integer
+#'   column `unit` with the ID values 1 to 3.
 #'
 #' @param refresh (optional) Rewrite existing '.model_run' folder. If `TRUE`
 #'   (default value and recommended) always forces that .model_run' is newly
@@ -258,8 +265,8 @@
 #'
 #' ```
 #' # Change cn2 by -5% and alpha by an absolute value of 0.35
-#' par_condplus <- c("cn2.hru | change = relchg" = - 0.05,
-#' "                 "alpha.aqu | change = absval" = 0.35)
+#' par_set <- c("cn2.hru | change = relchg" = - 0.05,
+#' "           "alpha.aqu | change = absval" = 0.35)
 #' ```
 #'
 #' As shown in the example above, single parameter changes can be passed as a
@@ -283,7 +290,7 @@
 #'                   'perco.hru | change = absval' = runif(n,0.1,0.8),
 #'                   'k.sol | change = pctchg' = runif(n,-20,100),
 #'                   'awc.sol | change = pctchg' = runif(n,-20,20),
-#'                   'alpha.aqu | change = absval' = runif(n,0.1,0.8))
+#'                   'alpha.aqu | change = absval' = runif(n,0.01,0.3))
 #' ```
 #'
 #' @examples

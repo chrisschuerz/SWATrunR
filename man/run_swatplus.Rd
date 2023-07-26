@@ -149,10 +149,17 @@ simulations are returned.}
 simulation outputs. If \code{TRUE} (default value and recommended) the returned
 list with the simulation outputs includes the list element \code{.$parameter}
 which provides the definition of the parameters \code{.$parameter$definition}
-and the values of the parameter changes \code{.$parameter$values}}
+and the values of the parameter changes \code{.$parameter$values}.}
 
 \item{add_date}{(optional) Add a date vector to simulated time series. If
 \code{TRUE} (default value) a date vector is added.}
+
+\item{split_units}{(optional) Split simulated outputs of the same variable into
+separate tables in the \code{.$simulation} list. If \code{TRUE} (default value) outputs
+are split (e.g. for \code{define_output('channel_sd_day', 'flo_out', 1:3)}) the
+output tables \code{flo_out_1}, \code{flo_out_2}, and \code{flo_out_3} will be generated.
+If \code{FALSE} in the same example a single table is generated with an integer
+column \code{unit} with the ID values 1 to 3.}
 
 \item{refresh}{(optional) Rewrite existing '.model_run' folder. If \code{TRUE}
 (default value and recommended) always forces that .model_run' is newly
@@ -291,8 +298,8 @@ of the parameter how it is defined in the calibration.cal input file, the
 file suffix, and the type of change, as shown in this example:
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{# Change cn2 by -5\% and alpha by an absolute value of 0.35
-par_condplus <- c("cn2.hru | change = relchg" = - 0.05,
-"                 "alpha.aqu | change = absval" = 0.35)
+par_set <- c("cn2.hru | change = relchg" = - 0.05,
+"           "alpha.aqu | change = absval" = 0.35)
 }\if{html}{\out{</div>}}
 
 As shown in the example above, single parameter changes can be passed as a
@@ -315,7 +322,7 @@ par_set <- tibble('cn2.hru | change = abschg' = runif(n,-15,10),
                   'perco.hru | change = absval' = runif(n,0.1,0.8),
                   'k.sol | change = pctchg' = runif(n,-20,100),
                   'awc.sol | change = pctchg' = runif(n,-20,20),
-                  'alpha.aqu | change = absval' = runif(n,0.1,0.8))
+                  'alpha.aqu | change = absval' = runif(n,0.01,0.3))
 }\if{html}{\out{</div>}}
 }
 

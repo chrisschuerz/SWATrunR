@@ -153,14 +153,21 @@
 #'   saved in a `save_file`. Otherwise the simulations are performed but no
 #'   simulations are returned.
 #'
-#' @param add_date (optional) Add a date vector to simulated time series. If
-#'   `TRUE` (default value) a date vector is added.
-#'
 #' @param add_parameter (optional)  Add the used parameter changes in the
 #'   simulation outputs. If `TRUE` (default value and recommended) the returned
 #'   list with the simulation outputs includes the list element `.$parameter`
 #'   which provides the definition of the parameters `.$parameter$definition`
-#'   and the values of the parameter changes `.$parameter$values`
+#'   and the values of the parameter changes `.$parameter$values`.
+#'
+#' @param add_date (optional) Add a date vector to simulated time series. If
+#'   `TRUE` (default value) a date vector is added.
+#'
+#' @param split_units (optional) Split simulated outputs of the same variable into
+#'   separate tables in the `.$simulation` list. If `TRUE` (default value) outputs
+#'   are split (e.g. for `define_output('rch', 'FLOW_OUT', 1:3)`) the
+#'   output tables `FLOW_OUT_1`, `FLOW_OUT_2`, and `FLOW_OUT_3` will be generated.
+#'   If `FALSE` in the same example a single table is generated with an integer
+#'   column `unit` with the ID values 1 to 3.
 #'
 #' @param refresh (optional) Rewrite existing '.model_run' folder. If `TRUE`
 #'   (default value and recommended) always forces that .model_run' is newly
@@ -202,6 +209,90 @@
 #'    * `.$run_info$output_definition` is a tibble which summarizes the defined
 #'      output variables which were passed with the input argument `output` and
 #'      defined with `define_output()`.
+#'
+#' @section Examples for output definition:
+#'
+#' Outputs are defined with the function `define_output()`. The function has the
+#' three input arguments `file` which defines the output file into which the
+#' variable of interest is written, `variable` which is the variable name as it is
+#' defined in the output file (without the unit), and `unit` which is the spatial
+#' unit for which the variable is extracted (e.g. channel ID, or HRU, etc.).
+#'
+#' The following examples show definitions for output variables. In a simulation
+#' run with `run_swat2012()` these definitions must be passed with the input
+#' argument `output`.
+#'
+#' A single output variable can be defined like in the following examples:
+#'
+#' ```
+#' # Define ET for all subbasins (e.g. if the setup has 125 subbasins)
+#' # subbasin ET is in written into output.sub.
+#' # The definition of the time interval in which the outputs are written are
+#' # defined with the input argument output_interval (see arguments above)
+#' define_output(file = 'sub',
+#'               variable = 'ET', # Variable name in the file (capital letters!)
+#'               unit = 1:125 # All subbasins 1 to 125
+#'               )
+#'
+#' # Define discharge for the channels 1 to 3 and 7
+#' # Channel outputs are written into output.rch.
+#'  define_output(file = 'rch',
+#'                variable = 'FLOW_OUT',
+#'                unit = c(1:3, 7) # To define the channel IDs of interest.
+#'               )
+#'```
+#'
+#' More than one variable must be defined in a named list. The name of each
+#' output definition is then assigned to the returned outputs together with the
+#' unit ID if more than one ID was defined.
+#'
+#' ```
+#' # Define the outputs for
+#' # - ET for the HRUs 1 to 847
+#' # - Channel discharge for the channels 1, 34, and 57
+#' list(et_hru  = define_output('hru', 'ET', 1:847),
+#'      cha_q   = define_output('rch', 'FLOW_OUT', c(1, 34, 57)))
+#' ```
+#'
+#' @section Examples for parameter definition:
+#'
+#' The definition of parameter changes follows a strict syntax in the parameter
+#' names which have to be assigned to the change values. Therefore it is highly
+#' recommended to read the corresponding section on the
+#' \href{https://chrisschuerz.github.io/SWATrunR/articles/SWATrunR.html#changing-parameter-values}{`SWATrunR`}
+#' github page. The following examples show very basic parameter definitions and
+#' do not cover specific naming of parameters, or parameter conditions which are
+#' topics covered on the github page.
+#'
+#' In a nutshell the name definition of a parameter requires at least the name
+#' of the parameter how it is defined in the calibration.cal input file, the
+#' file suffix, and the type of change, as shown in this example:
+#'
+#' ```
+#' # Change CN2 by -5% and ALPHA_BF by an absolute value of 0.35
+#' par_set <- c("CN2.mgt | change = relchg" = - 0.05,
+#' "            "ALPHA_BF.gw | change = absval" = 0.35)
+#' ```
+#'
+#' As shown in the example above, single parameter changes can be passed as a
+#' named vector. Multiple parameter combinations must be passed in a tibble
+#' (caution here, base R data.frames might not be able to handle all special
+#' characters in the parameter names). Below an example for a more comprehensive
+#' parameter set with uniform randomly sampled parameter changes:
+#'
+#' ```
+#' library(tibble)
+#'
+#' # Draw 100 samples for each parameter
+#' n <- 100
+#'
+#' # Sample each parameter change uniformly n times in their upper/lower bounds
+#' par_set <- tibble('CN2.mgt | change = abschg' = runif(n,-15,10),
+#'                   'CANMX.hru | change = absval |
+#'                   'EPCO.bsn | change = absval' = runif(n,0.1,1),
+#'                   'ESCO.bsn | change = absval' = runif(n,0.1,1),
+#'                   "ALPHA_BF.gw | change = absval" = runif(n,0.01,0.8))
+#' ```
 #'
 #' @examples
 #' # Install the SWATdata R package which provides a SWAT+ demo project
