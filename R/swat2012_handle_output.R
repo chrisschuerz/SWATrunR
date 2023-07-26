@@ -1,16 +1,17 @@
-# Functions for reading SWAT outputs
+# Functions for reading SWAT2012 outputs
 
 #' Read SWAT output files
 #'
 #' @param output Output defined to read from the SWAT model results
 #' @param thread_path Path to respective thread where SWAT was executed
+#' @param split_units Path to respective thread where SWAT was executed
 #'
 #' @importFrom dplyr %>%
 #' @importFrom purrr map map2 map_chr pmap set_names
 #' @importFrom readr fwf_positions read_fwf
 #' @keywords internal
 #'
-read_swat2012_output <- function(output, thread_path) {
+read_swat2012_output <- function(output, thread_path, split_units) {
   ## Get unique output files defined in output
   output_files <- unique(output$file)
   split_key <- factor(output$file, levels = output_files)
@@ -41,7 +42,7 @@ read_swat2012_output <- function(output, thread_path) {
   }
 
   out_tables <- map2(out_tables, output_list,
-                     ~ extract_swat2012_output_i(.x, .y))
+                     ~ extract_swat2012_output_i(.x, .y, split_units))
 
   return(out_tables)
 }
@@ -55,12 +56,12 @@ read_swat2012_output <- function(output, thread_path) {
 #' @importFrom tidyselect all_of
 #' @keywords internal
 #'
-extract_swat2012_output_i <- function(out_tbl_i, out_def_i) {
+extract_swat2012_output_i <- function(out_tbl_i, out_def_i, split_units) {
   out_tbl_i %>%
     select(., 2, all_of(out_def_i$variable)) %>%
     rename(., unit = 1) %>%
     add_id(.) %>% # Revised, uses now ID adding from SWAT+ version
-    mutate_output_i(., out_def_i) # Revised, uses now mutate from SWAT+ version
+    mutate_output_i(., out_def_i, split_units) # Revised, uses now mutate from SWAT+ version
 }
 
 #' Read the column names for the SWAT output files

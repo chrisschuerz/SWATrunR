@@ -4,7 +4,7 @@
 \alias{extract_swat2012_output_i}
 \title{Extract and rearrange output variables of SWAT2012 outputs}
 \usage{
-extract_swat2012_output_i(out_tbl_i, out_def_i)
+extract_swat2012_output_i(out_tbl_i, out_def_i, split_units)
 }
 \arguments{
 \item{out_tbl_i}{ith output table read from SWAT2012 simulations}

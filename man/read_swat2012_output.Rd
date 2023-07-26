@@ -4,12 +4,14 @@
 \alias{read_swat2012_output}
 \title{Read SWAT output files}
 \usage{
-read_swat2012_output(output, thread_path)
+read_swat2012_output(output, thread_path, split_units)
 }
 \arguments{
 \item{output}{Output defined to read from the SWAT model results}
 
 \item{thread_path}{Path to respective thread where SWAT was executed}
+
+\item{split_units}{Path to respective thread where SWAT was executed}
 }
 \description{
 Read SWAT output files

@@ -24,7 +24,7 @@ run_swat2012(
   return_output = TRUE,
   add_parameter = TRUE,
   add_date = TRUE,
-  split_units = FALSE,
+  split_units = TRUE,
   refresh = TRUE,
   keep_folder = FALSE,
   quiet = FALSE

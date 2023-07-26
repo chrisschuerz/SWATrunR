@@ -211,6 +211,27 @@ get_date_vector_2012 <- function(model_setup) {
     date <- paste(year(sd), year(ed), sep = " - ")
   }
 
-  date <- tibble(date = date)
   return(date)
+}
+
+#' Add the date vector to a simulation output table
+#'
+#' @param sim_i Simulation output table element i in the list of simulation outputs.
+#' @param date Date vector which should be added.
+#'
+#' @importFrom dplyr arrange %>%
+#' @importFrom tibble add_column
+#' @keywords internal
+#'
+add_date_vector_2012 <- function(sim_i, date) {
+  if ('unit' %in% names(sim_i)) {
+    n_unit <- length(unique(sim_i$unit))
+    date <- rep(date, n_unit)
+    sim_i <- sim_i %>%
+      arrange(., unit) %>%
+      add_column(., date = date, .after = 'unit')
+  } else {
+    sim_i <- add_column(sim_i, date = date, .before = 1)
+  }
+  return(sim_i)
 }

@@ -325,14 +325,25 @@ mutate_output_i <- function(out_tbl_i, output_i, split_units) {
       tbl_mutate <- bind_cols(date_col, tbl_mutate)
     }
   } else {
+    if('date' %in% names(out_tbl_i)) {
+      add_cols <- c('unit', 'date')
+      i_col <- 3
+    } else {
+      add_cols <- c('unit')
+      i_col <- 2
+    }
+
     tbl_mutate <- tbl_list %>%
       map2(., output_i$unit, ~ mutate(.x, variable = ifelse(unit %in% .y, variable, NA))) %>%
       map(., ~ select(.x, variable)) %>%
       map2(., output_i$name, ~ set_names(.x, .y)) %>%
-      bind_cols(out_tbl_i[c('unit', 'date')], .)
+      bind_cols(out_tbl_i[add_cols], .)
 
-    all_na <- apply(tbl_mutate[,3:ncol(tbl_mutate)], 1, is.na) %>%
-      apply(., 2, all)
+    all_na <- apply(tbl_mutate[,i_col:ncol(tbl_mutate)], 1, is.na)
+
+    if (!is.null(dim(all_na))) {
+      all_na <- apply(all_na, 2, all)
+    }
 
     tbl_mutate <- tbl_mutate[!all_na, ]
   }

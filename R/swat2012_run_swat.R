@@ -348,7 +348,7 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                          n_thread = NULL, save_file = NULL,
                          save_path = NULL, return_output = TRUE,
                          add_parameter = TRUE, add_date = TRUE,
-                         split_units = FALSE, refresh = TRUE,
+                         split_units = TRUE, refresh = TRUE,
                          keep_folder = FALSE, quiet = FALSE) {
 
 #-------------------------------------------------------------------------------
@@ -483,7 +483,7 @@ sim_result <- foreach(i_run = 1:n_run,
 
     if(nchar(msg$stderr) == 0) {
       ## Read defined model outputs
-      model_output <- read_swat2012_output(output, thread_path)
+      model_output <- read_swat2012_output(output, thread_path, split_units)
 
       if(!is.null(save_path)) {
         save_run(save_path, model_output, parameter, run_index, i_run, thread_id)
@@ -543,7 +543,9 @@ sim_result <- foreach(i_run = 1:n_run,
     if(add_date) {
       ## Create date vector from the information in model_setup
       date <- get_date_vector_2012(model_setup)
-      output_list$simulation <- map(output_list$simulation, ~ bind_cols(date, .x))
+      output_list$simulation <- map(output_list$simulation,
+                                    ~ add_date_vector_2012(.x, date))
+
     }
 
     output_list$error_report <- prepare_error_report(sim_result)
