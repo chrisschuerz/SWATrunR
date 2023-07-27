@@ -9,6 +9,13 @@
 #' @param os String that indicates the operating system on the current machine
 #' @param swat_vers Character string that defines the SWAT version. Either
 #'   "2012" or "plus".
+#'
+#' @param run_in_project Should a simulation be executed directly in the project
+#'   folder? If `FALSE` (default) the subfolder structure '.model_run/thread_*'
+#'   is generated to run simulations in the thread folders. If `TRUE` the
+#'   simulation will be performed directly in the `project_path` and the
+#'   generation of the run folder structure is skipped.
+#'
 #' @param refresh Logical. Defines if refreshing exisiting .model_run folder
 #'   structure should be forced.
 #' @param quiet Logical. Defines if messages should be written or function
@@ -19,36 +26,41 @@
 #'
 
 manage_model_run <- function(project_path, run_path, n_thread, os,
-                             swat_vers, refresh, quiet) {
-  ## Case .model_run exists already and no forced refresh considered
-  if(dir.exists(run_path) & !refresh) {
-    ## Check how many parallel threads are available
-    n_thread_avail <- dir(run_path) %>%
-      gsub('[0-9]+', '', .) %>%
-      grepl("thread_",.) %>%
-      sum()
-    ## The existing folder strucuture is used when more parallel folders are
-    ## available than parallel threads are needed
-    if(n_thread_avail >= n_thread) {
-      if(!quiet) {
-        message("Model will be executed in existing '.model_run' folder structure"%&%
-                  "\nMake sure '.model_run' is up to date with the project folder!")
+                             swat_vers, run_in_project, refresh, quiet) {
+  if(run_in_project) {
+    cat("Simulation will be executed directly in the project folder:",
+        "'"%&%run_path%&%"'", "\n")
+  } else {
+    ## Case .model_run exists already and no forced refresh considered
+    if(dir.exists(run_path) & !refresh) {
+      ## Check how many parallel threads are available
+      n_thread_avail <- dir(run_path) %>%
+        gsub('[0-9]+', '', .) %>%
+        grepl("thread_",.) %>%
+        sum()
+      ## The existing folder strucuture is used when more parallel folders are
+      ## available than parallel threads are needed
+      if(n_thread_avail >= n_thread) {
+        if(!quiet) {
+          message("Model will be executed in existing '.model_run' folder structure"%&%
+                    "\nMake sure '.model_run' is up to date with the project folder!")
+        }
+        ## If the number of available parallel folders is not sufficient
+        ## a new setup of the folder structures is forced
+      } else {
+        unlink(run_path, recursive = TRUE)
+        if(!quiet) {
+          message("The number of existing threads is lower than the required number."%&%
+                    "\nParallel folder structure will be created from scratch!\n\n")
+        }
+        build_model_run(project_path, run_path, n_thread, os, swat_vers, quiet)
       }
-      ## If the number of available parallel folders is not sufficient
-      ## a new setup of the folder structures is forced
+      ## Build the parallel folder structure if it does not exist or if a
+      ## forced refresh was set with refresh = TRUE
     } else {
       unlink(run_path, recursive = TRUE)
-      if(!quiet) {
-        message("The number of existing threads is lower than the required number."%&%
-                  "\nParallel folder structure will be created from scratch!\n\n")
-      }
       build_model_run(project_path, run_path, n_thread, os, swat_vers, quiet)
     }
-    ## Build the parallel folder structure if it does not exist or if a
-    ## forced refresh was set with refresh = TRUE
-  } else {
-    unlink(run_path, recursive = TRUE)
-    build_model_run(project_path, run_path, n_thread, os, swat_vers, quiet)
   }
 }
 
@@ -60,41 +72,22 @@ manage_model_run <- function(project_path, run_path, n_thread, os,
 #'   executable model is built in the 'project_path'
 #' @param n_thread Number of parallel threads that will be created. This number
 #'   must be in accordance to the number of cores of the PC
+#' @param os Operating system of computer, one of 'win', 'unix'.
 #' @param swat_vers Character string that defines the SWAT version. Either
 #'   "2012" or "plus".
 #' @param quiet Logical. Defines if messages should be written or function
 #'   should be executed quietly.
 #'
-#' @importFrom parallel detectCores
-#' @importFrom dplyr %>%
-#' @importFrom lubridate now
-#' @importFrom stringr str_sub
 #' @keywords internal
 #'
 
 build_model_run <- function(project_path, run_path, n_thread, os, swat_vers, quiet){
-
-  if(os == "win") {
-    swat_exe <- list.files(project_path) %>%
-      .[grepl(".exe$",.)]
-
-  } else if(os == "unix") {
-    swat_exe <- system("find"%&&%project_path%&&%"-executable -type f",
-                        intern = T) %>%
-      basename(.)
-  }
-
-  # Make sure that there is exactly one executable in the SWAT project folder
-  if(length(swat_exe) == 0) stop("No SWAT executable found in the project folder!")
-  if(length(swat_exe) > 1) stop("Project folder contains more than one executable!")
-
   if(!quiet) {
     cat("Building", n_thread, "thread"%&%plural(n_thread),
         "in","'"%&%run_path%&%"':", "\n")
   }
 
   # Create folder structure to execute SWAT
-
   swat_files <- dir(project_path, full.names = TRUE)
   ## To save storage do not copy allready existing output files
   ## Extend for SWAT+ output files after discussion about names with Jeff
@@ -118,6 +111,36 @@ build_model_run <- function(project_path, run_path, n_thread, os, swat_vers, qui
   if(!quiet){
     finish_progress(n_thread, t0, "thread")
   }
+}
+
+#' Find executable file in the project folder
+#'
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder)
+#' @param os Operating system of computer, one of 'win', 'unix'.
+#'
+#' @returns the name of the executable file
+#'
+#' @keywords internal
+#'
+find_exe_file <- function(project_path, os) {
+  if(os == "win") {
+    swat_exe <- list.files(project_path) %>%
+      .[grepl(".exe$",.)]
+
+  } else if(os == "unix") {
+    swat_exe <- system("find"%&&%project_path%&&%"-executable -type f",
+                       intern = T) %>%
+      basename(.)
+  }
+
+  # Make sure that there is exactly one executable in the SWAT project folder
+  if (length(swat_exe) == 0) {
+    stop("No SWAT executable found in the project folder!")
+  } else if (length(swat_exe) > 1) {
+    stop("Project folder contains more than one executable!")
+  }
+
   return(swat_exe)
 }
 
@@ -138,8 +161,9 @@ get_os <- function() {
 }
 
 #' Add './' to run the exe on unix systems
-#' @param exe Text string that defines the name of the executable file
-#' @param os Text string that defines the operating system
+#' @param exe Name of the executable file.
+#' @param os Operating system of computer, one of 'win', 'unix'.
+#'
 #' @keywords internal
 #'
 run_os <- function(exe, os) {

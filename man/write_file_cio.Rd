@@ -4,12 +4,16 @@
 \alias{write_file_cio}
 \title{Write the updated file.cio to all parallel folders}
 \usage{
-write_file_cio(run_path, file_cio)
+write_file_cio(run_path, file_cio, run_in_project)
 }
 \arguments{
 \item{run_path}{Path to the .model_run folder}
 
 \item{file_cio}{Updated file_cio to be written}
+
+\item{run_in_project}{Should a simulation be executed directly in the project
+folder? If \code{FALSE} (default) the file.cio is updated in the thread folders.
+If \code{TRUE} the file.cio is updated directly in the \code{project_path}.}
 }
 \description{
 Write the updated file.cio to all parallel folders

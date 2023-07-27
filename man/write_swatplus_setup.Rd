@@ -4,13 +4,17 @@
 \alias{write_swatplus_setup}
 \title{Write the updated init files to all parallel folders}
 \usage{
-write_swatplus_setup(run_path, model_setup)
+write_swatplus_setup(run_path, model_setup, run_in_project)
 }
 \arguments{
 \item{run_path}{Path to the .model_run folder}
 
 \item{model_setup}{List with the prepared SWAT+ input settings for the files
 \code{file.cio}, \code{print.prt}, \code{time.sim}, and \code{calibration.cal}.}
+
+\item{run_in_project}{Should a simulation be executed directly in the project
+folder? If \code{FALSE} (default) the \code{model_setup} files are updated in the
+thread folders. If \code{TRUE} the files are updated directly in the \code{project_path}.}
 }
 \value{
 No return value. Writes input text files into the \code{run_path}.

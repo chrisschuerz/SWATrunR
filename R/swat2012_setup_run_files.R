@@ -203,15 +203,24 @@ setup_swat2012 <- function(project_path, output,
 #' Write the updated file.cio to all parallel folders
 #'
 #' @param run_path Path to the .model_run folder
+#'
 #' @param file_cio Updated file_cio to be written
+#'
+#' @param run_in_project Should a simulation be executed directly in the project
+#'   folder? If `FALSE` (default) the file.cio is updated in the thread folders.
+#'   If `TRUE` the file.cio is updated directly in the `project_path`.
 #'
 #' @keywords internal
 #'
-write_file_cio <- function(run_path, file_cio) {
-  thread_i <- dir(run_path) %>%
-    .[. %in% ("thread"%_%1:999)]
+write_file_cio <- function(run_path, file_cio, run_in_project) {
+  if(run_in_project) {
+    thread_i <- run_path
+  } else {
+    thread_i <- dir(run_path, pattern = 'thread_[:0-9:]+', full.names = TRUE)
+  }
+
   ## Write modified file_cio into thread folder and respective Backup folder
   for(i in thread_i) {
-    writeLines(file_cio, run_path%//%i%//%"file.cio")
+    writeLines(file_cio, i%//%"file.cio")
   }
 }

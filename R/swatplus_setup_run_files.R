@@ -530,20 +530,28 @@ add_slope <- function(cond, cond_tbl) {
 #' Write the updated init files to all parallel folders
 #'
 #' @param run_path Path to the .model_run folder
+#'
 #' @param model_setup List with the prepared SWAT+ input settings for the files
 #'   `file.cio`, `print.prt`, `time.sim`, and `calibration.cal`.
+#'
+#' @param run_in_project Should a simulation be executed directly in the project
+#'   folder? If `FALSE` (default) the `model_setup` files are updated in the
+#'   thread folders. If `TRUE` the files are updated directly in the `project_path`.
 #'
 #' @keywords internal
 #'
 #'@returns No return value. Writes input text files into the `run_path`.
-write_swatplus_setup <- function(run_path, model_setup) {
-  thread_i <- dir(run_path) %>%
-    .[. %in% ("thread"%_%1:999)]
+write_swatplus_setup <- function(run_path, model_setup, run_in_project) {
+  if(run_in_project) {
+    thread_i <- run_path
+  } else {
+    thread_i <- dir(run_path, pattern = 'thread_[:0-9:]+', full.names = TRUE)
+  }
 
   ## Write modified file_cio into thread folder and respective Backup folder
   for(i in thread_i) {
-    writeLines(model_setup$file.cio, run_path%//%i%//%"file.cio")
-    writeLines(model_setup$time.sim, run_path%//%i%//%"time.sim")
-    writeLines(model_setup$print.prt, run_path%//%i%//%"print.prt")
+    writeLines(model_setup$file.cio,  i%//%"file.cio")
+    writeLines(model_setup$time.sim,  i%//%"time.sim")
+    writeLines(model_setup$print.prt, i%//%"print.prt")
   }
 }

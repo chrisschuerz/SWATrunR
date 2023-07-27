@@ -169,6 +169,13 @@
 #'   If `FALSE` in the same example a single table is generated with an integer
 #'   column `unit` with the ID values 1 to 3.
 #'
+#' @param run_in_project Should a simulation be executed directly in the project
+#'   folder? If `FALSE` (default) the subfolder structure '.model_run/thread_*'
+#'   is generated and simulations are run in the thread folders. If `TRUE` the
+#'   simulation will be performed directly in the `project_path`. This is only
+#'   allowed for single simulation runs (No or a single parameter set provided).
+#'   **Caution:** This option can overwrite the original model input files!
+#'
 #' @param refresh (optional) Rewrite existing '.model_run' folder. If `TRUE`
 #'   (default value and recommended) always forces that .model_run' is newly
 #'   written when SWAT run ins started.
@@ -348,22 +355,32 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
                          n_thread = NULL, save_file = NULL,
                          save_path = NULL, return_output = TRUE,
                          add_parameter = TRUE, add_date = TRUE,
-                         split_units = TRUE, refresh = TRUE,
+                         split_units = TRUE,
+                         run_in_project = FALSE, refresh = TRUE,
                          keep_folder = FALSE, quiet = FALSE) {
 
 #-------------------------------------------------------------------------------
   # Check settings before starting to set up '.model_run'
   ## General function input checks
   stopifnot(is.character(project_path))
+  stopifnot(is.list(output))
   stopifnot(is.character(run_path)|is.null(run_path))
   stopifnot(is.numeric(n_thread)|is.null(n_thread))
+  stopifnot(is.numeric(run_index)|is.null(run_index))
   stopifnot(is.logical(add_parameter))
   stopifnot(is.logical(add_date))
   stopifnot(is.logical(split_units))
   stopifnot(is.logical(return_output))
+  stopifnot(is.logical(run_in_project))
   stopifnot(is.logical(refresh))
   stopifnot(is.logical(keep_folder))
   stopifnot(is.logical(quiet))
+
+  if(!return_output & is.null(save_file)) {
+    stop("'return_output = FALSE' and no 'save_file' is defined. ",
+         'Simulation runs would be performed without returning or saving ',
+         'simulatied outputs!')
+  }
 
   ## Check if all parameter names exist in the Absolute_SWAT_Value.txt
   if(!is.null(parameter)) {
@@ -379,11 +396,27 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     run_index <- 1:max(nrow(parameter$values), 1)
   }
 
-  ## Set the .model_run folder as the run_path
-  if (is.null(run_path)) {
-    run_path <- paste0(project_path, '/.model_run')
+  ## Set the run_path based on the input arguments run_path, project_path, and
+  ## run_in_project
+  if (run_in_project) {
+    if (!is.null(run_path)) {
+      cat("'run_path' was ignored because 'run_in_project = TRUE'.\n\n")
+    }
+
+    run_path <- project_path
+
+    if(length(run_index) > 1) {
+      stop('Only single run with no or one parameter combination can be run ',
+           "directly in the 'project_path'. To run multiple simulations, set ",
+           "'run_in_project = FALSE'")
+    }
+
   } else {
-    run_path <- paste0(run_path, '/.model_run')
+    if (is.null(run_path)) {
+      run_path <- paste0(project_path, '/.model_run')
+    } else {
+      run_path <- paste0(run_path, '/.model_run')
+    }
   }
 
   ## Convert output to named list in case single unnamed output was defined
@@ -418,13 +451,17 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
   ## Identify operating system and find the SWAT executable in the project folder
   os <- get_os()
 
+  ## Find executable file in project_path
+  swat_exe <- find_exe_file(project_path, os)
+
   ## Manage the handling of the '.model_run' folder structure.
-  swat_exe <- manage_model_run(project_path, run_path, n_thread, os,
-                               "2012", refresh, quiet)
+  manage_model_run(project_path, run_path, n_thread, os, "2012",
+                   run_in_project, refresh, quiet)
+
 #-------------------------------------------------------------------------------
   # Write files
   ## Write file.cio
-  write_file_cio(run_path, model_setup$file.cio)
+  write_file_cio(run_path, model_setup$file.cio, run_in_project)
 #-------------------------------------------------------------------------------
   # Initiate foreach loop to run SWAT models
   ## make and register cluster, create table that links the parallel worker
@@ -464,10 +501,14 @@ sim_result <- foreach(i_run = 1:n_run,
                        .packages = c("dplyr", "lubridate", "stringr", "processx"),
                        .options.snow = opts) %dopar% {
    # for(i_run in 1:max(nrow(parameter$values), 1)) {
-   # Identify worker of the parallel process and link it with respective thread
-    worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
-    thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
-    thread_path <- run_path%//%thread_id
+    if(run_in_project) {
+      thread_path <- project_path
+    } else {
+      ## Identify worker of the parallel process and link it with respective thread
+      worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
+      thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
+      thread_path <- run_path%//%thread_id
+    }
     # thread_path <- run_path%//%"thread_1"
 
     ## Modify model parameters if parameter set was provided
@@ -523,7 +564,7 @@ sim_result <- foreach(i_run = 1:n_run,
   }
 
   ## Delete the parallel threads if keep_folder is not TRUE
-  if(!keep_folder) unlink(run_path, recursive = TRUE)
+  if(!keep_folder & ! run_in_project) unlink(run_path, recursive = TRUE)
 
   if("error_report" %in% names(sim_result)) {
     warning("Some simulations runs failed! Check '.$error_report' in your",

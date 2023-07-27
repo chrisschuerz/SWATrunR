@@ -16,6 +16,8 @@ executable model is built in the 'project_path'}
 \item{n_thread}{Number of parallel threads that will be created. This number
 must be in accordance to the number of cores of the PC}
 
+\item{os}{Operating system of computer, one of 'win', 'unix'.}
+
 \item{swat_vers}{Character string that defines the SWAT version. Either
 "2012" or "plus".}
 
