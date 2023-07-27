@@ -70,13 +70,23 @@ run_scenario <- function(project_path, scenario_path,
   stopifnot(is.character(scenario_path))
   stopifnot(is.list(output))
   stopifnot(is.numeric(n_thread)|is.null(n_thread))
+  stopifnot(version %in% c('plus', '2012'))
 
 # ------------------------------------------------------------------------------
   # Define the number of iterations and parallel threads for scenarios and
   # parameters.
 
+  # Only get names of sub folders of scenario_path
+  is_dir <- file.info(dir(scenario_path,full.names=T))$isdir
+  scenario_name <- dir(scenario_path)[is_dir]
+
+  # Number of scenarios
+  n_scenario <- length(scenario_name)
+
   # Get the names of all input arguments including the ones passed with ...
   arg_names <- names(as.list(match.call()))
+  # Check if not supported input arguments were provided by the user.
+  check_arg_names(arg_names, version)
 
   # Get the number of parameter sets which should be run for each scenario based
   # on the additionally provided input arguments
@@ -109,7 +119,10 @@ run_scenario <- function(project_path, scenario_path,
 #'   scenario.
 #'
 #' @returns A vector of length 2 with the number of parallel threads for
-#'   scenarios and parameters.
+#'   scenarios and parameters and the the total number of iterations.
+#'
+#' @importFrom dplyr filter mutate %>%
+#' @importFrom parallel detectCores
 #'
 #' @keywords internal
 #'
@@ -126,7 +139,58 @@ get_n_parallel <- function(n_thread, n_scenario, n_parameter) {
     filter(n_p == min(n_p)) %>%
     filter(n_c == min(n_c))
 
-  n_parallel <- c(scenario  = n_comb$n_s, parameter = n_comb$n_p)
+  n_parallel <- c(scenario   = n_comb$n_s,
+                  parameter  = n_comb$n_p,
+                  iterations = n_comb$i_c)
 
   return(n_parallel)
+}
+
+#' Check the names of the passed input arguments and trigger error if argument
+#' is not supported by any of the run functions.
+#'
+#' @param arg_names Character vector of provided input arguments
+#' @param version Version of the SWAT project, one of 'plus', '2012'
+#'
+#' @returns Error message if argument is not supported
+#'
+#' @keywords internal
+#'
+check_arg_names <- function(arg_names, version) {
+  # Define possible input arguments for both SWAT+ and SWAT2012
+  names_gen <- c('project_path', 'scenario_path', 'output', 'version', 'n_thread',
+                 'parameter', 'start_date', 'end_date', 'years_skip', 'run_index',
+                 'run_path', 'save_file', 'save_path', 'return_output',
+                 'add_parameter', 'add_date', 'split_units', 'keep_folder' ,'')
+
+  # SWAT+ specific input arguments
+  names_plus <- c('start_date_print', 'time_out')
+  names_2012 <- c('output_interval', 'rch_out_var', 'sub_out_var', 'hru_out_var',
+                  'hru_out_nr')
+
+  # Input arguments which will be defined by run_scenario()
+  names_scen <- c('quiet', 'refresh')
+
+  if (any(arg_names %in% names_scen)) {
+    stop('The input arguments', paste(names_scen, collapse = ', '), 'are not ',
+         "supported by 'run_scenario()'.")
+  }
+
+  if (version == 'plus') {
+    names_check <- c(names_gen, names_plus)
+  } else {
+    names_check <- c(names_gen, names_2012)
+  }
+
+  not_in_names <- ! arg_names %in% names_check
+
+  if(any(not_in_names)) {
+    args_not_in_names <- arg_names[not_in_names]
+
+    stop('The following input arguments passed with ... are not supported by ',
+         ifelse(version == 'plus', "'run_swatplus()'", "'run_swat2012()'"),
+         ':\n',
+         paste(args_not_in_names, collapse = ', '))
+  }
+
 }
