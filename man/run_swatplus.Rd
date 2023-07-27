@@ -21,6 +21,7 @@ run_swatplus(
   add_parameter = TRUE,
   add_date = TRUE,
   split_units = TRUE,
+  run_in_project = FALSE,
   refresh = TRUE,
   keep_folder = FALSE,
   quiet = FALSE,

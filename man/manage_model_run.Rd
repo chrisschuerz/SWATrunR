@@ -10,6 +10,7 @@ manage_model_run(
   n_thread,
   os,
   swat_vers,
+  run_in_project,
   refresh,
   quiet
 )

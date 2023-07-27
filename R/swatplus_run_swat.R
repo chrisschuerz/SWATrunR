@@ -344,7 +344,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                          n_thread = NULL, save_file = NULL,
                          save_path = NULL, return_output = TRUE,
                          add_parameter = TRUE, add_date = TRUE,
-                         split_units = TRUE,
+                         split_units = TRUE, run_in_project = FALSE,
                          refresh = TRUE, keep_folder = FALSE,
                          quiet = FALSE, time_out = Inf) {
 
@@ -368,6 +368,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   stopifnot(is.logical(refresh))
   stopifnot(is.logical(keep_folder))
   stopifnot(is.logical(quiet))
+  stopifnot(is.numeric(time_out))
 
   ## Check if all parameter names exist in cal_parms.cal and plants.plt
   if(!is.null(parameter)) {
@@ -393,11 +394,27 @@ run_swatplus <- function(project_path, output, parameter = NULL,
     run_index <- 1:max(nrow(parameter$values), 1)
   }
 
-  ## Set the .model_run folder as the run_path
-  if (is.null(run_path)) {
-    run_path <- paste0(project_path, '/.model_run')
+  ## Set the run_path based on the input arguments run_path, project_path, and
+  ## run_in_project
+  if (run_in_project) {
+    if (!is.null(run_path)) {
+      cat("'run_path' was ignored because 'run_in_project = TRUE'.\n\n")
+    }
+
+    run_path <- project_path
+
+    if(length(run_index) > 1) {
+      stop('Only single run with no or one parameter combination can be run ',
+           "directly in the 'project_path'. To run multiple simulations, set ",
+           "'run_in_project = FALSE'")
+    }
+
   } else {
-    run_path <- paste0(run_path, '/.model_run')
+    if (is.null(run_path)) {
+      run_path <- paste0(project_path, '/.model_run')
+    } else {
+      run_path <- paste0(run_path, '/.model_run')
+    }
   }
 
   ## Convert output to named list in case single unnamed output was defined
@@ -432,15 +449,18 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ## Identify operating system and find the SWAT executable in the project folder
   os <- get_os()
 
+  ## Find executable file in project_path
+  swat_exe <- find_exe_file(project_path, os)
+
   ## Manage the handling of the '.model_run' folder structure.
-  swat_exe <- manage_model_run(project_path, run_path, n_thread, os,
-                               "plus", refresh, quiet)
+  manage_model_run(project_path, run_path, n_thread, os, "plus",
+                   run_in_project, refresh, quiet)
 
 #-------------------------------------------------------------------------------
   # Write files
   ## Write model setup: Files that define the time range etc. of the SWAT
   ## simulation
-  write_swatplus_setup(run_path, model_setup)
+  write_swatplus_setup(run_path, model_setup, run_in_project)
 
   #-------------------------------------------------------------------------------
   # Initiate foreach loop to run SWAT models
@@ -476,10 +496,14 @@ run_swatplus <- function(project_path, output, parameter = NULL,
    .packages = c("dplyr", "lubridate", "processx", "stringr"),
    .options.snow = opts) %dopar% {
     # for(i_run in 1:max(nrow(parameter), 1)) {
-    ## Identify worker of the parallel process and link it with respective thread
-    worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
-    thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
-    thread_path <- run_path%//%thread_id
+    if(run_in_project) {
+      thread_path <- project_path
+    } else {
+      ## Identify worker of the parallel process and link it with respective thread
+      worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
+      thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
+      thread_path <- run_path%//%thread_id
+    }
     # thread_path <- run_path%//%"thread_1"
 
         ## Modify model parameters if parameter set was provided and write
@@ -551,7 +575,7 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   }
 
   ## Delete the parallel threads if keep_folder is not TRUE
-  if(!keep_folder) unlink(run_path, recursive = TRUE)
+  if(!keep_folder & ! run_in_project) unlink(run_path, recursive = TRUE)
 
   if("error_report" %in% names(sim_result)) {
     warning("Some simulations runs failed! Check '.$error_report' in your",

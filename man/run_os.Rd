@@ -7,9 +7,9 @@
 run_os(exe, os)
 }
 \arguments{
-\item{exe}{Text string that defines the name of the executable file}
+\item{exe}{Name of the executable file.}
 
-\item{os}{Text string that defines the operating system}
+\item{os}{Operating system of computer, one of 'win', 'unix'.}
 }
 \description{
 Add './' to run the exe on unix systems

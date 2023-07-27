@@ -4,7 +4,7 @@
 \alias{write_swatplus_setup}
 \title{Write the updated init files to all parallel folders}
 \usage{
-write_swatplus_setup(run_path, model_setup)
+write_swatplus_setup(run_path, model_setup, run_in_project)
 }
 \arguments{
 \item{run_path}{Path to the .model_run folder}
