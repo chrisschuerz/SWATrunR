@@ -458,7 +458,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
                   max(length(run_index),1),
                   detectCores())
 
-
   ## Identify operating system and find the SWAT executable in the project folder
   os <- get_os()
 

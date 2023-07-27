@@ -60,9 +60,8 @@
 #' @importFrom tibble tibble as_tibble
 #' @export
 #'
-run_scenario <- function(project_path, scenario_path,
-                         output, version, n_thread = NULL,
-                         ...) {
+run_scenario <- function(project_path, scenario_path, output, version,
+                         n_thread = NULL, ...) {
 
 #-------------------------------------------------------------------------------
   # General function input checks
@@ -88,109 +87,35 @@ run_scenario <- function(project_path, scenario_path,
   # Check if not supported input arguments were provided by the user.
   check_arg_names(arg_names, version)
 
-  # Get the number of parameter sets which should be run for each scenario based
-  # on the additionally provided input arguments
-  if ('parameter' %in% arg_names) {
-    # If run_index is provided n_parameter is the number of selected parameter
-    # sets. Otherwise the rows of parameter or if it is a vector set to 1.
-    if('run_index' %in% arg_names) {
-      n_parameter <- length(run_index)
-    } else {
-      n_parameter <- max(1, nrow(parameter))
-    }
-  } else {
-    # If no parameter set is provided set to 1
-    n_parameter <- 1
-  }
+  n_parameter <- get_n_parameter(...)
 
   # Define the optimum combination of parallel threads for scenarios and
   # parameters with the available number of threads to minimize the number of
   # required parallel model iterations.
   n_parallel <- get_n_parallel(n_thread, n_scenario, n_parameter)
 
-}
-
-#' Get numbers of parallel threads for scenarios and parameters which minimize
-#' the number of parallel iterations.
-#'
-#' @param n_thread Number of parallel threads defined by the user.
-#' @param n_scenario Number of scenarios which should be run.
-#' @param n_parameter Number of parameter sets which should be run for every
-#'   scenario.
-#'
-#' @returns A vector of length 2 with the number of parallel threads for
-#'   scenarios and parameters and the the total number of iterations.
-#'
-#' @importFrom dplyr filter mutate %>%
-#' @importFrom parallel detectCores
-#'
-#' @keywords internal
-#'
-get_n_parallel <- function(n_thread, n_scenario, n_parameter) {
-  n_thread <- min(detectCores(), max(n_thread, 1))
-
-  n_comb <- expand.grid(n_s = 1:n_thread, n_p = 1:n_thread) %>%
-    mutate(n_c = n_s*n_p) %>%
-    filter(n_c <= n_thread) %>%
-    mutate(i_s = ceiling(n_scenario  / n_s),
-           i_p = ceiling(n_parameter / n_p),
-           i_c = i_s * i_p) %>%
-    filter(i_c == min(i_c)) %>%
-    filter(n_p == min(n_p)) %>%
-    filter(n_c == min(n_c))
-
-  n_parallel <- c(scenario   = n_comb$n_s,
-                  parameter  = n_comb$n_p,
-                  iterations = n_comb$i_c)
-
-  return(n_parallel)
-}
-
-#' Check the names of the passed input arguments and trigger error if argument
-#' is not supported by any of the run functions.
-#'
-#' @param arg_names Character vector of provided input arguments
-#' @param version Version of the SWAT project, one of 'plus', '2012'
-#'
-#' @returns Error message if argument is not supported
-#'
-#' @keywords internal
-#'
-check_arg_names <- function(arg_names, version) {
-  # Define possible input arguments for both SWAT+ and SWAT2012
-  names_gen <- c('project_path', 'scenario_path', 'output', 'version', 'n_thread',
-                 'parameter', 'start_date', 'end_date', 'years_skip', 'run_index',
-                 'run_path', 'save_file', 'save_path', 'return_output',
-                 'add_parameter', 'add_date', 'split_units', 'keep_folder' ,'')
-
-  # SWAT+ specific input arguments
-  names_plus <- c('start_date_print', 'time_out')
-  names_2012 <- c('output_interval', 'rch_out_var', 'sub_out_var', 'hru_out_var',
-                  'hru_out_nr')
-
-  # Input arguments which will be defined by run_scenario()
-  names_scen <- c('quiet', 'refresh')
-
-  if (any(arg_names %in% names_scen)) {
-    stop('The input arguments', paste(names_scen, collapse = ', '), 'are not ',
-         "supported by 'run_scenario()'.")
-  }
-
-  if (version == 'plus') {
-    names_check <- c(names_gen, names_plus)
+  if(n_parallel['parameter'] == 1) {
+    # If parameters are not run in parallel simulations will be run directly
+    # in the scenario folders
+    run_in_project <- TRUE
   } else {
-    names_check <- c(names_gen, names_2012)
+    run_in_project <- FALSE
   }
 
-  not_in_names <- ! arg_names %in% names_check
+# ------------------------------------------------------------------------------
+# Next here generate parallel folder structure for scenarios which will then be
+# used by the workers to run simulations.
 
-  if(any(not_in_names)) {
-    args_not_in_names <- arg_names[not_in_names]
 
-    stop('The following input arguments passed with ... are not supported by ',
-         ifelse(version == 'plus', "'run_swatplus()'", "'run_swat2012()'"),
-         ':\n',
-         paste(args_not_in_names, collapse = ', '))
-  }
+#-------------------------------------------------------------------------------
+  # Initiate foreach loop to run SWAT models
+  ## make and register cluster, create table that links the parallel worker
+  ## with the created parallel thread folders in '.model_run'
+  cl_scen <- makeCluster(n_parallel['scenario'])
+  worker <- tibble(worker_id = parSapply(cl, 1:n_thread,
+                                         function(x) paste(Sys.info()[['nodename']],
+                                                           Sys.getpid(), sep = "-")),
+                   thread_id = dir(run_path) %>% .[grepl("thread_",.)])
 
+  registerDoSNOW(cl_scen)
 }
