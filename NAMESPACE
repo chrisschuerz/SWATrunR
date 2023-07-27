@@ -3,6 +3,7 @@
 export(define_output)
 export(load_demo)
 export(load_swat_run)
+export(run_scenario)
 export(run_swat2012)
 export(run_swatplus)
 export(scan_swat_run)
