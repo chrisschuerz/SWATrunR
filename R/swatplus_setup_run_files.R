@@ -530,8 +530,13 @@ add_slope <- function(cond, cond_tbl) {
 #' Write the updated init files to all parallel folders
 #'
 #' @param run_path Path to the .model_run folder
+#'
 #' @param model_setup List with the prepared SWAT+ input settings for the files
 #'   `file.cio`, `print.prt`, `time.sim`, and `calibration.cal`.
+#'
+#' @param run_in_project Should a simulation be executed directly in the project
+#'   folder? If `FALSE` (default) the `model_setup` files are updated in the
+#'   thread folders. If `TRUE` the files are updated directly in the `project_path`.
 #'
 #' @keywords internal
 #'

@@ -30,6 +30,12 @@ must be in accordance to the number of cores of the PC}
 \item{swat_vers}{Character string that defines the SWAT version. Either
 "2012" or "plus".}
 
+\item{run_in_project}{Should a simulation be executed directly in the project
+folder? If \code{FALSE} (default) the subfolder structure '.model_run/thread_*'
+is generated to run simulations in the thread folders. If \code{TRUE} the
+simulation will be performed directly in the \code{project_path} and the
+generation of the run folder structure is skipped.}
+
 \item{refresh}{Logical. Defines if refreshing exisiting .model_run folder
 structure should be forced.}
 

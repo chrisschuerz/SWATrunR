@@ -143,6 +143,13 @@
 #'   If `FALSE` in the same example a single table is generated with an integer
 #'   column `unit` with the ID values 1 to 3.
 #'
+#' @param run_in_project Should a simulation be executed directly in the project
+#'   folder? If `FALSE` (default) the subfolder structure '.model_run/thread_*'
+#'   is generated and simulations are run in the thread folders. If `TRUE` the
+#'   simulation will be performed directly in the `project_path`. This is only
+#'   allowed for single simulation runs (No or a single parameter set provided).
+#'   **Caution:** This option can overwrite the original model input files!
+#'
 #' @param refresh (optional) Rewrite existing '.model_run' folder. If `TRUE`
 #'   (default value and recommended) always forces that .model_run' is newly
 #'   written when SWAT run ins started.
@@ -369,6 +376,12 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   stopifnot(is.logical(keep_folder))
   stopifnot(is.logical(quiet))
   stopifnot(is.numeric(time_out))
+
+  if(!return_output & is.null(save_file)) {
+    stop("'return_output = FALSE' and no 'save_file' is defined. ",
+         'Simulation runs would be performed without returning or saving ',
+         'simulatied outputs!')
+  }
 
   ## Check if all parameter names exist in cal_parms.cal and plants.plt
   if(!is.null(parameter)) {

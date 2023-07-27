@@ -25,6 +25,7 @@ run_swat2012(
   add_parameter = TRUE,
   add_date = TRUE,
   split_units = TRUE,
+  run_in_project = FALSE,
   refresh = TRUE,
   keep_folder = FALSE,
   quiet = FALSE
@@ -189,6 +190,13 @@ are split (e.g. for \code{define_output('rch', 'FLOW_OUT', 1:3)}) the
 output tables \code{FLOW_OUT_1}, \code{FLOW_OUT_2}, and \code{FLOW_OUT_3} will be generated.
 If \code{FALSE} in the same example a single table is generated with an integer
 column \code{unit} with the ID values 1 to 3.}
+
+\item{run_in_project}{Should a simulation be executed directly in the project
+folder? If \code{FALSE} (default) the subfolder structure '.model_run/thread_*'
+is generated and simulations are run in the thread folders. If \code{TRUE} the
+simulation will be performed directly in the \code{project_path}. This is only
+allowed for single simulation runs (No or a single parameter set provided).
+\strong{Caution:} This option can overwrite the original model input files!}
 
 \item{refresh}{(optional) Rewrite existing '.model_run' folder. If \code{TRUE}
 (default value and recommended) always forces that .model_run' is newly

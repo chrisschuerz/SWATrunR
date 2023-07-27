@@ -9,6 +9,13 @@
 #' @param os String that indicates the operating system on the current machine
 #' @param swat_vers Character string that defines the SWAT version. Either
 #'   "2012" or "plus".
+#'
+#' @param run_in_project Should a simulation be executed directly in the project
+#'   folder? If `FALSE` (default) the subfolder structure '.model_run/thread_*'
+#'   is generated to run simulations in the thread folders. If `TRUE` the
+#'   simulation will be performed directly in the `project_path` and the
+#'   generation of the run folder structure is skipped.
+#'
 #' @param refresh Logical. Defines if refreshing exisiting .model_run folder
 #'   structure should be forced.
 #' @param quiet Logical. Defines if messages should be written or function
