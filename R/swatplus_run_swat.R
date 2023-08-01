@@ -416,9 +416,9 @@ run_swatplus <- function(project_path, output, parameter = NULL,
 
     run_path <- project_path
 
-    if(length(run_index) > 1) {
-      stop('Only single run with no or one parameter combination can be run ',
-           "directly in the 'project_path'. To run multiple simulations, set ",
+    if(n_thread > 1) {
+      stop('Only single single simulations can be run sequentially',
+           "directly in the 'project_path'. To run parallel simulations, set ",
            "'run_in_project = FALSE'")
     }
 
@@ -596,7 +596,6 @@ run_swatplus <- function(project_path, output, parameter = NULL,
   ##Tidy up results if return_output is TRUE
   if(return_output) {
     output_list <- list()
-
 
     if(add_parameter) {
       output_list$parameter <- parameter[c('values', 'definition')]

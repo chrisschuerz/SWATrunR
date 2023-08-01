@@ -36,12 +36,6 @@
 #'   `version` must be either `'plus'` for SWAT+ model setups and `'2012'` if
 #'   the model setup is a SWAT2012 project.
 #'
-#' @param n_thread (optional) Number parallel threads in which the simulations
-#'   are performed. Default, `n_thread` is `NULL` and all simulations are run on
-#'   a single core. If `n_thread` is defined with a number greater than 1 the
-#'   simulations are performed in parallel on that number of cores.
-#'   `n_thread` is always limited by the number of cores of the used computer.
-#'
 #' @param ... Other input arguments passed on to `run_swatplus()` or
 #'   `run_swat2012()` depending on the `version` of the SWAT project. All input
 #'   arguments passed with `...` must be defined for the respective run function.
@@ -60,20 +54,21 @@
 #' @importFrom tibble tibble as_tibble
 #' @export
 #'
-run_scenario <- function(project_path, scenario_path, output, version,
-                         n_thread = NULL, ...) {
+run_scenario <- function(project_path, scenario_path, output, version, ...) {
 
 #-------------------------------------------------------------------------------
   # General function input checks
   stopifnot(is.character(project_path))
   stopifnot(is.character(scenario_path))
   stopifnot(is.list(output))
-  stopifnot(is.numeric(n_thread)|is.null(n_thread))
   stopifnot(version %in% c('plus', '2012'))
 
 # ------------------------------------------------------------------------------
   # Define the number of iterations and parallel threads for scenarios and
   # parameters.
+
+  # Get the all input arguments and names including the ones passed with ...
+  dot_args <- list(...)
 
   # Only get names of sub folders of scenario_path
   is_dir <- file.info(dir(scenario_path,full.names=T))$isdir
@@ -82,17 +77,14 @@ run_scenario <- function(project_path, scenario_path, output, version,
   # Number of scenarios
   n_scenario <- length(scenario_name)
 
-  # Get the names of all input arguments including the ones passed with ...
-  arg_names <- names(as.list(match.call()))
-  # Check if not supported input arguments were provided by the user.
-  check_arg_names(arg_names, version)
 
-  n_parameter <- get_n_parameter(...)
+  n_parameter <- get_n_parameter(parameter = dot_args$parameter,
+                                 run_index = dot_args$run_index)
 
   # Define the optimum combination of parallel threads for scenarios and
   # parameters with the available number of threads to minimize the number of
   # required parallel model iterations.
-  n_parallel <- get_n_parallel(n_thread, n_scenario, n_parameter)
+  n_parallel <- get_n_parallel(dot_args$n_thread, n_scenario, n_parameter)
 
   if(n_parallel['parameter'] == 1) {
     # If parameters are not run in parallel simulations will be run directly
@@ -102,20 +94,182 @@ run_scenario <- function(project_path, scenario_path, output, version,
     run_in_project <- FALSE
   }
 
-# ------------------------------------------------------------------------------
-# Next here generate parallel folder structure for scenarios which will then be
-# used by the workers to run simulations.
+  if (is.null(dot_args$run_path)) {
+    run_path <- paste0(project_path, '/.scenario_run')
+  } else {
+    run_path <- paste0(dot_args$run_path, '/.scenario_run')
+  }
 
+  if(is.null(dot_args$return_output)) dot_args$return_output <- TRUE
+  if(is.null(dot_args$add_parameter)) dot_args$add_parameter <- TRUE
+  if(is.null(dot_args$keep_folder))   dot_args$keep_folder <- FALSE
+  if(!is.null(dot_args$run_path))     dot_args$run_path <- NULL
+  if(!is.null(dot_args$n_thread))     dot_args$n_thread <- NULL
+  if (!is.null(dot_args$quiet)) {
+    quiet <- dot_args$quiet
+    dot_args$quiet <- NULL
+  } else {
+    quiet <- FALSE
+  }
+
+  # Check if not supported input arguments were provided by the user.
+  check_arg_names(dot_args, version)
 
 #-------------------------------------------------------------------------------
   # Initiate foreach loop to run SWAT models
   ## make and register cluster, create table that links the parallel worker
   ## with the created parallel thread folders in '.model_run'
+  ##
+  if(!quiet) {
+    cat(n_scenario ,'Scenario folder'%&%plural(n_scenario),
+        'with the following name'%&%plural(n_scenario),
+        "found in 'scenario_path':\n",
+        paste0(scenario_name, collapse = ', '), '\n\n')
+    if('parameter' %in% names(dot_args)) {
+      cat(n_parameter, 'parameter set'%&%plural(n_parameter), 'defined to be',
+          'used in each scenario simulation.\n\n')
+    }
+    cat("Performing in total", n_scenario*n_parameter,
+        "simulation"%&%plural(n_scenario*n_parameter),
+        "on", n_parallel['core_total'],
+        "core"%&%plural(n_parallel['core_total'])%&%".", "\n")
+    if(n_parallel['scenario'] == 1) {
+      cat('Scenarios will be run sequentially on 1 core in', run_path%&%'.\n')
+    } else {
+      cat('Scenarios will be run in parallel on', n_parallel['scenario'],
+          'cores in', run_path%&%'.\n')
+    }
+    if(!'parameter' %in% names(dot_args)) {
+      cat('')
+    } else if(n_parallel['parameter'] == 1) {
+      cat('The defined parmeter changes will be implemented directly in the',
+          'scenario thread folder'%&%plural(n_parallel['scenario'])%&%'.\n')
+    } else {
+      cat('In each scenario thread folder', n_parallel['parameter'],
+          "thread folders will be generated in '.model_run/thread_<i>'",
+          'for parallel parameter simulations.\n')
+    }
+
+    cat('\nPerforming simulations:\n')
+
+    progress <- function(n){
+      display_progress(n, n_scenario, t0, "Scenario")
+    }
+    opts <- list(progress = progress)
+  } else {
+    opts <- list()
+  }
+
+  thread_ids <- build_scenario_run(project_path, run_path, n_parallel)
+
   cl_scen <- makeCluster(n_parallel['scenario'])
-  worker <- tibble(worker_id = parSapply(cl, 1:n_thread,
+  worker <- tibble(worker_id = parSapply(cl_scen, 1:n_parallel['scenario'],
                                          function(x) paste(Sys.info()[['nodename']],
                                                            Sys.getpid(), sep = "-")),
-                   thread_id = dir(run_path) %>% .[grepl("thread_",.)])
+                   thread_id = thread_ids)
 
   registerDoSNOW(cl_scen)
+
+  ## If not quiet a function for displaying the simulation progress is generated
+  ## and provided to foreach via the SNOW options
+  t0 <- now()
+
+  sim_result <- foreach(i_scn = 1:n_scenario,
+                        .packages = c("dplyr", "lubridate", "processx", "stringr"),
+                        .options.snow = opts) %dopar% {
+    # for(i_scn in 1:n_scenario) {
+    ## Identify worker of the parallel process and link it with respective thread
+    worker_id <- paste(Sys.info()[['nodename']], Sys.getpid(), sep = "-")
+    thread_id <- worker[worker$worker_id == worker_id, 2][[1]]
+    thread_path <- run_path%//%thread_id
+    # thread_path <- run_path%//%'thread_1'
+    args_list  <- list(project_path = thread_path,
+                       output       = output,
+                       n_thread     = n_parallel['parameter'],
+                       quiet = TRUE,
+                       run_in_project = run_in_project)
+    args_list <- c(args_list, dot_args)
+
+    scn_i <- scenario_name[i_scn]
+
+    thread_files <- list.files(thread_path, full.names = TRUE)
+    file.remove(thread_files)
+
+    project_files <- list.files(project_path, full.names = TRUE)
+    file.copy(project_files, thread_path)
+
+    scenario_files <- list.files(paste0(scenario_path, '/', scn_i),
+                                 full.names = TRUE)
+    file.copy(scenario_files, thread_path, overwrite = TRUE)
+
+    if(version == 'plus') {
+      scn_sim <- do.call(run_swatplus, args_list)
+    }else {
+      scn_sim <- do.call(run_swat2012, args_list)
+    }
+
+    if(dot_args$return_output) {
+      return(scn_sim)
+    }
+  }
+
+  ## Stop cluster after parallel run
+  stopCluster(cl_scen)
+
+  if (!quiet) {
+    finish_progress(n_scenario, t0, "scenario")
+  }
+
+  ## Delete the parallel threads if keep_folder is not TRUE
+  if(!dot_args$keep_folder) unlink(run_path, recursive = TRUE)
+
+  if (dot_args$return_output) {
+    parameter <- sim_result[[1]]$parameter
+
+    has_sim <- map_lgl(sim_result, ~! is.null(.x$simulation))
+
+    scn_simulations <- sim_result[has_sim] %>%
+      map(., ~.x$simulation) %>%
+      set_names(., scenario_name[has_sim])
+
+    sim_log <- sim_result %>%
+      map(., ~.x$run_info$simulation_log) %>%
+      map2(., scenario_name, ~ mutate(.x, scenario = .y, .before = 1)) %>%
+      list_rbind(.) %>%
+      mutate(run_path = project_path) %>%
+      mutate(scenario_path = scenario_path, .before = run_path)
+    sim_log$project_path <- project_path
+
+    run_info <- list(simulation_log = sim_log,
+                     simulation_period = sim_result[[1]]$run_info$simulation_period,
+                     output_definition = sim_result[[1]]$run_info$output_definition)
+
+    error_report <- map(sim_result, ~.x$error_report)
+    has_error    <- map_lgl(error_report, ~ !is.null(.x))
+
+    if(any(has_error)) {
+      warning("Some simulations runs failed! Check '.$error_report' in your",
+              " simulation results for further information.")
+      scn_err_name <- scenario_name[has_error]
+
+      error_report <- sim_result[has_error] %>%
+        map(., ~.x$error_report) %>%
+        map2(., scn_err_name, ~ mutate(.x, scenario = .y, .before = 1)) %>%
+        list_rbind(.)
+    } else {
+      error_report <- NULL
+    }
+
+    output_list <- list()
+
+    if(dot_args$add_parameter) {
+      output_list$parameter <- parameter
+    }
+    output_list$simulation <- scn_simulations
+    output_list$error_report <- error_report
+    output_list$run_info <- run_info
+
+    ## ...and return simulation results if return_output is TRUE
+    return(output_list)
+  }
 }

@@ -16,8 +16,9 @@ get_n_parallel(n_thread, n_scenario, n_parameter)
 scenario.}
 }
 \value{
-A vector of length 2 with the number of parallel threads for
-scenarios and parameters and the the total number of iterations.
+A vector of length 4 with the number of parallel threads for
+scenarios and parameters, the total number of used cores and the the total
+number of iterations.
 }
 \description{
 Get numbers of parallel threads for scenarios and parameters which minimize

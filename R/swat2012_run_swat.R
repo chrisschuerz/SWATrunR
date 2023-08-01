@@ -404,10 +404,16 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
     }
 
     run_path <- project_path
+#
+#     if(length(run_index) > 1) {
+#       stop('Only single run with no or one parameter combination can be run ',
+#            "directly in the 'project_path'. To run multiple simulations, set ",
+#            "'run_in_project = FALSE'")
+#     }
 
-    if(length(run_index) > 1) {
-      stop('Only single run with no or one parameter combination can be run ',
-           "directly in the 'project_path'. To run multiple simulations, set ",
+    if(n_thread > 1) {
+      stop('Only single single simulations can be run sequentially',
+           "directly in the 'project_path'. To run parallel simulations, set ",
            "'run_in_project = FALSE'")
     }
 

@@ -5,14 +5,12 @@
 #' @param run_index Indices of parameter combintations which should be run
 #'   from the parameter set in `parameter`. This is an optional input argument
 #'   passed on to `run_swat*()`.
-#' @param ... Addtional input arguments which can be passed on. Not considered
-#'   in this function.
 #'
 #' @returns the number of parameter sets as integer value
 #'
 #' @keywords internal
 #'
-get_n_parameter <- function(parameter = NULL, run_index = NULL, ...) {
+get_n_parameter <- function(parameter = NULL, run_index = NULL) {
   # Get the number of parameter sets which should be run for each scenario based
   # on the additionally provided input arguments
   if (!is.null(parameter)) {
@@ -40,8 +38,9 @@ get_n_parameter <- function(parameter = NULL, run_index = NULL, ...) {
 #' @param n_parameter Number of parameter sets which should be run for every
 #'   scenario.
 #'
-#' @returns A vector of length 2 with the number of parallel threads for
-#'   scenarios and parameters and the the total number of iterations.
+#' @returns A vector of length 4 with the number of parallel threads for
+#'   scenarios and parameters, the total number of used cores and the the total
+#'   number of iterations.
 #'
 #' @importFrom dplyr filter mutate %>%
 #' @importFrom parallel detectCores
@@ -63,6 +62,7 @@ get_n_parallel <- function(n_thread, n_scenario, n_parameter) {
 
   n_parallel <- c(scenario   = n_comb$n_s,
                   parameter  = n_comb$n_p,
+                  core_total = n_comb$n_c,
                   iterations = n_comb$i_c)
 
   return(n_parallel)
@@ -78,12 +78,13 @@ get_n_parallel <- function(n_thread, n_scenario, n_parameter) {
 #'
 #' @keywords internal
 #'
-check_arg_names <- function(arg_names, version) {
+check_arg_names <- function(dot_args, version) {
+  arg_names <- names(dot_args)
+
   # Define possible input arguments for both SWAT+ and SWAT2012
-  names_gen <- c('project_path', 'scenario_path', 'output', 'version', 'n_thread',
-                 'parameter', 'start_date', 'end_date', 'years_skip', 'run_index',
+  names_gen <- c('parameter', 'start_date', 'end_date', 'years_skip', 'run_index',
                  'run_path', 'save_file', 'save_path', 'return_output',
-                 'add_parameter', 'add_date', 'split_units', 'keep_folder' ,'')
+                 'add_parameter', 'add_date', 'split_units', 'keep_folder')
 
   # SWAT+ specific input arguments
   names_plus <- c('start_date_print', 'time_out')
@@ -114,4 +115,27 @@ check_arg_names <- function(arg_names, version) {
          ':\n',
          paste(args_not_in_names, collapse = ', '))
   }
+}
+
+#' Prepare scenario thread paths
+#'
+#' @param project_path Path to the SWAT project folder on the hard drive
+#'   (i.e. txtinout folder).
+#' @param n_parallel Named vector whith number of cores to be used for parallel
+#'   threads of scenarios and parameters
+#'
+#' @returns Character vector with the full thread paths
+#'
+#' @importFrom purrr walk
+#'
+#' @keywords internal
+#'
+build_scenario_run <- function(project_path, run_path, n_parallel) {
+  if(dir.exists(run_path)) {
+    unlink(run_path, recursive = TRUE, force = TRUE)
+  }
+  thread_ids <- paste0('thread_', 1:n_parallel['scenario'])
+  thread_paths <- paste0(run_path,'/', thread_ids)
+  walk(thread_paths, ~ dir.create(path = .x, recursive = TRUE))
+  return(thread_ids)
 }

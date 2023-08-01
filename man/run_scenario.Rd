@@ -4,14 +4,7 @@
 \alias{run_scenario}
 \title{Run a set of scenarios for a SWAT+/SWAT2012 project}
 \usage{
-run_scenario(
-  project_path,
-  scenario_path,
-  output,
-  version,
-  n_thread = NULL,
-  ...
-)
+run_scenario(project_path, scenario_path, output, version, ...)
 }
 \arguments{
 \item{project_path}{Path to the SWAT project folder on the hard drive
@@ -37,12 +30,6 @@ on the help page of the functions \code{\link{run_swatplus}} and
 \item{version}{The version of the SWAT model setup in \code{project_path}.
 \code{version} must be either \code{'plus'} for SWAT+ model setups and \code{'2012'} if
 the model setup is a SWAT2012 project.}
-
-\item{n_thread}{(optional) Number parallel threads in which the simulations
-are performed. Default, \code{n_thread} is \code{NULL} and all simulations are run on
-a single core. If \code{n_thread} is defined with a number greater than 1 the
-simulations are performed in parallel on that number of cores.
-\code{n_thread} is always limited by the number of cores of the used computer.}
 
 \item{...}{Other input arguments passed on to \code{run_swatplus()} or
 \code{run_swat2012()} depending on the \code{version} of the SWAT project. All input

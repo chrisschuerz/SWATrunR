@@ -5,12 +5,12 @@
 \title{Check the names of the passed input arguments and trigger error if argument
 is not supported by any of the run functions.}
 \usage{
-check_arg_names(arg_names, version)
+check_arg_names(dot_args, version)
 }
 \arguments{
-\item{arg_names}{Character vector of provided input arguments}
-
 \item{version}{Version of the SWAT project, one of 'plus', '2012'}
+
+\item{arg_names}{Character vector of provided input arguments}
 }
 \value{
 Error message if argument is not supported

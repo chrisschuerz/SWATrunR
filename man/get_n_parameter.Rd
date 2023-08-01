@@ -4,7 +4,7 @@
 \alias{get_n_parameter}
 \title{Get the number of parameter sets which shold be run for each scenario.}
 \usage{
-get_n_parameter(parameter = NULL, run_index = NULL, ...)
+get_n_parameter(parameter = NULL, run_index = NULL)
 }
 \arguments{
 \item{parameter}{Parameter input table that is passed as an optional
@@ -13,9 +13,6 @@ get_n_parameter(parameter = NULL, run_index = NULL, ...)
 \item{run_index}{Indices of parameter combintations which should be run
 from the parameter set in \code{parameter}. This is an optional input argument
 passed on to \verb{run_swat*()}.}
-
-\item{...}{Addtional input arguments which can be passed on. Not considered
-in this function.}
 }
 \value{
 the number of parameter sets as integer value
