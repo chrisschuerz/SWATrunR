@@ -181,7 +181,7 @@ read_mgtout <- function(output_i, thread_path) {
 
   mgt <- mutate(mgt, label = paste(mgt$hru, mgt$year, mgt$plant_name, sep = '_'))
   multi_harv <- table(mgt$label)
-  mgt <- select(mgt, -label)
+  # mgt <- select(mgt, -label)
 
   if(any(multi_harv > 1)) {
     mgt_multi  <- filter(mgt, label %in% names(multi_harv)[multi_harv > 1])
