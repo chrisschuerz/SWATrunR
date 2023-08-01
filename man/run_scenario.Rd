@@ -35,15 +35,58 @@ the model setup is a SWAT2012 project.}
 \code{run_swat2012()} depending on the \code{version} of the SWAT project. All input
 arguments passed with \code{...} must be defined for the respective run function.}
 }
+\value{
+Returns the simulation results as list with the following elements:
+\itemize{
+\item \code{.$parameter} is only available if parameter changes were implemented in
+the simulation runs. \code{.$parameter} is a list with 2 elements:
+\itemize{
+\item \code{.$parameter$definition} is a tibble which shows how the parameter
+changes were defined.
+\item \code{.$parameter$values} is a tibble with the values of the defined
+parameter changes. Each row is a parameter set. The names of the
+columns correspond to the \code{par_name} which are defined in
+\code{.$parameter$definition}.
+}
+\item \code{.$simulation} is a list with the defined and simulated output variables.
+Each list element is a scenario output. The name of the list element is the
+same as the scenarios folder name. Each scenario element is a list where
+each list element is one defined output variable. The name of each list
+element is the name which was defined with \code{define_output()}.
+\item \code{.$error_report} is only available if simulation runs failed. This element
+is a tibble which summarizes the failed simulations and the triggered errors
+of the SWAT executable which caused a simulation to fail.
+\item \code{.$run_info} is a list with meta information on the simulation run. The
+saved information is:
+\itemize{
+\item \code{.$run_info$simulation_log} is a tibble which logs simulation start and
+end time_stamps, duration and paths of the project folder.
+\item \code{.$run_info$simulation_period} is a tibble which provides dates, and skipped
+years of the saved output variables.
+\item \code{.$run_info$output_definition} is a tibble which summarizes the defined
+output variables which were passed with the input argument \code{output} and
+defined with \code{define_output()}.
+}
+}
+}
 \description{
-\code{run_scenario()} uses scenario input files which are organized in the
-\code{scenario_path} and performs scenario simulations for a SWAT+/SWAT2012 model
-setup, which is located in the \code{project_path}. The scenario simulations
-return output variables which are defined with \code{output}. The version of the
-model set up is defined with \code{version}. Scenarios can be run in parallel by
+\code{run_scenario()} performs scenario simulations for a SWAT+ or SWAT2012 model
+setup, which is located in the \code{project_path}. Scenarios are defined by SWAT
+sub-folders in the \code{scenario_path}. The name of each scenario is defined by
+its sub-folder name. SWAT input files in each scenario folder define a scenario.
+These are input files (e.g. weather input files) which overwrite the respective
+input files in a copy of the original SWAT model setup defined in \code{project_path}.
+
+The scenario simulations return output variables which are defined with
+\code{output}. The version of the model set up is defined with \code{version}.
+\code{version} defines whether \code{run_swatplus()} (\code{version = 'plus'}), or
+\code{run_swat2012()} (\code{version = '2012'}) is called. Scenarios can be run in parallel by
 defining \code{n_thread}.
 
 Further input arguments for \code{run_swatplus()} and \code{run_swat2012()} can be
 passed to \code{run_scenario()}. E.g. if a parameter set is provided with
 \code{parameter} all defined parameter combinations will be run for each scenario.
+Simulations can e.g. be run in parallel by defining \code{n_thread}. For a full
+list of input arguments see the help pages of \code{\link{run_swatplus}} and
+\code{\link{run_swat2012}}.
 }

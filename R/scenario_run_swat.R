@@ -1,16 +1,25 @@
 #' Run a set of scenarios for a SWAT+/SWAT2012 project
 #'
 #' @description
-#' `run_scenario()` uses scenario input files which are organized in the
-#' `scenario_path` and performs scenario simulations for a SWAT+/SWAT2012 model
-#' setup, which is located in the `project_path`. The scenario simulations
-#' return output variables which are defined with `output`. The version of the
-#' model set up is defined with `version`. Scenarios can be run in parallel by
+#' `run_scenario()` performs scenario simulations for a SWAT+ or SWAT2012 model
+#' setup, which is located in the `project_path`. Scenarios are defined by SWAT
+#' sub-folders in the `scenario_path`. The name of each scenario is defined by
+#' its sub-folder name. SWAT input files in each scenario folder define a scenario.
+#' These are input files (e.g. weather input files) which overwrite the respective
+#' input files in a copy of the original SWAT model setup defined in `project_path`.
+#'
+#' The scenario simulations return output variables which are defined with
+#' `output`. The version of the model set up is defined with `version`.
+#' `version` defines whether `run_swatplus()` (`version = 'plus'`), or
+#' `run_swat2012()` (`version = '2012'`) is called. Scenarios can be run in parallel by
 #' defining `n_thread`.
 #'
 #' Further input arguments for `run_swatplus()` and `run_swat2012()` can be
 #' passed to `run_scenario()`. E.g. if a parameter set is provided with
 #' `parameter` all defined parameter combinations will be run for each scenario.
+#' Simulations can e.g. be run in parallel by defining `n_thread`. For a full
+#' list of input arguments see the help pages of \code{\link{run_swatplus}} and
+#' \code{\link{run_swat2012}}.
 #'
 #' @param project_path  Path to the SWAT project folder on the hard drive
 #'   (i.e. txtinout folder).
@@ -40,18 +49,45 @@
 #'   `run_swat2012()` depending on the `version` of the SWAT project. All input
 #'   arguments passed with `...` must be defined for the respective run function.
 #'
+#' @returns
+#' Returns the simulation results as list with the following elements:
+#'
+#' - `.$parameter` is only available if parameter changes were implemented in
+#'   the simulation runs. `.$parameter` is a list with 2 elements:
+#'      * `.$parameter$definition` is a tibble which shows how the parameter
+#'      changes were defined.
+#'      * `.$parameter$values` is a tibble with the values of the defined
+#'        parameter changes. Each row is a parameter set. The names of the
+#'        columns correspond to the `par_name` which are defined in
+#'        `.$parameter$definition`.
+#' - `.$simulation` is a list with the defined and simulated output variables.
+#'   Each list element is a scenario output. The name of the list element is the
+#'   same as the scenarios folder name. Each scenario element is a list where
+#'   each list element is one defined output variable. The name of each list
+#'   element is the name which was defined with `define_output()`.
+#' - `.$error_report` is only available if simulation runs failed. This element
+#'   is a tibble which summarizes the failed simulations and the triggered errors
+#'   of the SWAT executable which caused a simulation to fail.
+#' - `.$run_info` is a list with meta information on the simulation run. The
+#'   saved information is:
+#'     * `.$run_info$simulation_log` is a tibble which logs simulation start and
+#'       end time_stamps, duration and paths of the project folder.
+#'    * `.$run_info$simulation_period` is a tibble which provides dates, and skipped
+#'      years of the saved output variables.
+#'    * `.$run_info$output_definition` is a tibble which summarizes the defined
+#'      output variables which were passed with the input argument `output` and
+#'      defined with `define_output()`.
+#'
 #' @examples
 #'
-#' @importFrom data.table fread
 #' @importFrom doSNOW registerDoSNOW
-#' @importFrom dplyr %>%
+#' @importFrom dplyr mutate %>%
 #' @importFrom foreach foreach %dopar%
 #' @importFrom lubridate now
 #' @importFrom parallel detectCores makeCluster parSapply stopCluster
-#' @importFrom processx run
-#' @importFrom purrr map map_if map_lgl
-#' @importFrom stringr str_split
-#' @importFrom tibble tibble as_tibble
+#' @importFrom purrr list_rbind map map_lgl map2 set_names
+#' @importFrom tibble tibble
+#'
 #' @export
 #'
 run_scenario <- function(project_path, scenario_path, output, version, ...) {
