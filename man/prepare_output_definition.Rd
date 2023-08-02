@@ -4,12 +4,27 @@
 \alias{prepare_output_definition}
 \title{Check output if is a data.frame and convert in case to named list}
 \usage{
-prepare_output_definition(output, swat_vers, project_path)
+prepare_output_definition(output, swat_version, project_path)
 }
 \arguments{
 \item{output}{Output (or list of outputs) defined with \code{define_output()}}
 
-\item{swat_vers}{SWAT version one of '2012' or 'plus'}
+\item{swat_version}{SWAT version one of '2012' or 'plus'.}
+
+\item{project_path}{Path to the SWAT project folder on the hard drive
+(i.e. txtinout folder)}
+}
+\value{
+A tibble with:
+\itemize{
+\item \code{name} User defined variable name
+\item \code{file_full} Full output file name
+\item \code{file} File name without file extension
+\item \code{time_interval} output variable time interval
+\item \code{variable} SWAT output variable written as in output file
+\item \code{unit} vector of units for which variable is extracted
+\item \code{label} Specific plant or pesticide name for which output is extracted
+}
 }
 \description{
 Check output if is a data.frame and convert in case to named list

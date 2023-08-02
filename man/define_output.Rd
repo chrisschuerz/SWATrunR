@@ -4,40 +4,59 @@
 \alias{define_output}
 \title{Define SWAT output variables}
 \usage{
-define_output(file, variable = NULL, unit = NULL)
+define_output(file, variable = NULL, unit = NULL, label = NULL)
 }
 \arguments{
-\item{file}{Character string. The SWAT output file to read.
-(Valid inputs are \code{'rch'}, \code{'sub'}, \code{'hru'}, and \code{'sed'} for
-the respective SWAT2012 output files 'output.rch', 'output.sub',
-output.hru', and 'output.sed'. For the respective SWAT+ output files see
-the available options in the 'print.prt' file of your SWAT+ project).}
+\item{file}{The SWAT output file to read.
 
-\item{variable}{Character string. Output variable that is extracted from the
-respective SWAT output file defined with \code{file}. For a correct
-definition of SWAT2012 output variables please use the
-variable documented in the
-\href{https://swat.tamu.edu/media/69395/ch32_output.pdf}{SWAT Output Data
-Documentation}. For SWAT+ output variables please use the header names from
-the respective output table, \strong{without the units!} Optionally, the
-column number of a variable in the respective output file can be provided.
-\strong{CAUTION:} spaces (e.g. in P TOT) must be replaced with underscores
-(P_TOT).}
+For SWAT+ simulations with \code{run_swatplus()} all object files can be used
+which are defined in the input file 'print.prt'. All file definitions
+require to add the time interval extension in which the outputs should be
+returned. The options for the time interval are \code{'day'} for daily , \code{'mon'}
+for monthly, \code{'yr'} for yearly, and \code{'aa'} for average annual outputs.
+Additionally, the outputs \code{'fdcout'} for flow duration curve outputs,
+\code{'mgtout'} for management outputs, or \verb{'basin_crop_yld_<yr or aa>} for
+basin crop yields can be defined.
 
-\item{unit}{Numeric vector. The spatial unit (e.g. the reach, subbasin, or
-HRU) defined by the columns 'RCH', 'SUB', 'HRU' in the respective SWAT2012
-output file or the 'unit' column in the SWAT+ output file for which the
-outputs should be extracted.}
+For SWAT2012 simulations with \code{run_swat2012()} valid inputs are
+\code{'rch'}, \code{'sub'}, \code{'hru'}, and \code{'sed'} for the
+respective SWAT2012 output files 'output.rch', 'output.sub', output.hru',
+and 'output.sed'.}
+
+\item{variable}{Output variable that is extracted from the defined SWAT
+output \code{file}.
+
+A \code{variable} must be defined with the name which the variable has in the
+respective output table. The variable names are case sensitive (SWAT2012
+variables e.g. are usually all caps). In the \code{variable} definition units
+(which are part of the names in SWAT2012 output files) should be excluded
+from the name. Spaces in variable names must be replaced by an underscore
+(e.g. P TOT is defined as \code{'P_TOT'}).
+
+Some SWAT+ output files have specific output variable names. For \code{'mgtout'}
+outputs the variables \code{'yld'}, \code{'phu'}, \code{'bioms'}, \code{'wat_strs'},
+,\code{'aer_strs'},\code{'tmp_strs'}, \code{'n_strs'}, and \code{'p_strs'} can be returned. For
+\verb{'basin_crop_yld_*} outputs the variables \code{'harv_area'}, \code{'yld_total'}, and
+\code{'yld'} can be returned.}
+
+\item{unit}{The spatial unit for which outputs are returned.
+
+In SWAT+ output files spatial units are in most cases defined with the
+'unit' column and are e.g. the HRU IDs in \code{'hru_*'} output files, or
+channel IDs e.g. in \code{'channel_sd'} or \verb{'channel_sdmorph_*} output files
+(same applies to all other object types).
+
+In SWAT2012 output files \code{unit} is the  the reach, subbasin, or HRU ID
+defined by the columns 'RCH', 'SUB', or 'HRU' in the respective SWAT2012
+output file.}
+}
+\value{
+A table with the columns 'file', 'variable', 'unit', and 'label'.
 }
 \description{
-Define the SWAT output variables that should be extracted after the SWAT
-model execution and be returned to R. It is required to use this function to
-pass the desired outputs with the variable \code{output} in the function calls
-\code{\link{run_swat2012}} and \code{\link{run_swatplus}}. See
-the examples how to use the \code{output} definition together with
-\code{\link{run_swat2012}} or \code{\link{run_swatplus}}. Further, more comprehensive
-examples are provided on the package's 'Get Started' page in the section
-'\href{https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html#first-swat-model-runs}{First SWAT model runs}.
+Define the SWAT+ or SWAT2012 output variables which are returned for a SWAT
+model run with \code{run_swatplus()} or \code{run_swat2012()}. The defined outputs are
+passed with the input argument \code{output} in either one of the run functions.
 }
 \examples{
 # A single variable can be defined as follows (e.g. "FLOW_OUT" for
