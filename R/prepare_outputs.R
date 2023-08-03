@@ -150,6 +150,8 @@ extract_non_var_cols <- function(tbl) {
     col_extr <- tbl[1]
   } else if (all(names(tbl)[c(1,2)] == c('unit', 'date'))) {
     col_extr <- tbl[1:2]
+  } else if (all(names(tbl)[c(1:3)] == c('unit', 'pesticide', 'date'))) {
+    col_extr <- tbl[1:3]
   } else if (names(tbl)[1] == 'unit') {
     col_extr <- tbl[1]
   } else if(all(names(tbl)[c(1,2)] == c('year', 'plant_name'))) {
@@ -175,6 +177,8 @@ remove_non_var_cols <- function(tbl) {
     tbl <- tbl[2:ncol(tbl)]
   } else if (all(names(tbl)[c(1,2)] == c('unit', 'date'))) {
     tbl <- tbl[3:ncol(tbl)]
+  } else if (all(names(tbl)[c(1:3)] == c('unit', 'pesticide', 'date'))) {
+    tbl <- tbl[4:ncol(tbl)]
   } else if (names(tbl)[1] == 'unit') {
     tbl <- tbl[2:ncol(tbl)]
   } else if(all(names(tbl)[c(1,2)] == c('year', 'plant_name'))) {

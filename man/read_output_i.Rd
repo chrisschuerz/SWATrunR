@@ -4,7 +4,14 @@
 \alias{read_output_i}
 \title{Reading the i_th SWAT+ output file, filter required units and select variables.}
 \usage{
-read_output_i(output_i, col_names_i, thread_path, date_cols)
+read_output_i(
+  output_i,
+  col_names_i,
+  thread_path,
+  date_cols,
+  add_cols = NULL,
+  n_skip
+)
 }
 \arguments{
 \item{output_i}{i_th part from the output table which defines what to
@@ -14,7 +21,11 @@ read from the SWAT model results}
 
 \item{thread_path}{String path to the thread where to read the output file}
 
-\item{date_cols}{If data should be read, vector of names of the date columns.}
+\item{date_cols}{Vector of names of the date columns.}
+
+\item{add_cols}{Additional columns to add to outputs. E.g. pesticide.}
+
+\item{n_skip}{Number of header rows to skip}
 }
 \description{
 Reading the i_th SWAT+ output file, filter required units and select variables.

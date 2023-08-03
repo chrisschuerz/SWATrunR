@@ -4,11 +4,13 @@
 \alias{add_id}
 \title{Add id column to output table}
 \usage{
-add_id(tbl)
+add_id(tbl, col_unique = "unit")
 }
 \arguments{
-\item{tbl}{Output table
-read from the SWAT model results}
+\item{tbl}{Output table read from the SWAT model results}
+
+\item{col_unique}{Column names which should be considered to identify unique
+combinations}
 }
 \description{
 Add id column to output table

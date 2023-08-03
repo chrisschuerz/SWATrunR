@@ -201,7 +201,8 @@ setup_swatplus <- function(project_path, parameter, output,
   objects_in_tbl <- filter(output, ! file %in% c('basin_crop_yld', 'fdcout', 'mgtout'))
   # Change from channel_sdmorph to channel_sd as the first is written when the
   # second is defined
-  objects_in_tbl[objects_in_tbl == 'channel_sdmorph'] <- 'channel_sd'
+  objects_in_tbl$file[objects_in_tbl$file == 'channel_sdmorph'] <- 'channel_sd'
+  objects_in_tbl$file[grepl('_pest_',objects_in_tbl$file_full)] <- 'pest'
 
   if(nrow(objects_in_tbl) > 0) {
     for(i in 1:nrow(objects_in_tbl)) {

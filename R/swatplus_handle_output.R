@@ -21,7 +21,9 @@ read_swatplus_output <- function(output, thread_path, add_date, split_units) {
   }
 
   # Split into time series outputs and other outputs (yields, FDC)
-  output_ts <- filter(output, !file %in% c('basin_crop_yld', 'fdcout', 'mgtout'))
+  output_ts  <- filter(output, !file %in% c('basin_crop_yld', 'fdcout', 'mgtout') &
+                              !grepl('_pest', file))
+  output_pst <- filter(output, grepl('_pest', file))
   output_yld <- filter(output,  file %in% c('basin_crop_yld'))
   output_mgt <- filter(output,  file %in% c('mgtout'))
   output_fdc <- filter(output,  file %in% c('fdcout'))
@@ -43,7 +45,9 @@ read_swatplus_output <- function(output, thread_path, add_date, split_units) {
       map(., ~add_suffix_to_duplicate(.x))
 
     ## Read all output files, assign column names and assign output file names
-    out_tables_ts <- map2(output_ts, col_names, ~ read_output_i(.x, .y, thread_path, date_cols))
+    out_tables_ts <- map2(output_ts, col_names,
+                          ~ read_output_i(.x, .y, thread_path, date_cols,
+                                          n_skip = 3))
 
     if(add_date) {
       out_tables_ts <- out_tables_ts %>%
@@ -56,6 +60,57 @@ read_swatplus_output <- function(output, thread_path, add_date, split_units) {
         map2(., output_ts, ~mutate_output_i(.x, .y, split_units))
   } else {
     out_tables_ts <- NULL
+  }
+
+  if(nrow(output_pst) > 0) {
+    output_pst <- output_pst %>%
+      group_by(file_full) %>%
+      group_split()
+
+    has_unit_header <- read_table(thread_path%//%output_pst[[1]]$file_full[1],
+                                  skip = 2, n_max = 1, col_names = FALSE) %>%
+      .[[1]] %>%
+      is.character(.)
+
+    if(has_unit_header) {
+      unit_names <- output_pst %>%
+        map(., ~ fread(thread_path%//%.x$file_full[1], skip = 2, nrows = 1, header = F)) %>%
+        map(., ~ unlist(.x) %>% unname(.))
+
+      col_names <- output_pst %>%
+        map(., ~ fread(thread_path%//%.x$file_full[1], skip = 1, nrows = 1, header = F)) %>%
+        map(., ~ unlist(.x) %>% unname(.)) %>%
+        map2(., unit_names, ~ replace_colname_na(.x, .y)) %>%
+        map(., ~ .x[!is.na(.x)]) %>%
+        map(., ~add_suffix_to_duplicate(.x))
+
+      n_skip <- 3
+    } else {
+      col_names <- output_pst %>%
+        map(., ~ fread(thread_path%//%.x$file_full[1], skip = 1, nrows = 1, header = F)) %>%
+        map(., ~ unlist(.x) %>% unname(.)) %>%
+        map(., ~ str_remove(.x, "_[^_]+$"))
+
+      n_skip <- 2
+    }
+
+
+    ## Read all output files, assign column names and assign output file names
+    out_tables_pst <- map2(output_pst, col_names,
+                           ~ read_output_i(.x, .y, thread_path, date_cols,
+                                           add_cols = 'pesticide', n_skip = n_skip))
+
+    if(add_date) {
+      out_tables_pst <- out_tables_pst %>%
+        map(., ~ mutate(.x, date = ymd(paste(yr,mon,day, sep = '-')), .before = 1)) %>%
+        map(., ~ select(.x, -yr, -mon, -day))
+    }
+
+    out_tables_pst <- out_tables_pst %>%
+        map(., ~ add_id(.x, c('unit', 'pesticide'))) %>%
+        map2(., output_pst, ~mutate_output_i(.x, .y, split_units, 'pesticide'))
+  } else {
+    out_tables_pst <- NULL
   }
 
   if (nrow(output_yld) > 0) {
@@ -81,7 +136,7 @@ read_swatplus_output <- function(output, thread_path, add_date, split_units) {
     out_tables_fdc <- NULL
   }
 
-  out_tables <- c(out_tables_ts, out_tables_yld, out_tables_mgt, out_tables_fdc)
+  out_tables <- c(out_tables_ts, out_tables_pst, out_tables_yld, out_tables_mgt, out_tables_fdc)
 
   return(out_tables)
 }
@@ -92,7 +147,9 @@ read_swatplus_output <- function(output, thread_path, add_date, split_units) {
 #'   read from the SWAT model results
 #' @param col_names_i Prepared and fixed column names of output file i
 #' @param thread_path String path to the thread where to read the output file
-#' @param date_cols If data should be read, vector of names of the date columns.
+#' @param date_cols Vector of names of the date columns.
+#' @param add_cols Additional columns to add to outputs. E.g. pesticide.
+#' @param n_skip Number of header rows to skip
 #'
 #' @importFrom data.table fread
 #' @importFrom dplyr filter select %>%
@@ -101,12 +158,13 @@ read_swatplus_output <- function(output, thread_path, add_date, split_units) {
 #' @importFrom tidyselect all_of
 #' @keywords internal
 #'
-read_output_i <- function(output_i, col_names_i, thread_path, date_cols) {
-  fread(thread_path%//%output_i$file_full[1], skip = 3) %>%
+read_output_i <- function(output_i, col_names_i, thread_path,
+                          date_cols, add_cols = NULL, n_skip) {
+  fread(thread_path%//%output_i$file_full[1], skip = n_skip) %>%
     as_tibble(.) %>%
     .[,1:length(col_names_i)] %>%
     set_names(col_names_i) %>%
-    select(., all_of(c(date_cols, 'unit', output_i$variable))) %>%
+    select(., all_of(c(date_cols, 'unit', add_cols, output_i$variable))) %>%
     filter(unit %in% (output_i$unit %>% unlist(.) %>% unique(.)))
 }
 
@@ -276,16 +334,20 @@ add_suffix_to_duplicate <- function(col_name){
 
 #' Add id column to output table
 #'
-#' @param tbl Output table
-#'   read from the SWAT model results
+#' @param tbl Output table read from the SWAT model results
+#' @param col_unique Column names which should be considered to identify unique
+#'   combinations
 #'
 #' @importFrom dplyr mutate
 #'
 #' @keywords internal
 #'
-add_id <- function(tbl){
-  mutate(tbl, id = rep(1:(nrow(tbl)/length(unique(unit))),
-                         each = length(unique(unit))),
+add_id <- function(tbl, col_unique = 'unit'){
+  n_unique <- nrow(unique(tbl[, col_unique]))
+
+  mutate(tbl,
+         id = rep(1:(nrow(tbl) / n_unique),
+                         each = n_unique),
            .before = 1)
 }
 
@@ -300,37 +362,49 @@ add_id <- function(tbl){
 #' @importFrom tidyr pivot_wider
 #' @keywords internal
 #'
-mutate_output_i <- function(out_tbl_i, output_i, split_units) {
+mutate_output_i <- function(out_tbl_i, output_i, split_units, add_unit_col = NULL) {
 
-  tbl_list <- map(output_i$variable, ~ select(out_tbl_i, id, unit, .x)) %>%
-    map(., ~ set_names(.x, c('id', 'unit', 'variable')))
+  tbl_list <- map(output_i$variable, ~ select(out_tbl_i, id, unit, all_of(add_unit_col), .x)) %>%
+    map(., ~ set_names(.x, c('id', 'unit', add_unit_col, 'variable')))
 
   if(split_units) {
     is_multi_unit <- map_lgl(output_i$unit, ~ length(.x) > 1)
 
     tbl_mutate <- tbl_list %>%
       map2(., output_i$unit, ~ filter(.x, unit %in% .y)) %>%
-      map2(., output_i$name, ~ set_names(.x, c('id', 'unit', .y))) %>%
+      map2(., output_i$name, ~ set_names(.x, c('id', 'unit', all_of(add_unit_col), .y))) %>%
       map(., ~ mutate(.x, unit = paste0('_', unit))) %>%
-      map2(., is_multi_unit, ~ mutate(.x, unit = ifelse(rep(.y, nrow(.x)), unit, ''))) %>%
-      map(.,  ~ pivot_wider(.x, id_cols = id, names_from = unit, names_glue = "{.value}{unit}", values_from = 3)) %>%
+      map2(., is_multi_unit, ~ mutate(.x,
+                                      unit = ifelse(rep(.y, nrow(.x)),
+                                                    unit, '')))
+
+    if(!is.null(add_unit_col)) {
+      unit_merge <- tbl_mutate %>%
+        map(., ~ select(.x, unit, all_of(add_unit_col))) %>%
+        map(., ~ apply(.x, 1, paste, collapse = '_'))
+      tbl_mutate <- map2(tbl_mutate, unit_merge, ~ mutate(.x, unit = .y)) %>%
+        map(., ~ select(.x, - all_of(add_unit_col)))
+    }
+    tbl_mutate <- tbl_mutate %>%
+      map(.,  ~ pivot_wider(.x, id_cols = id, names_from = unit,
+                            names_glue = "{.value}{unit}", values_from = 3)) %>%
       map(., ~ select(.x, -id)) %>%
       bind_cols()
 
     if('date' %in% names(out_tbl_i)) {
       date_col <- out_tbl_i %>%
-        filter(., unit == unique(out_tbl_i$unit)[1]) %>%
+        distinct(., id, .keep_all = T) %>%
         select(date)
 
       tbl_mutate <- bind_cols(date_col, tbl_mutate)
     }
   } else {
     if('date' %in% names(out_tbl_i)) {
-      add_cols <- c('unit', 'date')
-      i_col <- 3
+      add_cols <- c('unit', add_unit_col, 'date')
+      i_col <- 3 + length(add_unit_col)
     } else {
-      add_cols <- c('unit')
-      i_col <- 2
+      add_cols <- c('unit', add_unit_col)
+      i_col <- 2 + length(add_unit_col)
     }
 
     tbl_mutate <- tbl_list %>%
