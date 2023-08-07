@@ -4,7 +4,7 @@
 \alias{mutate_output_i}
 \title{Transform extracted outputs into a wide table and add suffix to variable names.}
 \usage{
-mutate_output_i(out_tbl_i, output_i, split_units)
+mutate_output_i(out_tbl_i, output_i, split_units, add_unit_col = NULL)
 }
 \arguments{
 \item{out_tbl_i}{i_th output table read from the SWAT+ outputs}
