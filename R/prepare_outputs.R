@@ -35,6 +35,8 @@ initialize_run_info <- function(model_setup, output, project_path, run_path) {
   run_info$output_definition <- output
   run_info$output_definition$unit <- map_chr(run_info$output_definition$unit,
                                              group_values)
+  run_info$output_definition$label <- map_chr(run_info$output_definition$label,
+                                             group_values)
 
   return(run_info)
 }

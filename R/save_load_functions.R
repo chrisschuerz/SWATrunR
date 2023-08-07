@@ -181,29 +181,30 @@ initialize_save_file <- function(save_path, parameter, run_info, run_index) {
     compare_tables(saved_data$sim_period, sim_period, 'Simulation dates', TRUE)
     compare_tables(saved_data$out_def, run_info$output_definition,
                    'Output definitions', TRUE)
+    if (!is.null(saved_data$sim_tbl)) {
+      if(nrow(saved_data$sim_tbl) > 0) {
+        sim_all   <- 1:nrow(saved_data$par_val)
 
-    if(nrow(saved_data$sim_tbl) > 0) {
-      sim_all   <- 1:nrow(saved_data$par_val)
+        sim_compl <- saved_data$sim_tbl$run_idx[saved_data$sim_tbl$run_idx %in% run_index]
+        sim_msg <-  sim_compl %>%
+          group_values(.)
 
-      sim_compl <- saved_data$sim_tbl$run_idx[saved_data$sim_tbl$run_idx %in% run_index]
-      sim_msg <-  sim_compl %>%
-        group_values(.)
+        sim_miss  <- sim_all[! sim_all %in% unique(saved_data$sim_tbl$run_idx)]
+        miss_msg <-  sim_miss %>%
+          group_values(.)
 
-      sim_miss  <- sim_all[! sim_all %in% unique(saved_data$sim_tbl$run_idx)]
-      miss_msg <-  sim_miss %>%
-        group_values(.)
-
-      if(length(unlist(sim_compl)) > 0) {
-        if (length(sim_miss) == 0) {
-          stop("All simulation runs for the defined parameter set are",
-               " already saved in 'save_file'!"
-          )
-        } else {
-          stop("The following simulation runs are already saved in 'save_file': \n",
-               '  ', sim_msg,
-               "\n  The following simulation runs failed or are missing in 'save_file': \n",
-               '  ', miss_msg,
-               "\n  Change the 'run_index' to run only missing simulations.")
+        if(length(unlist(sim_compl)) > 0) {
+          if (length(sim_miss) == 0) {
+            stop("All simulation runs for the defined parameter set are",
+                 " already saved in 'save_file'!"
+            )
+          } else {
+            stop("The following simulation runs are already saved in 'save_file': \n",
+                 '  ', sim_msg,
+                 "\n  The following simulation runs failed or are missing in 'save_file': \n",
+                 '  ', miss_msg,
+                 "\n  Change the 'run_index' to run only missing simulations.")
+          }
         }
       }
     }
@@ -699,6 +700,7 @@ scan_save_files <- function(save_dir) {
   } else {
     sim_db <- NULL
     sim_tbl <- NULL
+    var_tbl <- NULL
   }
 
   if (length(err_file) > 0) {
@@ -774,7 +776,9 @@ is_identical_tbl <- function(x,y) {
 #' @keywords internal
 #'
 group_values <- function(vals, sep = ':') {
-  if (is.numeric(vals[1])) {
+  if(is.na(vals)) {
+    ''
+  } else if (is.numeric(vals[1])) {
     vals <- sort(vals)
     diff_vals <- diff(vals)
 
