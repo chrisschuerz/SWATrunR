@@ -175,7 +175,7 @@ read_output_i <- function(output_i, col_names_i, thread_path,
 #'   read from the SWAT model results
 #'
 #' @importFrom data.table fread
-#' @importFrom dplyr select %>%
+#' @importFrom dplyr filter select %>%
 #' @importFrom purrr set_names
 #' @importFrom tibble as_tibble
 #' @importFrom tidyselect all_of
@@ -183,11 +183,17 @@ read_output_i <- function(output_i, col_names_i, thread_path,
 #'
 read_basin_yld <- function(output_i, thread_path) {
   yld_header <- c('year', 'no', 'plant_name', 'harv_area', 'yld_total', 'yld')
-  fread(thread_path%//%output_i$file_full[1], skip = 2, header = FALSE) %>%
+  yld <- fread(thread_path%//%output_i$file_full[1],
+               skip = 2, header = FALSE) %>%
     set_names(., yld_header) %>%
     as_tibble(.) %>%
     select(., year, plant_name, all_of(output_i$variable)) %>%
     set_names(c('year', 'plant_name', output_i$name))
+
+  label <- unique(unlist(output_i$label))
+  if(!all(is.na(label))) {
+    yld <- filter(yld, plant_name %in% label)
+  }
 }
 
 #' Read and process SWAT+ management outputs.
@@ -228,18 +234,17 @@ read_mgtout <- function(output_i, thread_path) {
   mgt[,4:ncol(mgt)] <- map_df(mgt[,4:ncol(mgt)], as.numeric)
 
   unit <- unique(unlist(output_i$unit))
-
-  if(length(unit) > 0) {
-    if(is.numeric(unit[1])) {
+  if(!all(is.na(unit))) {
       mgt <- filter(mgt, hru %in% unit)
-    } else {
-      mgt <- filter(mgt, plant_name %in% unit)
-    }
+  }
+
+  label <- unique(unlist(output_i$label))
+  if(!all(is.na(label))) {
+      mgt <- filter(mgt, plant_name %in% label)
   }
 
   mgt <- mutate(mgt, label = paste(mgt$hru, mgt$year, mgt$plant_name, sep = '_'))
   multi_harv <- table(mgt$label)
-  # mgt <- select(mgt, -label)
 
   if(any(multi_harv > 1)) {
     mgt_multi  <- filter(mgt, label %in% names(multi_harv)[multi_harv > 1])
@@ -277,6 +282,7 @@ read_mgtout <- function(output_i, thread_path) {
       mgt <- bind_rows(mgt_single, mgt_multi)
     }
   }
+  mgt <- select(mgt, -label)
   mgt <- arrange(mgt, hru, year, plant_name)
 
   return(mgt)

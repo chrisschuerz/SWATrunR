@@ -776,7 +776,7 @@ is_identical_tbl <- function(x,y) {
 #' @keywords internal
 #'
 group_values <- function(vals, sep = ':') {
-  if(is.na(vals)) {
+  if(all(is.na(vals))) {
     ''
   } else if (is.numeric(vals[1])) {
     vals <- sort(vals)
