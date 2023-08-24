@@ -235,54 +235,55 @@ read_mgtout <- function(output_i, thread_path) {
 
   unit <- unique(unlist(output_i$unit))
   if(!all(is.na(unit))) {
-      mgt <- filter(mgt, hru %in% unit)
+    mgt <- filter(mgt, hru %in% unit)
   }
 
   label <- unique(unlist(output_i$label))
   if(!all(is.na(label))) {
-      mgt <- filter(mgt, plant_name %in% label)
+    mgt <- filter(mgt, plant_name %in% label)
   }
 
-  mgt <- mutate(mgt, label = paste(mgt$hru, mgt$year, mgt$plant_name, sep = '_'))
-  multi_harv <- table(mgt$label)
+  mgt <- mutate(mgt, lbl = paste(mgt$hru, mgt$year, mgt$plant_name, sep = '_'))
+  multi_harv <- table(mgt$lbl)
 
   if(any(multi_harv > 1)) {
-    mgt_multi  <- filter(mgt, label %in% names(multi_harv)[multi_harv > 1])
+    mgt_multi  <- filter(mgt, lbl %in% names(multi_harv)[multi_harv > 1])
     mgt_single <- mgt %>%
-      filter(., !label %in% names(multi_harv)[multi_harv > 1]) %>%
-      select(-label)
+      filter(., !lbl %in% names(multi_harv)[multi_harv > 1]) %>%
+      select(-lbl)
 
     if('yld' %in% output_i$variable & length(unique(output_i$variable)) > 1) {
       mgt_multi_yld <- mgt_multi %>%
-        select(label, yld) %>%
-        group_by(label) %>%
+        select(lbl, yld) %>%
+        group_by(lbl) %>%
         summarise(., yld = sum(yld), .groups = 'drop')
 
       mgt_multi_other <- mgt_multi %>%
         select(-yld, -hru, -year, -plant_name) %>%
-        group_by(label) %>%
+        group_by(lbl) %>%
         summarise(., across(everything(),  max), .groups = 'drop')
 
       mgt_multi <- mgt_multi %>%
-        select(hru, year, plant_name, label) %>%
-        left_join(., mgt_multi_yld, by = 'label') %>%
-        left_join(., mgt_multi_other, by = 'label') %>%
-        select(-label)
+        select(hru, year, plant_name, lbl) %>%
+        left_join(., mgt_multi_yld, by = 'lbl') %>%
+        left_join(., mgt_multi_other, by = 'lbl') %>%
+        select(-lbl)
 
       mgt_multi <- mgt_multi[names(mgt_single)]
       mgt <- bind_rows(mgt_single, mgt_multi)
     } else {
       agg_fun <- ifelse('yld' %in% output_i$variable, sum, max)
       mgt_multi <- mgt_multi %>%
-        select(-label) %>%
+        select(-lbl) %>%
         group_by(hru, year, plant_name) %>%
-        summarise(., across(everything(),  agg_fun), .groups = 'drop')
+        summarise(., across(everything(),  agg_fun), .groups = 'drop') %>%
+        select(., -lbl)
 
       mgt_multi <- mgt_multi[names(mgt_single)]
       mgt <- bind_rows(mgt_single, mgt_multi)
     }
   }
-  mgt <- select(mgt, -label)
+
   mgt <- arrange(mgt, hru, year, plant_name)
 
   return(mgt)
