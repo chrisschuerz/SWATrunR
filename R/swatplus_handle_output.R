@@ -243,41 +243,40 @@ read_mgtout <- function(output_i, thread_path) {
     mgt <- filter(mgt, plant_name %in% label)
   }
 
-  mgt <- mutate(mgt, lbl = paste(mgt$hru, mgt$year, mgt$plant_name, sep = '_'))
-  multi_harv <- table(mgt$lbl)
+  mgt <- mutate(mgt, label = paste(mgt$hru, mgt$year, mgt$plant_name, sep = '_'))
+  multi_harv <- table(mgt$label)
 
   if(any(multi_harv > 1)) {
-    mgt_multi  <- filter(mgt, lbl %in% names(multi_harv)[multi_harv > 1])
+    mgt_multi  <- filter(mgt, label %in% names(multi_harv)[multi_harv > 1])
     mgt_single <- mgt %>%
-      filter(., !lbl %in% names(multi_harv)[multi_harv > 1]) %>%
-      select(-lbl)
+      filter(., !label %in% names(multi_harv)[multi_harv > 1]) %>%
+      select(-label)
 
     if('yld' %in% output_i$variable & length(unique(output_i$variable)) > 1) {
       mgt_multi_yld <- mgt_multi %>%
-        select(lbl, yld) %>%
-        group_by(lbl) %>%
+        select(label, yld) %>%
+        group_by(label) %>%
         summarise(., yld = sum(yld), .groups = 'drop')
 
       mgt_multi_other <- mgt_multi %>%
         select(-yld, -hru, -year, -plant_name) %>%
-        group_by(lbl) %>%
+        group_by(label) %>%
         summarise(., across(everything(),  max), .groups = 'drop')
 
       mgt_multi <- mgt_multi %>%
-        select(hru, year, plant_name, lbl) %>%
-        left_join(., mgt_multi_yld, by = 'lbl') %>%
-        left_join(., mgt_multi_other, by = 'lbl') %>%
-        select(-lbl)
+        select(hru, year, plant_name, label) %>%
+        left_join(., mgt_multi_yld, by = 'label') %>%
+        left_join(., mgt_multi_other, by = 'label') %>%
+        select(-label)
 
       mgt_multi <- mgt_multi[names(mgt_single)]
       mgt <- bind_rows(mgt_single, mgt_multi)
     } else {
       agg_fun <- ifelse('yld' %in% output_i$variable, sum, max)
       mgt_multi <- mgt_multi %>%
-        select(-lbl) %>%
+        select(-label) %>%
         group_by(hru, year, plant_name) %>%
-        summarise(., across(everything(),  agg_fun), .groups = 'drop') %>%
-        select(., -lbl)
+        summarise(., across(everything(),  agg_fun), .groups = 'drop')
 
       mgt_multi <- mgt_multi[names(mgt_single)]
       mgt <- bind_rows(mgt_single, mgt_multi)
