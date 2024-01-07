@@ -310,7 +310,10 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
  if(run_info$simulation_period$output_interval == "m"){
       output_list$simulation  <- map(output_list$simulation, ~ filter(.x, date %in% 1:12))
     }
-    
+
+ if(run_info$simulation_period$output_interval %in% c("y","2")){
+      output_list$simulation  <- map(output_list$simulation, ~ filter(.x, date > 1900))
+    }
     if(add_date) {
       ## Create date vector from the information in model_setup
       date <- get_date_vector_2012(model_setup)
