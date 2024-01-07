@@ -301,11 +301,20 @@ run_swat2012 <- function(project_path, output, parameter = NULL,
       output_list$parameter <- parameter[c('values', 'definition')]
     }
 
+
+
     output_list$simulation <- tidy_simulations(sim_result)
 
+### To keep compability with montly output
+
+ if(run_info$simulation_period$output_interval == "m"){
+      output_list$simulation  <- map(output_list$simulation, ~ filter(.x, date %in% 1:12))
+    }
+    
     if(add_date) {
       ## Create date vector from the information in model_setup
       date <- get_date_vector_2012(model_setup)
+	  output_list$simulation <- map(output_list$simulation , ~ select(.x,-date))
       output_list$simulation <- map(output_list$simulation, ~ bind_cols(date, .x))
     }
 
