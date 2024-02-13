@@ -57,8 +57,8 @@ read_swat2012_output <- function(output, thread_path) {
 #'
 extract_swat2012_output_i <- function(out_tbl_i, out_def_i) {
   out_tbl_i %>%
-    select(., 2, all_of(out_def_i$variable)) %>%
-    rename(., unit = 1) %>%
+   	select(., 2,"MON", all_of(out_def_i$variable)) %>% #### Keep the MON column to keep compability with M and Yearly output
+    rename(., c(unit = 1, date = 2)) %>%
     add_id(.) %>% # Revised, uses now ID adding from SWAT+ version
     mutate_output_i(., out_def_i) # Revised, uses now mutate from SWAT+ version
 }
