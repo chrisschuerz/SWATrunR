@@ -193,6 +193,8 @@ read_basin_yld <- function(output_i, thread_path) {
   if(!all(is.na(label))) {
     yld <- filter(yld, plant_name %in% label)
   }
+
+  return(yld)
 }
 
 #' Read and process SWAT+ management outputs.
