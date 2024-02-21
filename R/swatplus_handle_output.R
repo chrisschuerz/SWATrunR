@@ -130,7 +130,6 @@ read_swatplus_output <- function(output, thread_path, add_date, split_units) {
   }
 
   if (nrow(output_fdc) > 0) {
-    output_fdc <- list(output_fdc)
     out_tables_fdc <- list(read_fdcout(output_fdc, thread_path))
   } else {
     out_tables_fdc <- NULL
@@ -282,6 +281,8 @@ read_mgtout <- function(output_i, thread_path) {
       mgt_multi <- mgt_multi[names(mgt_single)]
       mgt <- bind_rows(mgt_single, mgt_multi)
     }
+  } else {
+    mgt <- select(mgt, -lbl)
   }
 
   mgt <- arrange(mgt, hru, year, plant_name)
@@ -301,7 +302,7 @@ read_mgtout <- function(output_i, thread_path) {
 #' @importFrom stringr str_remove
 #' @importFrom tibble as_tibble
 #' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tidyselect all_of
+#' @importFrom tidyselect all_of any_of
 #' @keywords internal
 #'
 read_fdcout <- function(output_i, thread_path) {
@@ -309,7 +310,7 @@ read_fdcout <- function(output_i, thread_path) {
     as_tibble(.) %>%
     rename(unit = props) %>%
     filter(unit %in% output_i$unit[[1]]) %>%
-    select(-ob_typ, -area_ha, -mean) %>% # mean removed as all zero in outputs
+    select(-ob_typ, -area_ha, -mean, - any_of('flash_idx')) %>% # mean removed as all zero in outputs
     pivot_longer(., cols = - unit, names_to = 'p', values_to = output_i$name) %>%
     mutate(., unit = ifelse(length(output_i$unit[[1]]) > 1, paste0('_', unit), '')) %>%
     mutate(p = ifelse(p == 'max', 'p0', p),

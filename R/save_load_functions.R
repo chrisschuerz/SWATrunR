@@ -376,20 +376,50 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
     }
   }
 
-  var_sel <- unique(variable)
+  var_sel <- unique(variable[variable != 'date'])
+  var_sel_all <- unique(c('hru', 'year', 'plant_name', 'p', 'pesticide', var_sel))
+
+  var_tbl <- save_list$variables %>%
+    filter(variable %in% var_sel_all) %>%
+    mutate(id1 = as.integer(str_split(tbl_id, '\\.', simplify = TRUE)[,1]))
+
+  tbl_ids_sel <- var_tbl %>%
+    filter(variable %in% var_sel) %>%
+    .$tbl_id
+  var_tbl <- filter(var_tbl, tbl_id %in% tbl_ids_sel)
+  var_sel <- unique(var_tbl$variable)
+
   if(add_date) {
-    has_date <- 'date' %in% save_list$variables$variable
-    if(!has_date) {
+    has_date <- c('date', 'year', 'p') %in% save_list$variables$variable
+    if(!any(has_date)) {
       message("Variables were saved without 'date' vectors.",
               " Variables will be read and returned without dates.\n")
     }
+
+    date_tbl <- save_list$variables %>%
+      filter(., variable == 'date') %>%
+      mutate(id1 = as.integer(str_split(tbl_id, '\\.', simplify = TRUE)[,1]))
+    date_tbl <- filter(date_tbl, id1 %in% unique(var_tbl$id1))
+
+    if (nrow(date_tbl) > 0) {
+      date_tbl <- save_list$sim_tbl %>%
+        filter(!run_idx %in% save_list$err_log$idx,
+               run_idx %in% run,
+               tbl_id %in% date_tbl$tbl_id) %>%
+        filter(db_id == min(db_id)) %>%
+        filter(run_name == run_name[1]) %>%
+        mutate(id1 = as.integer(str_split(tbl_id, '\\.', simplify = TRUE)[,1]))
+      date_list <- list()
+    } else {
+      date_list <- NULL
+    }
+
   } else {
-    var_sel <- var_sel[var_sel != 'date']
+    date_list <- NULL
   }
 
-  var_tbl <- filter(save_list$variables, variable %in% var_sel)
   tbl_ids <- unique(var_tbl$tbl_id)
-  sim_tbl <- filter(save_list$sim_tbl, run_idx %in% run & tbl_ids %in% tbl_ids)
+  sim_tbl <- filter(save_list$sim_tbl, run_idx %in% run & tbl_id %in% tbl_ids)
 
   db_ids <- unique(sim_tbl$db_id)
 
@@ -402,10 +432,23 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
     sim_tbl_i <- filter(sim_tbl, db_id == i_db) %>%
       arrange(tbl_id)
 
-    for (i_row in 1:nrow(sim_tbl_i)) {
-      if (is.null(sim_results[[sim_tbl_i$run_name[i_row]]])) {
-        sim_results[[sim_tbl_i$run_name[i_row]]] <- list()
+    if (add_date & length(date_list) == 0) {
+      if(nrow(date_tbl) > 0) {
+        if (i_db %in% date_tbl$db_id) {
+          for (i in 1:nrow(date_tbl)) {
+            date_list[[date_tbl$id1[i]]] <-
+              collect_cols('date',
+                           date_tbl$tbl[i],
+                           save_list$sim_db[[date_tbl$db_id[i]]],
+                           handle_conn = F)
+            date_list[[date_tbl$id1[i]]]$date <-
+              ymd(19700101) + date_list[[date_tbl$id1[i]]]$date
+          }
+        }
       }
+    }
+
+    for (i_row in 1:nrow(sim_tbl_i)) {
       tbl_i <- sim_tbl_i$tbl[i_row]
       tbl_id_i <- sim_tbl_i$tbl_id[i_row]
       tbl_id_i_sub <- as.numeric(str_split(tbl_id_i, '\\.', simplify = TRUE))
@@ -414,12 +457,14 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
       sim_i <- collect_cols(var_i, tbl_i, save_list$sim_db[[i_db]],
                             handle_conn = F)
 
-      if('date' %in% names(sim_i)) {
-        sim_i$date <- ymd(19700101) + sim_i$date
-      }
-
-      if (tbl_id_i_sub[2] == 1) {
+      is_init <- is.null(sim_results[[sim_tbl_i$run_name[i_row]]][tbl_id_i_sub[1]][[1]])
+      if (is_init) {
         sim_results[[sim_tbl_i$run_name[i_row]]][[tbl_id_i_sub[1]]] <- sim_i
+        if(add_date & !is.null(date_list[tbl_id_i_sub[1]][[1]])) {
+          sim_results[[sim_tbl_i$run_name[i_row]]][[tbl_id_i_sub[1]]] <-
+            bind_cols(date_list[[tbl_id_i_sub[1]]],
+                      sim_results[[sim_tbl_i$run_name[i_row]]][[tbl_id_i_sub[1]]])
+        }
       } else {
         sim_results[[sim_tbl_i$run_name[i_row]]][[tbl_id_i_sub[1]]] <-
           bind_cols(sim_results[[sim_tbl_i$run_name[i_row]]][[tbl_id_i_sub[1]]], sim_i)
@@ -438,8 +483,9 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
     output_list$parameter <- list(values = save_list$par_val,
                                   definition = save_list$par_def)
   }
-
+  is_null <- map_lgl(sim_results[[1]], is.null)
   output_list$simulation <- sim_results[order(names(sim_results))] %>%
+    map(., ~ .x[!is_null]) %>%
     tidy_simulations(.)
 
   if (add_run_info) {
@@ -576,7 +622,7 @@ scan_swat_run <- function(save_dir, return_full = FALSE) {
 #'   the path/s to the save folder/s.
 #'
 #' @importFrom DBI dbConnect dbListFields dbListTables dbReadTable
-#' @importFrom dplyr bind_rows collect filter mutate %>%
+#' @importFrom dplyr bind_rows collect distinct filter mutate %>%
 #' @importFrom lubridate ymd ymd_hms
 #' @importFrom purrr list_rbind map map2 map2_df walk
 #' @importFrom RSQLite SQLite
@@ -686,7 +732,8 @@ scan_save_files <- function(save_dir) {
         tbl_id  <- str_extract(tbls_1, '[:digit:]+\\.[:digit:]+$')
         var_tbl <- map(tbls_1, ~ dbListFields(sim_db[[i]], .x)) %>%
           map2(., tbl_id,  ~ tibble(variable = .x, tbl_id = .y)) %>%
-          list_rbind(.)
+          list_rbind(.) %>%
+          distinct(.)
       }
       dbDisconnect(sim_db[[i]])
     }
