@@ -528,7 +528,7 @@ sim_result <- foreach(i_run = 1:n_run,
     ## Execute the SWAT exe file located in the thread folder
     msg <- run(run_os(swat_exe, os), wd = thread_path, error_on_status = FALSE)
 
-    if(nchar(msg$stderr) == 0) {
+    if(nchar(msg$stderr) == 0 | str_detect(msg$stderr, 'IEEE_DENORMAL')) {
       ## Read defined model outputs
       model_output <- read_swat2012_output(output, thread_path, split_units)
 

@@ -75,8 +75,8 @@ extract_swat2012_output_i <- function(out_tbl_i, out_def_i, split_units) {
 #' @keywords internal
 #'
 get_file_header <- function(output_i, tbl_pos, thread_path) {
-  header <- read_lines(file = thread_path%//%output_i,
-                       skip = tbl_pos - 1, n_max = 1, lazy = FALSE) %>%
+  header <- read_lines(file = thread_path%//%output_i, n_max = tbl_pos, lazy = FALSE) %>%
+    .[tbl_pos] %>%
     split_by_units(.) %>%
     str_replace_all(., "-", "_") %>%
     str_replace_all(., "#", "_")
@@ -99,9 +99,9 @@ get_file_header <- function(output_i, tbl_pos, thread_path) {
 #'
 get_fwf_positions <- function(output_i, thread_path, tbl_pos) {
   header_line <- read_lines(file = thread_path%//%output_i,
-                            skip = tbl_pos - 1, n_max = 1, lazy = FALSE)
+                            n_max = tbl_pos - 1, lazy = FALSE)[tbl_pos - 1]
   first_line <- read_lines(file = thread_path%//%output_i,
-                           skip = tbl_pos, n_max = 1, lazy = FALSE)
+                           n_max = tbl_pos, lazy = FALSE)[tbl_pos]
 
   # Workaround to split MON and AREA flexibly
   pos_mon_area <- c(str_locate(header_line, "MON")[1],
