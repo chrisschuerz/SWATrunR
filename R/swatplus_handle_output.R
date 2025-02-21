@@ -274,7 +274,7 @@ read_mgtout <- function(output_i, thread_path) {
       mgt <- bind_rows(mgt_single, mgt_multi)
     }
   } else {
-    mgt <- select(mgt, -lbl)
+    mgt <- select(mgt, -label)
   }
 
   mgt <- arrange(mgt, hru, year, plant_name)
