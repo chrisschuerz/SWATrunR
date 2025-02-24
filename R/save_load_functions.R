@@ -390,10 +390,13 @@ load_swat_run <- function(save_dir, variable = NULL, run = NULL,
   var_sel <- unique(var_tbl$variable)
 
   if(add_date) {
-    has_date <- c('date', 'year', 'p') %in% save_list$variables$variable
+    has_date <- 'date' %in% save_list$variables$variable
     if(!any(has_date)) {
-      message("Variables were saved without 'date' vectors.",
-              " Variables will be read and returned without dates.\n")
+      has_year_p <- c('year', 'p') %in% save_list$variables$variable
+      if(!any(has_year_p)) {
+        message("Variables were saved without 'date' vectors.",
+                " Variables will be read and returned without dates.\n")
+      }
       date_tbl <- tibble()
     } else {
       date_tbl <- save_list$variables %>%
