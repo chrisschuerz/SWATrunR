@@ -36,7 +36,6 @@ format_swatplus_parameter <- function(parameter) {
 write_calibration <- function(thread_path, parameter, calibration, run_index,
                               i_run) {
   is_plant_par <- parameter$definition$file_name == 'pdb'
-
   if(any(is_plant_par)) {
     update_plant_par(thread_path, parameter, is_plant_par, run_index, i_run)
   }
@@ -44,6 +43,34 @@ write_calibration <- function(thread_path, parameter, calibration, run_index,
   # parameters which are updated with the calibration.cal file
   parameter$definition <- parameter$definition[!is_plant_par,]
   parameter$values     <- parameter$values[ ,!is_plant_par]
+
+  is_till_par <- parameter$definition$file_name == 'til'
+  if(any(is_till_par)) {
+    update_till_par(thread_path, parameter, is_till_par, run_index, i_run)
+  }
+  # Remove all pdb (plant) parameters from the parameter list and keep all
+  # parameters which are updated with the calibration.cal file
+  parameter$definition <- parameter$definition[!is_till_par,]
+  parameter$values     <- parameter$values[ ,!is_till_par]
+
+  is_cons_par <- parameter$definition$file_name == 'cpr'
+  if(any(is_cons_par)) {
+    update_cons_par(thread_path, parameter, is_cons_par, run_index, i_run)
+  }
+  # Remove all pdb (plant) parameters from the parameter list and keep all
+  # parameters which are updated with the calibration.cal file
+  parameter$definition <- parameter$definition[!is_cons_par,]
+  parameter$values     <- parameter$values[ ,!is_cons_par]
+
+  is_ovn_par <- parameter$definition$file_name == 'ovn'
+  if(any(is_ovn_par)) {
+    update_ovn_par(thread_path, parameter, is_ovn_par, run_index, i_run)
+  }
+  # Remove all pdb (plant) parameters from the parameter list and keep all
+  # parameters which are updated with the calibration.cal file
+  parameter$definition <- parameter$definition[!is_ovn_par,]
+  parameter$values     <- parameter$values[ ,!is_ovn_par]
+
   if(nrow(parameter$definition) > 0) {
     cal_pos <- which(is.na(calibration$VAL))
     # cal_names <- calibration$NAME[cal_pos]
@@ -117,6 +144,126 @@ update_plant_par <- function(thread_path, parameter, is_plant_par, run_index, i_
   write_lines('plants.plt updated with SWATrunR', file = plt_path)
   fwrite(plant_par, plt_path, append = TRUE, sep = '\t', col.names = TRUE)
 }
+#' Modify plants.plt parameters
+#'
+#' @param thread_path Path to the parallel thread folder
+#' @param parameter List providing the parameter table and the parameter
+#'   constraints
+#' @param is_plant_par Logical vector that defines the plant parameters
+#' @param run_index Vector of the indices of runs that are performed
+#' @param i_run Index that gives the number of the current run simulated in the
+#'   respective thread
+#'
+#' @importFrom data.table fwrite
+#' @importFrom dplyr %>% filter mutate select
+#' @importFrom readr write_lines
+#'
+#' @keywords internal
+#'
+update_till_par <- function(thread_path, parameter, is_till_par, run_index, i_run) {
+  def <- parameter$definition[is_till_par, ]
+  till_par <- parameter$tillage_til %>%
+    mutate(., file_name = 'til', file_code = 1:nrow(.))
+  for (i_par in 1:nrow(def)) {
+    def_i <- def[i_par, ]
+    idx <- def_i %>%
+      build_expression() %>%
+      evaluate_expression(till_par, .) %>%
+      .[["file_code"]]
+
+    par_up_i <- parameter$values[[def_i$par_name]][run_index[i_run]]
+    par_val  <- till_par[[def_i$parameter]][idx]
+
+    par_val <- update_par(par_val, par_up_i, def_i$change)
+
+    till_par[[def_i$parameter]][idx] <- par_val
+
+  }
+  till_par <- select(till_par, - file_name, - file_code)
+  til_path <- paste0(thread_path, '/tillage.til')
+  write_lines('tillage.til updated with SWATrunR', file = til_path)
+  fwrite(till_par, til_path, append = TRUE, sep = '\t', col.names = TRUE)
+}
+#' Modify plants.plt parameters
+#'
+#' @param thread_path Path to the parallel thread folder
+#' @param parameter List providing the parameter table and the parameter
+#'   constraints
+#' @param is_plant_par Logical vector that defines the plant parameters
+#' @param run_index Vector of the indices of runs that are performed
+#' @param i_run Index that gives the number of the current run simulated in the
+#'   respective thread
+#'
+#' @importFrom data.table fwrite
+#' @importFrom dplyr %>% filter mutate select
+#' @importFrom readr write_lines
+#'
+#' @keywords internal
+#'
+update_cons_par <- function(thread_path, parameter, is_cons_par, run_index, i_run) {
+  def <- parameter$definition[is_cons_par, ]
+  cons_par <- parameter$cons_practice_lum %>%
+    mutate(., file_name = 'cpr', file_code = 1:nrow(.))
+  for (i_par in 1:nrow(def)) {
+    def_i <- def[i_par, ]
+    idx <- def_i %>%
+      build_expression() %>%
+      evaluate_expression(cons_par, .) %>%
+      .[["file_code"]]
+
+    par_up_i <- parameter$values[[def_i$par_name]][run_index[i_run]]
+    par_val  <- cons_par[[def_i$parameter]][idx]
+
+    par_val <- update_par(par_val, par_up_i, def_i$change)
+
+    cons_par[[def_i$parameter]][idx] <- par_val
+
+  }
+  cons_par <- select(cons_par, - file_name, - file_code)
+  cpr_path <- paste0(thread_path, '/cons_practice.lum')
+  write_lines('cons_practice.lum updated with SWATrunR', file = cpr_path)
+  fwrite(cons_par, cpr_path, append = TRUE, sep = '\t', col.names = TRUE)
+}
+#' Modify plants.plt parameters
+#'
+#' @param thread_path Path to the parallel thread folder
+#' @param parameter List providing the parameter table and the parameter
+#'   constraints
+#' @param is_plant_par Logical vector that defines the plant parameters
+#' @param run_index Vector of the indices of runs that are performed
+#' @param i_run Index that gives the number of the current run simulated in the
+#'   respective thread
+#'
+#' @importFrom data.table fwrite
+#' @importFrom dplyr %>% filter mutate select
+#' @importFrom readr write_lines
+#'
+#' @keywords internal
+#'
+update_ovn_par <- function(thread_path, parameter, is_ovn_par, run_index, i_run) {
+  def <- parameter$definition[is_ovn_par, ]
+  ovn_par <- parameter$ovn_table_lum %>%
+    mutate(., file_name = 'ovn', file_code = 1:nrow(.))
+  for (i_par in 1:nrow(def)) {
+    def_i <- def[i_par, ]
+    idx <- def_i %>%
+      build_expression() %>%
+      evaluate_expression(ovn_par, .) %>%
+      .[["file_code"]]
+
+    par_up_i <- parameter$values[[def_i$par_name]][run_index[i_run]]
+    par_val  <- ovn_par[[def_i$parameter]][idx]
+
+    par_val <- update_par(par_val, par_up_i, def_i$change)
+
+    ovn_par[[def_i$parameter]][idx] <- par_val
+
+  }
+  ovn_par <- select(ovn_par, - file_name, - file_code)
+  ovn_path <- paste0(thread_path, '/ovn_table.lum')
+  write_lines('ovn_table.lum updated with SWATrunR', file = ovn_path)
+  fwrite(ovn_par, ovn_path, append = TRUE, sep = '\t', col.names = TRUE)
+}
 
 #' Check if the names of the defined parameters are available in 'cal_parms.cal'.
 #'
@@ -146,6 +293,57 @@ check_swatplus_parameter <- function(project_path, parameter) {
       stop("Plant parameters ",
            paste(plant_par[!in_plant_parms], collapse = ", "),
            " not defined in 'plants.plt'")
+    }
+  }
+  if ('til' %in% parameter$definition$file_name) {
+    till_par <- parameter$definition$parameter[parameter$definition$file_name == 'til']
+    parameter$definition <- filter(parameter$definition, file_name != 'til')
+    tillage_til <- read_lines(paste0(project_path, '/tillage.til'), skip = 1,
+                              n_max = 1, lazy = FALSE) %>%
+      str_trim(.) %>%
+      str_split(., '[:space:]+') %>%
+      unlist(.)
+
+    in_till_parms <- till_par %in% tillage_til
+
+    if(any(!in_till_parms)){
+      stop("Tillage parameters ",
+           paste(till_par[!in_till_parms], collapse = ", "),
+           " not defined in 'tillage.til'")
+    }
+  }
+  if ('cpr' %in% parameter$definition$file_name) {
+    cons_par <- parameter$definition$parameter[parameter$definition$file_name == 'cpr']
+    parameter$definition <- filter(parameter$definition, file_name != 'cpr')
+    cons_pract <- read_lines(paste0(project_path, '/cons_practice.lum'), skip = 1,
+                             n_max = 1, lazy = FALSE) %>%
+      str_trim(.) %>%
+      str_split(., '[:space:]+') %>%
+      unlist(.)
+
+    in_cons_parms <- cons_par %in% cons_pract
+
+    if(any(!in_cons_parms)){
+      stop("Conservation practice parameters ",
+           paste(cons_par[!in_cons_parms], collapse = ", "),
+           " not defined in 'cons_practice.lum'")
+    }
+  }
+  if ('ovn' %in% parameter$definition$file_name) {
+    ovn_par <- parameter$definition$parameter[parameter$definition$file_name == 'ovn']
+    parameter$definition <- filter(parameter$definition, file_name != 'ovn')
+    ovn_table <- read_lines(paste0(project_path, '/ovn_table.lum'), skip = 1,
+                            n_max = 1, lazy = FALSE) %>%
+      str_trim(.) %>%
+      str_split(., '[:space:]+') %>%
+      unlist(.)
+
+    in_ovn_parms <- ovn_par %in% ovn_table
+
+    if(any(!in_ovn_parms)){
+      stop("Mannings n parameters ",
+           paste(ovn_par[!in_ovn_parms], collapse = ", "),
+           " not defined in 'ovn_table.lum'")
     }
   }
 

@@ -414,6 +414,18 @@ run_swatplus <- function(project_path, output, parameter = NULL,
       parameter$plants_plt <-
         as_tibble(fread(paste0(project_path, '/plants.plt'),skip = 1))
     }
+    if('til' %in% parameter$definition$file_name) {
+      parameter$tillage_til <-
+        as_tibble(fread(paste0(project_path, '/tillage.til'),skip = 1))
+    }
+    if('cpr' %in% parameter$definition$file_name) {
+      parameter$cons_practice_lum <-
+        as_tibble(fread(paste0(project_path, '/cons_practice.lum'),skip = 1))
+    }
+    if('ovn' %in% parameter$definition$file_name) {
+      parameter$ovn_table_lum <-
+        as_tibble(fread(paste0(project_path, '/ovn_table.lum'),skip = 1))
+    }
 
     # here would also be clever to implement parameter boundary checkup keep
     # parameter boundary file in R package and write to project folder when it

@@ -46,7 +46,7 @@ translate_parameter_constraints <- function(par, swat_vers) {
                     "sdr", "sep", "bsn", "wwq", "res", "ops")
   } else {
     swat_files <- c("hru", "sol", "bsn", "swq", "rte", "res", "aqu", "hlt", "pst",
-                    "plt", "pdb")
+                    "plt", "pdb", "ovn", "cpr", "til")
   }
 
   if(any(!(file_name %in% swat_files))) {
