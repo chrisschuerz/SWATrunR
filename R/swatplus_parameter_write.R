@@ -220,12 +220,12 @@ read_unit_conditions <- function(project_path, parameter) {
 #' @param file Path to the object file
 #'
 #' @importFrom dplyr %>%
-#' @importFrom readr read_table2 cols col_character col_double
+#' @importFrom readr read_table cols col_character col_double
 #'
 #' @keywords internal
 #'
 get_tbl_column <- function(file, col_i) {
-  suppressWarnings(read_table2(file, skip = 1,
+  suppressWarnings(read_table(file, skip = 1,
               col_types = cols(id = col_double(),
                                .default = col_character()))) %>%
     .[[col_i]]
